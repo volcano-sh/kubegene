@@ -1,0 +1,30 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: kube-dag
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      kube-dag: test
+  template:
+    metadata:
+      labels:
+        kube-dag: test
+    spec:
+      serviceAccount: kube-dag
+      containers:
+        - name: kube-dag
+          image: kube-dag:v1
+          args:
+            - "--v=4"
+          env:
+            - name: MY_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: MY_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          imagePullPolicy: "IfNotPresent"

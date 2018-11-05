@@ -1,0 +1,1 @@
+gcs sub repjob /xsw/kubegenetest/subrepjob/repjob.sh --memory 1g --cpu 1 --tool ubuntu:latest --pvc subrepjob-pvc --mount-path /xsw/kubegenetest/subrepjob --shell bash

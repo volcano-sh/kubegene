@@ -1,0 +1,101 @@
+version: genecontainer_0_1
+
+inputs:
+  sub-folder:
+    default: sample-x
+    description: 输出文件在hostpath卷中的路径
+    type: string
+  result:
+    default: test-result.txt
+    description: 输出文件的地址
+    type: string
+  output:
+    default: result
+    description: 输出文件的路径
+    type: string
+  samplemountpath:
+    default: /sample
+    description: hostpath卷挂载地址
+    type: string
+  output-prefix:
+    default: '$(date "+%F %r"): '
+    description: 输出到结果文件时的前缀
+    type: string
+  wait-base:
+    default: 1
+    description: 等待时间的基数
+    type: number
+  prepare-command:
+    default: "echo job-prepare"
+    description: 执行在所有命令之前的命令
+    type: string
+  sample-pvc:
+    default: sample-pvc
+    description: 使用的存储pvc
+    type: string
+
+workflow:
+  jobprepare:
+    tool: nginx:latest
+    commands:
+      - ${prepare-command}; rm -rf ${samplemountpath}/${output}/${sub-folder}; mkdir -p ${samplemountpath}/${output}/${sub-folder}; ls ${samplemountpath}/* echo ${output-prefix}prepare | tee -a ${samplemountpath}/${output}/${sub-folder}/${result};
+  joba:
+    tool: nginx:latest
+    commands:
+      - sleep `expr 3 \* ${wait-base}`; echo ${output-prefix}job-a | tee -a ${samplemountpath}/${output}/${sub-folder}/${result};
+      - sleep `expr 3 \* ${wait-base}`; echo ${output-prefix}job-a | tee -a ${samplemountpath}/${output}/${sub-folder}/${result};
+    depends:
+      - target: jobprepare
+        type: whole
+  jobb:
+    tool: nginx:latest
+    commandsIter:
+      command: sleep `expr ${1} \* ${wait-base}`; echo ${output-prefix}job-b-${item} | tee -a ${samplemountpath}/${output}/${sub-folder}/${result};
+      varsIter:
+        - range(0, 3)
+    depends:
+      - target: joba
+        type: whole
+  jobc:
+    tool: nginx:latest
+    commandsIter:
+      command: sleep `expr ${1} \* ${wait-base}`; echo ${output-prefix}job-c-${item} | tee -a ${samplemountpath}/${output}/${sub-folder}/${result};
+      varsIter:
+        - [3, 20]
+    depends:
+      - target: joba
+        type: iterate
+      - target: jobprepare
+        type: whole
+  jobd:
+    tool: nginx:latest
+    commandsIter:
+      command: sleep `expr ${1} \* ${wait-base}`; echo ${output-prefix}job-d-${item} | tee -a ${samplemountpath}/${output}/${sub-folder}/${result};
+      varsIter:
+        - [3, 5]
+    depends:
+      - target: jobb
+        type: whole
+      - target: jobc
+        type: iterate
+  jobfinish:
+    tool: nginx:latest
+    commands:
+      - cat ${samplemountpath}/${output}/${sub-folder}/${result} | tee -a ${samplemountpath}/${output}/${result};
+    depends:
+      - target: jobd
+        type: whole
+
+volumes:
+  samplepv:
+    mountPath: ${samplemountpath}
+    mountFrom:
+      pvc: ${sample-pvc}
+
+outputs:
+  result:
+    paths:
+    - ${output}/${result}
+
+
+

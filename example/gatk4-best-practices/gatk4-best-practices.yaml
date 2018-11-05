@@ -1,0 +1,266 @@
+version: genecontainer_0_1
+inputs:
+  fastq-files:
+    default:
+      - 'sample/R1.fq.gz'
+      - 'sample/R2.fq.gz'
+    description: Fastq file path
+    type: array
+  sample:
+    default: sample
+    description: sample data storage path in the volume
+    type: string
+  reference-path:
+    default: 'reference_files'
+    description: reference_files storage path in the volume
+    type: string
+  fastafile:
+    default: 'hg19.fa'
+    description: >-
+       reference genome file name in the reference-path directory, It should also include the results of
+       the bwa software indexing the hg19 reference genome in the reference-path directory.
+    type: string
+  knownsitedb147:
+    default: 'ncbi.hg19_dbsnp147.'
+    description: >-
+      the dbsnp147 mutation annotation file in the reference-path directory that is well chromosome classification
+      and compressed by the bgzip algorithm. This file can be used as a BaseQuality Score Recalibration (BQSR) as
+      a known mutation site on the genome. The system adds the suffix chr[1-22XYM].vcf.gz by default.
+    type: string
+  knownsitemills1kg:
+    default: 'Mills_and_1000G_gold_standard.indels.hg19.sites.'
+    description: >-
+      the Mills_and_1000G mutation annotation file in the reference-path directory that is well chromosome classification
+      and compressed by the bgzip algorithm. This file can be used as a BaseQuality Score Recalibration (BQSR) as
+      a known mutation site on the genome. The system adds the suffix chr[1-22XYM].vcf.gz by default.
+    type: string
+  npart:
+    default: 13
+    description: Split the original file into as many small files as possible and run concurrently
+    type: number
+  nthread:
+    default: 8
+    description: How many cpus can be used for concurrent multithreaded concurrency
+    type: number
+  chromlist:
+    default:
+      - 'chr1:10000-103863906'
+      - 'chr1:103913906-205922707'
+      - 'chr1:206072707-249240621'
+      - 'chr2:10000-87668206'
+      - 'chr2:87718206-149690582'
+      - 'chr2:149790582-243189373'
+      - 'chr3:10000-90504854'
+      - 'chr3:93504854-198012430'
+      - 'chr4:10000-75427379'
+      - 'chr4:75452279-191044276'
+      - 'chr5:10000-91636128'
+      - 'chr5:91686128-180905260'
+      - 'chr6:10000-95680543'
+      - 'chr6:95830543-171105067'
+      - 'chr7:10000-100556043'
+      - 'chr7:100606043-159128663'
+      - 'chr8:10000-86576451'
+      - 'chr8:86726451-146354022'
+      - 'chr9:10000-92343416'
+      - 'chr9:92443416-141203431'
+      - 'chr10:10000-49095536'
+      - 'chr10:49195536-135524747'
+      - 'chr11:10000-69089801'
+      - 'chr11:69139801-134946516'
+      - 'chr12:10000-34856694'
+      - 'chr12:37856694-133841895'
+      - 'chr13:10000-115159878'
+      - 'chr14:10000-107289540'
+      - 'chr15:10000-102521392'
+      - 'chr16:10000-90344753'
+      - 'chr17:1-81195210'
+      - 'chr18:10000-78067248'
+      - 'chr19:10000-59118983'
+      - 'chr20:10000-63015520'
+      - 'chr21:10000-48119895'
+      - 'chr22:10000-51294566'
+      - 'chrX:10000-76653692'
+      - 'chrX:76703692-155260560'
+      - 'chrY:10000-59363566'
+      - 'chrM:1-16571'
+    description:  >-
+      The genome-separated regions are organized according to the hg19 reference genome annotation file.
+      This process will perform calculations concurrently within these separate areas.
+    type: array
+  volume-path-tmp:
+    default: '/tmpresult'
+    description: The mount point of the middle result storage volume in the file system.
+    type: string
+  volume-path-data:
+    default: '/data'
+    description: The mount point of the sample data storage volume in the file system.
+    type: string
+workflow:
+  splitfq:
+    tool: 'zsplit:0.2'
+    resources:
+      memory: 1G
+    commandsIter:
+      command: >
+        for i in `seq 0 ${npart}`; do mkdir -p ${volume-path-tmp}/${sample}/$i;
+        done && \
+
+        zlibfq -b 100000 -t ${npart} ${volume-path-data}/${1}
+        ${volume-path-tmp}/${sample} R${item}
+      varsIter:
+        - '${fastq-files}'
+  bwamapping:
+    tool: 'bwa:0.7.12'
+    resources:
+      memory: 1G
+    commandsIter:
+      command: >
+        bwa mem -t ${nthread} -M -R
+        "@RG\tID:Sample\tPL:illumina\tSM:${sample}\tCN:GATK4"
+        ${volume-path-data}/${reference-path}/${fastafile} \
+
+        ${volume-path-tmp}/${sample}/${1}/R0.${1}.fastq  \
+
+        ${volume-path-tmp}/${sample}/${1}/R1.${1}.fastq |\
+
+        samtools view -F 4 -q 10 -bS /dev/stdin
+        >${volume-path-tmp}/${sample}/${sample}.${1}.bam && \
+
+        samtools sort -@ ${nthread} -o
+        ${volume-path-tmp}/${sample}/${sample}.${1}.sort.bam
+        ${volume-path-tmp}/${sample}/${sample}.${1}.bam && \
+
+        samtools index ${volume-path-tmp}/${sample}/${sample}.${1}.sort.bam
+      varsIter:
+        - 'range(0, ${npart})'
+    depends:
+      - target: splitfq
+        type: whole
+  mergemappedbam:
+    tool: 'bwa:0.7.12'
+    resources:
+      memory: 1G
+    commands:
+      - >-
+        ls ${volume-path-tmp}/${sample}/${sample}.*.sort.bam >
+        ${volume-path-tmp}/${sample}/mergelist.txt
+    depends:
+      - target: bwamapping
+        type: whole
+  samflagstat:
+    tool: 'bwa:0.7.12'
+    resources:
+      memory: 1G
+    commands:
+      - >
+        samtools merge -f -@ ${nthread} -b
+        ${volume-path-tmp}/${sample}/mergelist.txt \
+
+        ${volume-path-tmp}/${sample}/${sample}.sort.bam && \
+
+        samtools flagstat ${volume-path-tmp}/${sample}/${sample}.sort.bam >
+        ${volume-path-tmp}/${sample}/${sample}.sort.flagstat
+    depends:
+      - target: mergemappedbam
+        type: whole
+  sammerge:
+    tool: 'bwa:0.7.12'
+    resources:
+      memory: 1G
+    commandsIter:
+      command: >
+        samtools merge -f -@ ${nthread} -R ${1} -b
+        ${volume-path-tmp}/${sample}/mergelist.txt \
+
+        ${volume-path-tmp}/${sample}/${sample}.sort.${1}.bam && \
+
+        sambamba markdup -t ${nthread}
+        ${volume-path-tmp}/${sample}/${sample}.sort.${1}.bam \
+
+        ${volume-path-tmp}/${sample}/${sample}.sort.mkdup.${1}.bam && \
+
+        samtools view -T ${volume-path-data}/${reference-path}/${fastafile} -@
+        ${nthread} \
+
+        -C ${volume-path-tmp}/${sample}/${sample}.sort.mkdup.${1}.bam
+        >${volume-path-tmp}/${sample}/${sample}.sort.mkdup.${1}.cram && \
+
+        sambamba index -t ${nthread} -C
+        ${volume-path-tmp}/${sample}/${sample}.sort.mkdup.${1}.cram
+      varsIter:
+        - '${chromlist}'
+    depends:
+      - target: mergemappedbam
+        type: whole
+  mkdupbqsr:
+    tool: 'gatk:4.0.2.0'
+    resources:
+      memory: 1G
+    commandsIter:
+      command: >
+        export chrom=`echo ${1} | cut -d ":" -f1` && \
+
+        gatk BaseRecalibrator -I
+        ${volume-path-tmp}/${sample}/${sample}.sort.mkdup.${1}.cram \
+          --known-sites ${volume-path-data}/${reference-path}/${knownsitedb147}$chrom.vcf.gz \
+          --known-sites ${volume-path-data}/${reference-path}/${knownsitemills1kg}$chrom.vcf.gz \
+          -O ${volume-path-tmp}/${sample}/${sample}.${1}.bqsr.table \
+          -R ${volume-path-data}/${reference-path}/${fastafile} \
+          -L ${1} && \
+        gatk ApplyBQSR -I
+        ${volume-path-tmp}/${sample}/${sample}.sort.mkdup.${1}.cram  \
+          -bqsr ${volume-path-tmp}/${sample}/${sample}.${1}.bqsr.table  \
+          -R ${volume-path-data}/${reference-path}/${fastafile} \
+          -L ${1} \
+          -O ${volume-path-tmp}/${sample}/${sample}.sort.mkdup.recal.${1}.cram &&\
+        gatk HaplotypeCaller -I
+        ${volume-path-tmp}/${sample}/${sample}.sort.mkdup.recal.${1}.cram \
+          -O ${volume-path-tmp}/${sample}/${sample}.${1}.g.vcf.gz \
+          --emit-ref-confidence GVCF \
+          -R ${volume-path-data}/${reference-path}/${fastafile} \
+          -L ${1}
+      varsIter:
+        - '${chromlist}'
+    depends:
+      - target: sammerge
+        type: whole
+  mergevcf:
+    tool: 'gatk:4.0.2.0'
+    resources:
+      memory: 1G
+    commands:
+      - >
+        echo "gatk MergeVcfs \\">/root/GATK.merge.VCF.sh && \
+
+        for chr in `echo "${chromlist}"| tr -d "\"[]\ " | sed "s/,/ /g"`; do
+        echo "  --INPUT ${volume-path-tmp}/${sample}/${sample}.$chr.g.vcf.gz
+        \c"   >>/root/GATK.merge.VCF.sh; done && \
+
+        echo " --OUTPUT
+        ${volume-path-tmp}/${sample}/merge.HaplotypeCaller.raw.g.vcf.gz
+        ">>/root/GATK.merge.VCF.sh && \
+
+        sh /root/GATK.merge.VCF.sh && \
+
+        gatk GenotypeGVCFs --variant
+        ${volume-path-tmp}/${sample}/merge.HaplotypeCaller.raw.g.vcf.gz -R
+        ${volume-path-data}/${reference-path}/${fastafile} -O
+        ${volume-path-data}/${sample}/merge.HaplotypeCaller.raw.vcf.gz
+    depends:
+      - target: mkdupbqsr
+        type: whole
+volumes:
+  gendata:
+    mountPath: '${volume-path-data}'
+    mountFrom:
+      pvc: 'gcs-data'
+  gentmp:
+    mountPath: '${volume-path-tmp}'
+    mountFrom:
+      pvc: 'gcs-tmp-result'
+outputs:
+  gene-report-vcf:
+    paths:
+      - '${sample}/merge.HaplotypeCaller.raw.vcf.gz'
+      - '${sample}/merge.HaplotypeCaller.raw.vcf.gz.tbi'

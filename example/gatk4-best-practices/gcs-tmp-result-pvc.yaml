@@ -1,0 +1,12 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+    name: gcs-tmp-result
+spec:
+  storageClassName: standard
+  accessModes:
+    - ReadWriteOnce
+  volumeName: gcs-tmp-result
+  resources:
+    requests:
+      storage: 10Gi
