@@ -11,5 +11,5 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: /xsw/kubegenetest/subrepjob
+    path: /kubegenetest/subrepjob
     type: Directory

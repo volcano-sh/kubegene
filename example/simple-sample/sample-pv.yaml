@@ -11,5 +11,5 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: /xsw/sample
+    path: /sample
     type: Directory

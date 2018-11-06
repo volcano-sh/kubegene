@@ -26,7 +26,7 @@ genectl:
 clean:
 	-rm -rf bin
 
-container: kube-dag
+docker: kube-dag
 	docker build -t $(IMAGE_NAME):$(TAG) .
 
 test:
