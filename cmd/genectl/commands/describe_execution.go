@@ -17,11 +17,11 @@ limitations under the License.
 package commands
 
 import (
-	"sort"
-	"io"
 	"bytes"
 	"fmt"
+	"io"
 	"os"
+	"sort"
 	"strings"
 	"text/tabwriter"
 
@@ -84,8 +84,7 @@ func FindExecutionTask(exec *execv1alpha1.Execution, name string) *execv1alpha1.
 	panic("can not get task for " + name)
 }
 
-
-func DescribeExecution(exec *execv1alpha1.Execution){
+func DescribeExecution(exec *execv1alpha1.Execution) {
 	buf := &bytes.Buffer{}
 	tabWriter := newTabWriter(buf)
 	writer := NewExecutionWriter(tabWriter)
@@ -141,7 +140,7 @@ func DescribeExecution(exec *execv1alpha1.Execution){
 		}
 
 		info := fmt.Sprintf("(total: %d; success: %d; failed: %d; running: %d; error: %d)", totalJob, succeedJob, failedJob, runningJob, errorJob)
-		writer.Write(1, taskName + info + ":\n")
+		writer.Write(1, taskName+info+":\n")
 
 		if len(vertices) == 0 {
 			if exec.Status.Phase == execv1alpha1.VertexError || exec.Status.Phase == execv1alpha1.VertexFailed {

@@ -40,7 +40,7 @@ func validateExecution() *genev1alpha1.Execution {
 				{
 					Name:       "A",
 					Type:       genev1alpha1.JobTaskType,
-					CommandSet: []string{"echo A >> /tmp/hostvolume/",},
+					CommandSet: []string{"echo A >> /tmp/hostvolume/"},
 					Image:      "hello-word",
 					Volumes: map[string]genev1alpha1.Volume{
 						"volumeA": {
@@ -54,7 +54,7 @@ func validateExecution() *genev1alpha1.Execution {
 				{
 					Name:       "B",
 					Type:       genev1alpha1.JobTaskType,
-					CommandSet: []string{"echo B >> /tmp/hostvolume/",},
+					CommandSet: []string{"echo B >> /tmp/hostvolume/"},
 					Image:      "hello-word",
 					Dependents: []genev1alpha1.Dependent{
 						{
@@ -74,7 +74,7 @@ func validateExecution() *genev1alpha1.Execution {
 				{
 					Name:       "C",
 					Type:       genev1alpha1.JobTaskType,
-					CommandSet: []string{"echo C >> /tmp/hostvolume/",},
+					CommandSet: []string{"echo C >> /tmp/hostvolume/"},
 					Image:      "hello-word",
 					Dependents: []genev1alpha1.Dependent{
 						{
@@ -94,7 +94,7 @@ func validateExecution() *genev1alpha1.Execution {
 				{
 					Name:       "D",
 					Type:       genev1alpha1.JobTaskType,
-					CommandSet: []string{"echo hello D",},
+					CommandSet: []string{"echo hello D"},
 					Image:      "hello-word",
 					Dependents: []genev1alpha1.Dependent{
 						{
@@ -135,7 +135,7 @@ func TestValidateExecution(t *testing.T) {
 					{
 						Name:       "A",
 						Type:       genev1alpha1.JobTaskType,
-						CommandSet: []string{"echo A >> /tmp/hostvolume/",},
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
 						Image:      "hello-word",
 						Dependents: []genev1alpha1.Dependent{
 							{
@@ -155,7 +155,7 @@ func TestValidateExecution(t *testing.T) {
 					{
 						Name:       "B",
 						Type:       genev1alpha1.JobTaskType,
-						CommandSet: []string{"echo B >> /tmp/hostvolume/",},
+						CommandSet: []string{"echo B >> /tmp/hostvolume/"},
 						Image:      "hello-word",
 						Dependents: []genev1alpha1.Dependent{
 							{
@@ -175,7 +175,7 @@ func TestValidateExecution(t *testing.T) {
 					{
 						Name:       "C",
 						Type:       genev1alpha1.JobTaskType,
-						CommandSet: []string{"echo C >> /tmp/hostvolume/",},
+						CommandSet: []string{"echo C >> /tmp/hostvolume/"},
 						Image:      "hello-word",
 						Dependents: []genev1alpha1.Dependent{
 							{
@@ -216,7 +216,7 @@ func TestValidateExecution(t *testing.T) {
 				exec.Spec.Tasks = []genev1alpha1.Task{
 					{
 						Type:       genev1alpha1.JobTaskType,
-						CommandSet: []string{"echo A >> /tmp/hostvolume/",},
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
 						Image:      "hello-word",
 						Volumes: map[string]genev1alpha1.Volume{
 							"volumeA": {
@@ -238,7 +238,7 @@ func TestValidateExecution(t *testing.T) {
 					{
 						Name:       "A",
 						Type:       genev1alpha1.JobTaskType,
-						CommandSet: []string{"echo A >> /tmp/hostvolume/",},
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
 						Volumes: map[string]genev1alpha1.Volume{
 							"volumeA": {
 								MountPath: "/tmp/hostvolume",
@@ -280,7 +280,7 @@ func TestValidateExecution(t *testing.T) {
 					{
 						Name:        "A",
 						Type:        genev1alpha1.JobTaskType,
-						CommandSet:  []string{"echo A >> /tmp/hostvolume/",},
+						CommandSet:  []string{"echo A >> /tmp/hostvolume/"},
 						Image:       "hello-word",
 						Parallelism: NewInt64(-5),
 						Volumes: map[string]genev1alpha1.Volume{
@@ -303,7 +303,7 @@ func TestValidateExecution(t *testing.T) {
 					{
 						Name:         "A",
 						Type:         genev1alpha1.JobTaskType,
-						CommandSet:   []string{"echo A >> /tmp/hostvolume/",},
+						CommandSet:   []string{"echo A >> /tmp/hostvolume/"},
 						Image:        "hello-word",
 						BackoffLimit: NewInt32(-5),
 						Volumes: map[string]genev1alpha1.Volume{
@@ -326,7 +326,7 @@ func TestValidateExecution(t *testing.T) {
 					{
 						Name:                  "A",
 						Type:                  genev1alpha1.JobTaskType,
-						CommandSet:            []string{"echo A >> /tmp/hostvolume/",},
+						CommandSet:            []string{"echo A >> /tmp/hostvolume/"},
 						Image:                 "hello-word",
 						ActiveDeadlineSeconds: NewInt64(-5),
 						Volumes: map[string]genev1alpha1.Volume{
@@ -349,7 +349,7 @@ func TestValidateExecution(t *testing.T) {
 					{
 						Name:       "A",
 						Type:       genev1alpha1.JobTaskType,
-						CommandSet: []string{"echo A >> /tmp/hostvolume/",},
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
 						Image:      "hello-word",
 						Dependents: []genev1alpha1.Dependent{
 							{
@@ -376,7 +376,7 @@ func TestValidateExecution(t *testing.T) {
 					{
 						Name:       "A",
 						Type:       genev1alpha1.JobTaskType,
-						CommandSet: []string{"echo A >> /tmp/hostvolume/",},
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
 						Image:      "hello-word",
 						Dependents: []genev1alpha1.Dependent{
 							{
@@ -404,7 +404,7 @@ func TestValidateExecution(t *testing.T) {
 					{
 						Name:       "A",
 						Type:       genev1alpha1.JobTaskType,
-						CommandSet: []string{"echo A >> /tmp/hostvolume/",},
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
 						Image:      "hello-word",
 						Dependents: []genev1alpha1.Dependent{
 							{
@@ -424,7 +424,7 @@ func TestValidateExecution(t *testing.T) {
 					{
 						Name:       "C",
 						Type:       genev1alpha1.JobTaskType,
-						CommandSet: []string{"echo C >> /tmp/hostvolume/",},
+						CommandSet: []string{"echo C >> /tmp/hostvolume/"},
 						Image:      "hello-word",
 						Volumes: map[string]genev1alpha1.Volume{
 							"volumeC": {

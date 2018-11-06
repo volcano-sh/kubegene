@@ -17,19 +17,19 @@ limitations under the License.
 package commands
 
 import (
+	"bytes"
+	"fmt"
+	"os"
 	"sort"
 	"text/tabwriter"
-	"bytes"
 	"time"
-	"os"
-	"fmt"
 
 	"github.com/spf13/cobra"
-	"kubegene.io/kubegene/cmd/genectl/client"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/duration"
-	execv1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
+	"kubegene.io/kubegene/cmd/genectl/client"
 	"kubegene.io/kubegene/cmd/genectl/util"
+	execv1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
 )
 
 var getExecutionExample = `
@@ -49,10 +49,10 @@ var getExecutionExample = `
 		genectl get execution -n exec-system –phase Running,Succeeded`
 
 type getExecutionFlags struct {
-	namespace string
-	allNamespaces     bool
-	phases    []string
-	output string
+	namespace     string
+	allNamespaces bool
+	phases        []string
+	output        string
 }
 
 func NewGetExecutionCommand() *cobra.Command {
