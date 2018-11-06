@@ -59,7 +59,11 @@ func validateNoCycle(execution *genev1alpha1.Execution) bool {
 }
 
 func validateTasks(tasks []genev1alpha1.Task) error {
+	taskNames := make(map[string]struct{}, len(tasks))
 	for _, task := range tasks {
+		if _, exist := taskNames[task.Name]; exist {
+			return fmt.Errorf("task name %s duplicated", task.Name)
+		}
 		if err := validateTask(task, tasks); err != nil {
 			return err
 		}
