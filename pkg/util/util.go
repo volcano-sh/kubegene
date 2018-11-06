@@ -89,6 +89,7 @@ func InitializeVertexStatus(vertexName string,
 		Message:   message,
 		StartedAt: metav1.Now(),
 		Children:  childStr,
+		Type:      genev1alpha1.JobVertexType, // TODO: set this filed according to real scenario
 	}
 
 	return vertexStatus
@@ -181,10 +182,8 @@ func MarkVertexPhase(exec *genev1alpha1.Execution, vertexName string, phase gene
 		vertexStatus.Message = message
 	}
 
-	if IsExecutionCompleted(exec) {
-		if vertexStatus.FinishedAt.IsZero() {
-			vertexStatus.FinishedAt = metav1.Now()
-		}
+	if vertexStatus.Phase == genev1alpha1.VertexSucceeded && vertexStatus.FinishedAt.IsZero() {
+		vertexStatus.FinishedAt = metav1.Now()
 	}
 
 	exec.Status.Vertices[vertexStatus.ID] = *vertexStatus
