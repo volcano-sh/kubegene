@@ -62,7 +62,7 @@ func validateTask(task genev1alpha1.Task, tasks []genev1alpha1.Task) error {
 		return fmt.Errorf("task image must not be empty")
 	}
 	if len(task.CommandSet) == 0 {
-		return fmt.Errorf("task commands must not be empty")
+		return fmt.Errorf("task commandSet must not be empty")
 	}
 	if task.Parallelism != nil && *task.Parallelism < 0 {
 		return fmt.Errorf("task parallelism must be greater than or equal to 0")

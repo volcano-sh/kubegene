@@ -12,7 +12,7 @@ metadata:
   name: simple-example
 spec:
   tasks:
-  - commands:
+  - commandSet:
     - echo A >> /tmp/hostvolume/test.txt
     dependents: null
     image: ubuntu
@@ -23,7 +23,7 @@ spec:
         mountFrom:
           pvc: test-host-path
         mountPath: /tmp/hostvolume
-  - commands:
+  - commandSet:
     - echo B >> /tmp/hostvolume/test.txt
     dependents:
     - target: a
@@ -36,7 +36,7 @@ spec:
         mountFrom:
           pvc: test-host-path
         mountPath: /tmp/hostvolume
-  - commands:
+  - commandSet:
     - echo C >> /tmp/hostvolume/test.txt
     dependents:
     - target: a
@@ -49,7 +49,7 @@ spec:
         mountFrom:
           pvc: test-host-path
         mountPath: /tmp/hostvolume
-  - commands:
+  - commandSet:
     - echo D >> /tmp/hostvolume/test.txt
     dependents:
     - target: b

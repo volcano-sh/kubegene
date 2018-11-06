@@ -12,7 +12,7 @@ metadata:
   name: simple-example
 spec:
   tasks:
-  - commands:
+  - commandSetet:
     - echo A >> /tmp/hostvolume/test.txt
     dependents: null
     image: ubuntu
@@ -23,7 +23,7 @@ spec:
         mountFrom:
           pvc: test-host-path
         mountPath: /tmp/hostvolume
-  - commands:
+  - commandSet:
     - echo B >> /tmp/hostvolume/test.txt
     dependents:
     - target: a
@@ -36,7 +36,7 @@ spec:
         mountFrom:
           pvc: test-host-path
         mountPath: /tmp/hostvolume
-  - commands:
+  - commandSet:
     - echo C >> /tmp/hostvolume/test.txt
     dependents:
     - target: a
@@ -51,7 +51,7 @@ spec:
         mountFrom:
           pvc: test-host-path
         mountPath: /tmp/hostvolume
-  - commands:
+  - commandSet:
     - echo D >> /tmp/hostvolume/test.txt
     dependents:
     - target: b
@@ -64,7 +64,7 @@ spec:
         mountFrom:
           pvc: test-host-path
         mountPath: /tmp/hostvolume
-  - commands:
+  - commandSet:
     - echo E >> /tmp/hostvolume/test.txt
     dependents: null
     image: ubuntu
@@ -75,7 +75,7 @@ spec:
         mountFrom:
           pvc: test-host-path
         mountPath: /tmp/hostvolume
-  - commands:
+  - commandSet:
     - echo F >> /tmp/hostvolume/test.txt
     dependents:
     - target: c
@@ -88,7 +88,7 @@ spec:
         mountFrom:
           pvc: test-host-path
         mountPath: /tmp/hostvolume
-  - commands:
+  - commandSet:
     - echo G >> /tmp/hostvolume/test.txt
     dependents:
     image: ubuntu
@@ -99,7 +99,7 @@ spec:
         mountFrom:
           pvc: test-host-path
         mountPath: /tmp/hostvolume
-  - commands:
+  - commandSet:
     - echo H >> /tmp/hostvolume/test.txt
     dependents:
     - target: g
@@ -112,7 +112,7 @@ spec:
         mountFrom:
           pvc: test-host-path
         mountPath: /tmp/hostvolume
-  - commands:
+  - commandSet:
     - echo I >> /tmp/hostvolume/test.txt
     dependents:
     - target: g
@@ -125,7 +125,7 @@ spec:
         mountFrom:
           pvc: test-host-path
         mountPath: /tmp/hostvolume
-  - commands:
+  - commandSet:
     - echo J >> /tmp/hostvolume/test.txt
     dependents:
     - target: h
