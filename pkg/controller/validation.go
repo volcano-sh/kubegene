@@ -18,13 +18,26 @@ package controller
 
 import (
 	"fmt"
+	"regexp"
+
+	"k8s.io/apimachinery/pkg/util/validation"
 
 	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
 )
 
+const dns1123LabelFmt string = "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+const dns1123LabelErrMsg string = "a DNS-1123 label must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character"
+const dns1123LabelMaxLength int = 63
+
+var dns1123LabelRegexp = regexp.MustCompile("^" + dns1123LabelFmt + "$")
+
 // ValidateExecution accepts a execution and performs validation against it. If lint is specified as
 // true, will skip some validations which is permissible during linting but not submission
 func ValidateExecution(execution *genev1alpha1.Execution) error {
+	if msgs := validation.IsDNS1123Label(execution.Name); len(msgs) > 0 {
+		return fmt.Errorf("name is not valid %v", msgs)
+	}
+
 	if execution.Spec.Parallelism != nil && *execution.Spec.Parallelism < 0 {
 		return fmt.Errorf("parallelism must be greater than or equal to 0")
 	}
@@ -55,8 +68,8 @@ func validateTasks(tasks []genev1alpha1.Task) error {
 }
 
 func validateTask(task genev1alpha1.Task, tasks []genev1alpha1.Task) error {
-	if len(task.Name) == 0 {
-		return fmt.Errorf("task name must not be empty")
+	if msgs := validation.IsDNS1123Label(task.Name); len(msgs) > 0 {
+		return fmt.Errorf("task name %s is not valid %v", task.Name, msgs)
 	}
 	if len(task.Image) == 0 {
 		return fmt.Errorf("task image must not be empty")
