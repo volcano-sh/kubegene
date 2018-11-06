@@ -145,7 +145,7 @@ func InstantiateWorkflow(workflow *Workflow, inputs map[string]interface{}, tool
 		newCommands := ReplaceArray(jobInfo.Commands, inputsReplaceData)
 
 		// populate data for commandIter.vars
-		prefix := fmt.Sprintf("workflows.commandsIter.%s.vars", jobName)
+		prefix := fmt.Sprintf("workflows.commands_iter.%s.vars", jobName)
 		vars, err := InstantiateVars(prefix, jobInfo.CommandsIter.Vars, inputsReplaceData)
 		if err != nil {
 			return err
@@ -156,7 +156,7 @@ func InstantiateWorkflow(workflow *Workflow, inputs map[string]interface{}, tool
 		}
 
 		// populate data for commandIter.varsIter
-		prefix = fmt.Sprintf("workflows.commandsIter.%s.varsIter", jobName)
+		prefix = fmt.Sprintf("workflows.commands_iter.%s.varsIter", jobName)
 		varsIter, err := InstantiateVars(prefix, jobInfo.CommandsIter.VarsIter, inputsReplaceData)
 		if err != nil {
 			return err

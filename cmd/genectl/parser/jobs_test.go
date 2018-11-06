@@ -365,7 +365,7 @@ func TestValidateCommandsIter(t *testing.T) {
         -O ${obs-path}/${1}_output.g.vcf  --spark-runner SPARK --spark-master yarn-client
       vars:
       - - hello
-      varsIter:
+      vars_iter:
       - - aaa`,
 			Inputs:    makeInputs(),
 			ExpectErr: false,
@@ -380,7 +380,7 @@ func TestValidateCommandsIter(t *testing.T) {
         -O ${obs-path}/${1}_output.g.vcf  --spark-runner SPARK --spark-master yarn-client
       vars:
       - - hello
-      varsIter:
+      vars_iter:
       - - aaa`,
 			Inputs:    makeInputs(),
 			ExpectErr: true,
@@ -395,7 +395,7 @@ func TestValidateCommandsIter(t *testing.T) {
         -O ${obs-path}/${1}_output.g.vcf  --spark-runner SPARK --spark-master yarn-client
       vars:
       - - ${sample}
-      varsIter:
+      vars_iter:
       - - aaa`,
 			Inputs:    makeInputs(),
 			ExpectErr: true,
@@ -410,7 +410,7 @@ func TestValidateCommandsIter(t *testing.T) {
         -O ${obs-path}/${1}_output.g.vcf  --spark-runner SPARK --spark-master yarn-client
       vars:
       - - [a, b]
-      varsIter:
+      vars_iter:
       - - aaa`,
 			Inputs:    makeInputs(),
 			ExpectErr: true,
@@ -425,7 +425,7 @@ func TestValidateCommandsIter(t *testing.T) {
         -O ${obs-path}/${1}_output.g.vcf  --spark-runner SPARK --spark-master yarn-client
       vars:
       - - ${bwaArray}
-      varsIter:
+      vars_iter:
       - - aaa`,
 			Inputs:    makeInputs(),
 			ExpectErr: true,
@@ -449,7 +449,7 @@ func TestValidateCommandsIter(t *testing.T) {
 			CommandsIter: `
       vars:
       - - bbb
-      varsIter:
+      vars_iter:
       - - aaa`,
 			Inputs:    makeInputs(),
 			ExpectErr: true,
@@ -464,7 +464,7 @@ func TestValidateCommandsIter(t *testing.T) {
         -O ${obs-path}/${1}_output.g.vcf  --spark-runner SPARK --spark-master yarn-client
       vars:
       - bbb
-      varsIter:
+      vars_iter:
       - - aaa`,
 			Inputs:    makeInputs(),
 			ExpectErr: true,

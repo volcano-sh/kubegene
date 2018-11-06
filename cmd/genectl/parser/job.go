@@ -113,27 +113,27 @@ func ValidateCommandsIter(jobName string, commandsIter CommandsIter, inputs map[
 		return allError
 	}
 	if len(commandsIter.Command) == 0 && !IsCommandIterEmpty(commandsIter) {
-		err := fmt.Errorf("workflow.%s.vars or varsIter is not empty but command is empty", jobName)
+		err := fmt.Errorf("workflow.%s.vars or vars_iter is not empty but command is empty", jobName)
 		return append(allError, err)
 	}
 	if len(commandsIter.Command) != 0 && IsCommandIterEmpty(commandsIter) {
-		err := fmt.Errorf("workflow.%s.vars or varsIter is empty but command is not empty", jobName)
+		err := fmt.Errorf("workflow.%s.vars or vars_iter is empty but command is not empty", jobName)
 		return append(allError, err)
 	}
 
-	prefix := fmt.Sprintf("workflow.%s.commandsIter.command", jobName)
+	prefix := fmt.Sprintf("workflow.%s.commands_iter.command", jobName)
 	maxIndex, errors := ValidateTemplate(commandsIter.Command, prefix, "command", inputs)
 	allError = append(allError, errors...)
 
 	if maxIndex > len(commandsIter.VarsIter) {
-		err := fmt.Errorf("workflow.%s.commandsIter.command: ${%d} is larger than commandsIter's rows", jobName, maxIndex)
+		err := fmt.Errorf("workflow.%s.commands_iter.command: ${%d} is larger than commands_iter's rows", jobName, maxIndex)
 		allError = append(allError, err)
 	}
 
-	prefix = fmt.Sprintf("workflow.%s.commandsIter.vars", jobName)
+	prefix = fmt.Sprintf("workflow.%s.commands_iter.vars", jobName)
 	allError = append(allError, ValidateVarsArray(prefix, commandsIter.Vars, inputs)...)
 
-	prefix = fmt.Sprintf("workflow.%s.commandsIter.varsIter", jobName)
+	prefix = fmt.Sprintf("workflow.%s.commands_iter.vars_iter", jobName)
 	allError = append(allError, ValidateVarsArray(prefix, commandsIter.VarsIter, inputs)...)
 
 	return allError

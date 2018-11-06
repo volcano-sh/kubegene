@@ -119,12 +119,12 @@ workflow:
       -O ${obs-path}/sample1_output.g.vcf --spark-runner SPARK --spark-master yarn-client
     - ./gatk HaplotypeCallerSpark -R ${obs-path}/ref.2bit -I ${obs-path}/sample2.bam
       -O ${obs-path}/sample2_output.g.vcf  --spark-runner SPARK --spark-master yarn-client
-    commandsIter:
+    commands_iter:
       command: sh ${obs-path}/scripts/step3.gatkspark.sh I ${obs-path}/${1}.bam
         -O ${obs-path}/${1}_output.g.vcf  --spark-runner SPARK --spark-master yarn-client
       vars:
       - - hello
-      varsIter:
+      vars_iter:
       - - aaa
 `
 
@@ -151,7 +151,7 @@ outputs:
     - /saa/123/ddd.vcf
     pathsIter:
       path: ${obs-path}/${1}/merge.HaplotypeCaller.raw.vcf
-      varsIter:
+      vars_iter:
       - - aaa
 `
 
@@ -211,9 +211,9 @@ workflow:
     image: ""
     commands:
     - ./gatk HaplotypeCallerSpark -R ${obs-path}/ref.2bit -I ${obs-path}/sample1.bam
-    commandsIter:
+    commands_iter:
       command: sh ${obs-path}/scripts/step3.gatkspark.sh I ${obs-path}/${1}.bam ${2}
-      varsIter:
+      vars_iter:
       - [aaa, bbb]
       - [ccc, ddd]`,
 			ExpectResult: `["./gatk HaplotypeCallerSpark -R /root/ref.2bit -I /root/sample1.bam","sh /root/scripts/step3.gatkspark.sh I /root/aaa.bam ccc","sh /root/scripts/step3.gatkspark.sh I /root/aaa.bam ddd","sh /root/scripts/step3.gatkspark.sh I /root/bbb.bam ccc","sh /root/scripts/step3.gatkspark.sh I /root/bbb.bam ddd"]`,
@@ -233,7 +233,7 @@ workflow:
     image: ""
     commands:
     - ./gatk HaplotypeCallerSpark -R ${obs-path}/ref.2bit -I ${obs-path}/sample1.bam
-    commandsIter:
+    commands_iter:
       command: sh ${obs-path}/scripts/step3.gatkspark.sh I ${obs-path}/${1}.bam
       vars:
       - - hello`,
@@ -254,11 +254,11 @@ workflow:
     image: ""
     commands:
     - ./gatk HaplotypeCallerSpark -R ${obs-path}/ref.2bit -I ${obs-path}/sample1.bam
-    commandsIter:
+    commands_iter:
       command: sh ${obs-path}/scripts/step3.gatkspark.sh I ${obs-path}/${1}.bam
       vars:
       - - hello
-      varsIter:
+      vars_iter:
       - - aaa`,
 			ExpectResult: `["./gatk HaplotypeCallerSpark -R /root/ref.2bit -I /root/sample1.bam","sh /root/scripts/step3.gatkspark.sh I /root/hello.bam","sh /root/scripts/step3.gatkspark.sh I /root/aaa.bam"]`,
 			ExpectErr:    false,
@@ -277,7 +277,7 @@ workflow:
     image: ""
     commands:
     - ./gatk HaplotypeCallerSpark -R ${obs-path}/ref.2bit -I ${obs-path}/sample1.bam
-    commandsIter:
+    commands_iter:
       command: sh ${obs-path}/scripts/step3.gatkspark.sh I ${obs-path}/${1}.bam
       vars:
       - - ${obs-path}`,
@@ -296,9 +296,9 @@ workflow:
     type: CCE.Job
     tool: GATK:4.0.1
     image: ""
-    commandsIter:
+    commands_iter:
       command: sh ${obs-path}/scripts/step3.gatkspark.sh I ${obs-path}/${1}.bam
-      varsIter:
+      vars_iter:
       - ${bwaArray}`,
 			ExpectResult: `["sh /root/scripts/step3.gatkspark.sh I /root/1.bam","sh /root/scripts/step3.gatkspark.sh I /root/2.bam","sh /root/scripts/step3.gatkspark.sh I /root/3.bam"]`,
 			ExpectErr:    false,
@@ -315,9 +315,9 @@ workflow:
     type: CCE.Job
     tool: GATK:4.0.1
     image: ""
-    commandsIter:
+    commands_iter:
       command: sh ${obs-path}/scripts/step3.gatkspark.sh I ${obs-path}/${1}.bam
-      varsIter:
+      vars_iter:
       - range(1,3)`,
 			ExpectResult: `["sh /root/scripts/step3.gatkspark.sh I /root/1.bam","sh /root/scripts/step3.gatkspark.sh I /root/2.bam"]`,
 			ExpectErr:    false,
@@ -334,9 +334,9 @@ workflow:
     type: CCE.Job
     tool: GATK:4.0.1
     image: ""
-    commandsIter:
+    commands_iter:
       command: sh ${obs-path}/scripts/step3.gatkspark.sh I ${obs-path}/${1}.bam
-      varsIter:
+      vars_iter:
       - range(0,${npart})`,
 			ExpectResult: `["sh /root/scripts/step3.gatkspark.sh I /root/0.bam","sh /root/scripts/step3.gatkspark.sh I /root/1.bam"]`,
 			ExpectErr:    false,
@@ -353,9 +353,9 @@ workflow:
     type: CCE.Job
     tool: GATK:4.0.1
     image: ""
-    commandsIter:
+    commands_iter:
       command: sh ${obs-path}/scripts/step3.gatkspark.sh I ${obs-path}/${1}.bam
-      varsIter:
+      vars_iter:
       - range(0,${npart}, 2)`,
 			ExpectResult: `["sh /root/scripts/step3.gatkspark.sh I /root/0.bam"]`,
 			ExpectErr:    false,
@@ -372,7 +372,7 @@ workflow:
     type: CCE.Job
     tool: GATK:4.0.1
     image: ""
-    commandsIter:
+    commands_iter:
       command: sh ${obs-path}/scripts/step3.gatkspark.sh I ${item}  ${obs-path}/${1}.bam
       vars:
       - [2]
@@ -392,7 +392,7 @@ workflow:
     type: CCE.Job
     tool: GATK:4.0.1
     image: ""
-    commandsIter:
+    commands_iter:
       command: sh ${obs-path}/scripts/step3.gatkspark.sh I ${1} ${obs-path}/${-1}.bam
       vars:
       - [2]`,
@@ -403,7 +403,7 @@ workflow:
 		// ####################################################################################################
 
 		{
-			Name: "workflow.commandsIter.job-gatk.varsIter[0]:In range function, start should be smaller than end",
+			Name: "workflow.commands_iter.job-gatk.vars_iter[0]:In range function, start should be smaller than end",
 			WorkflowStr: `
 workflow:
   job-gatk:
@@ -411,9 +411,9 @@ workflow:
     type: CCE.Job
     tool: GATK:4.0.1
     image: ""
-    commandsIter:
+    commands_iter:
       command: sh ${obs-path}/scripts/step3.gatkspark.sh I ${obs-path}/${1}.bam
-      varsIter:
+      vars_iter:
       - range(0,0)`,
 			ExpectErr: true,
 		},
@@ -421,7 +421,7 @@ workflow:
 		// ####################################################################################################
 
 		{
-			Name: "workflow.commandsIter.job-gatk.varsIter[0]:In range function, step should be larger than 0",
+			Name: "workflow.commands_iter.job-gatk.vars_iter[0]:In range function, step should be larger than 0",
 			WorkflowStr: `
 workflow:
   job-gatk:
@@ -429,9 +429,9 @@ workflow:
     type: CCE.Job
     tool: GATK:4.0.1
     image: ""
-    commandsIter:
+    commands_iter:
       command: sh ${obs-path}/scripts/step3.gatkspark.sh I ${obs-path}/${1}.bam
-      varsIter:
+      vars_iter:
       - range(0,2,-1)`,
 			ExpectErr: true,
 		},
@@ -447,7 +447,7 @@ workflow:
     type: CCE.Job
     tool: GATK:4.0.1
     image: ""
-    commandsIter:
+    commands_iter:
       command: sh ${obs-path}/scripts/step3.gatkspark.sh I ${obs-path}/${1}.bam
       vars:
       - [1, 2]
@@ -458,7 +458,7 @@ workflow:
 		// ####################################################################################################
 
 		{
-			Name: "workflow.job-gatk: the length of vars is 2, but the length of varsIter is 1",
+			Name: "workflow.job-gatk: the length of vars is 2, but the length of vars_iter is 1",
 			WorkflowStr: `
 workflow:
   job-gatk:
@@ -468,12 +468,12 @@ workflow:
     image: ""
     commands:
     - ./gatk HaplotypeCallerSpark -R ${obs-path}/ref.2bit -I ${obs-path}/sample1.bam
-    commandsIter:
+    commands_iter:
       command: sh ${obs-path}/scripts/step3.gatkspark.sh I ${obs-path}/${1}.bam ${2}
       vars:
       - - hello
         - world
-      varsIter:
+      vars_iter:
       - - aaa`,
 			ExpectErr: true,
 		},

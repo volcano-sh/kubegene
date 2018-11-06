@@ -125,7 +125,7 @@ type CommandsIter struct {
 	//
 	// commandsIter example
 	//
-	//    commandsIter:
+	//    commands_iter:
 	//      command: sh /tmp/scripts/step1.splitfq.sh ${1} ${2} /tmp/data ${3}
 	//      vars:
 	//        - ["sample1", 0, 25] # Each member of the array will be the ${1}, ${2}, ${3}
@@ -147,9 +147,9 @@ type CommandsIter struct {
 	//
 	// commandsIter example
 	//
-	//    commandsIter:
+	//    commands_iter:
 	//      command: sh /tmp/scripts/step1.splitfq.sh ${1} ${2} /tmp/data ${3}
-	//      varsIter:
+	//      vars_iter:
 	//        - ["sample1", "sample2"]
 	//        - [0, 1]
 	//        - [25]
@@ -160,7 +160,7 @@ type CommandsIter struct {
 	// sh /tmp/scripts/step1.splitfq.sh sample2 0 /tmp/data 25
 	// sh /tmp/scripts/step1.splitfq.sh sample1 1 /tmp/data 25
 	// sh /tmp/scripts/step1.splitfq.sh sample2 1 /tmp/data 25
-	VarsIter []interface{} `json:"varsIter,omitempty" yaml:"varsIter,omitempty"`
+	VarsIter []interface{} `json:"vars_iter,omitempty" yaml:"vars_iter,omitempty"`
 }
 
 const (
@@ -197,7 +197,7 @@ type JobInfo struct {
 	// command to run for gene sequencing.
 	Commands []string `json:"commands,omitempty" yaml:"commands,omitempty"`
 	// CommandsIter defines batch command for workflows job.
-	CommandsIter CommandsIter `json:"commandsIter,omitempty" yaml:"commandsIter,omitempty"`
+	CommandsIter CommandsIter `json:"commands_iter,omitempty" yaml:"commands_iter,omitempty"`
 	// Depends is the Name of task this depends on.
 	Depends []Depend `json:"depends,omitempty" yaml:"depends,omitempty"`
 }
