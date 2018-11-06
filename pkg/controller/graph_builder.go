@@ -97,6 +97,7 @@ func newGraph(execution *genev1alpha1.Execution) *graph.Graph {
 	for vertexIndex, jobInfo := range jobInfos {
 		items := strings.Split(jobInfo.Job.Name, Separator)
 		taskName := items[len(items)-2]
+		jobSuffix := items[len(items)-1]
 
 		for _, task := range execution.Spec.Tasks {
 			if task.Name != taskName {
@@ -113,8 +114,8 @@ func newGraph(execution *genev1alpha1.Execution) *graph.Graph {
 					}
 				case genev1alpha1.DependTypeIterate:
 					for index, jobInfo := range jobInfos {
-						items := strings.SplitAfter(jobInfo.Job.Name, execution.Name+Separator)
-						if dependent.Target+Separator+strconv.Itoa(index) == items[1] {
+						items := strings.Split(jobInfo.Job.Name, Separator)
+						if dependent.Target == items[len(items)-2] && jobSuffix == items[len(items)-1] {
 							vertices[index].AddChild(vertices[vertexIndex])
 						}
 					}
