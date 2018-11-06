@@ -17,21 +17,21 @@ limitations under the License.
 package e2e
 
 import (
-	"path/filepath"
-	"os"
 	"bufio"
-	"io"
-	"strings"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"k8s.io/api/core/v1"
-	"k8s.io/client-go/kubernetes"
-	execclientset "kubegene.io/kubegene/pkg/client/clientset/versioned"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"kubegene.io/kubegene/test/framework"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
+	execclientset "kubegene.io/kubegene/pkg/client/clientset/versioned"
+	"kubegene.io/kubegene/test/framework"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

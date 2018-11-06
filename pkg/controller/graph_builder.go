@@ -94,8 +94,8 @@ func newGraph(execution *genev1alpha1.Execution) *graph.Graph {
 		}
 	}
 
-	for vertexIndex, child := range jobInfos {
-		items := strings.Split(child.Job.Name, Separator)
+	for vertexIndex, jobInfo := range jobInfos {
+		items := strings.Split(jobInfo.Job.Name, Separator)
 		taskName := items[len(items)-2]
 
 		for _, task := range execution.Spec.Tasks {

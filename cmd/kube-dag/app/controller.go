@@ -43,8 +43,8 @@ import (
 	"kubegene.io/kubegene/pkg/apis/gene"
 	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
 	execclientset "kubegene.io/kubegene/pkg/client/clientset/versioned"
-	execinformers "kubegene.io/kubegene/pkg/client/informers/externalversions"
 	execscheme "kubegene.io/kubegene/pkg/client/clientset/versioned/scheme"
+	execinformers "kubegene.io/kubegene/pkg/client/informers/externalversions"
 	"kubegene.io/kubegene/pkg/controller"
 	"kubegene.io/kubegene/pkg/util"
 )
@@ -188,4 +188,3 @@ func Run(o *options.ExecutionOption, stopCh <-chan struct{}) error {
 	})
 	panic("unreachable")
 }
-

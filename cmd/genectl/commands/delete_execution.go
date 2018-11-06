@@ -34,9 +34,9 @@ func NewDeleteCommand() *cobra.Command {
 	var delExecutionFlags delExecutionFlags
 
 	var command = &cobra.Command{
-		Use:   "del NAME [flags]",
-		Short: "delete a execution",
-		Args:  cobra.ExactArgs(1),
+		Use:     "del NAME [flags]",
+		Short:   "delete a execution",
+		Args:    cobra.ExactArgs(1),
 		Example: delExecExample,
 		Run: func(cmd *cobra.Command, args []string) {
 			DeleteWorkflow(cmd, args, &delExecutionFlags)

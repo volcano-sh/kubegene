@@ -87,7 +87,7 @@ func validateTask(task genev1alpha1.Task, tasks []genev1alpha1.Task) error {
 
 func validateDependents(taskName string, dependents []genev1alpha1.Dependent, tasks []genev1alpha1.Task) error {
 	for _, dependent := range dependents {
-		if dependent.Type != genev1alpha1.DependTypeWhole && dependent.Type != genev1alpha1.DependTypeIterate{
+		if dependent.Type != genev1alpha1.DependTypeWhole && dependent.Type != genev1alpha1.DependTypeIterate {
 			return fmt.Errorf("wrong dependent type of task %s: %s", taskName, dependent.Type)
 		}
 		if len(dependent.Target) == 0 {

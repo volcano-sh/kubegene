@@ -269,11 +269,11 @@ func TransWorkflow2Execution(workflow *Workflow) (*execv1alpha1.Execution, error
 			Namespace: namespace,
 		},
 		Spec: execv1alpha1.ExecutionSpec{
-			Parallelism: parallelism,
-			Affinity:affinity,
-			Tolerations:tolerations,
-			NodeSelector:nodeSelector,
-			Tasks:       []execv1alpha1.Task{},
+			Parallelism:  parallelism,
+			Affinity:     affinity,
+			Tolerations:  tolerations,
+			NodeSelector: nodeSelector,
+			Tasks:        []execv1alpha1.Task{},
 		},
 	}
 
