@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package framework
+package e2e
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -42,15 +42,7 @@ func DescribeGene(text string, body func(*GeneTestContext)) bool {
 func registerTestsInGinkgo(gtc *GeneTestContext) {
 	for _, test := range tests {
 		Describe(test.text, func() {
-			BeforeEach(func() {
-				gtc.setup()
-			})
-
 			test.body(gtc)
-
-			AfterEach(func() {
-				gtc.teardown()
-			})
 		})
 	}
 }

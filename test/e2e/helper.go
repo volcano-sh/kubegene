@@ -14,9 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package framework
+package e2e
 
 import (
+	"fmt"
 	"time"
 
 	"k8s.io/api/core/v1"
@@ -25,12 +26,11 @@ import (
 	"path/filepath"
 	"io/ioutil"
 	apps "k8s.io/api/apps/v1"
-
 	"github.com/ghodss/yaml"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
-	"fmt"
+	"github.com/golang/glog"
 )
 
 func CreateServiceAccount(kubeClient kubernetes.Interface, namespace string, relativePath string) error {
@@ -59,7 +59,7 @@ func serviceAccountFromManifest(fileName, ns string) (*v1.ServiceAccount, error)
 	}
 
 	var serviceAccount v1.ServiceAccount
-	err = yaml.Unmarshal(data, serviceAccount)
+	err = yaml.Unmarshal(data, &serviceAccount)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func clusterRoleFromManifest(fileName string) (*rbac.ClusterRole, error) {
 	}
 
 	var clusterRole rbac.ClusterRole
-	err = yaml.Unmarshal(data, clusterRole)
+	err = yaml.Unmarshal(data, &clusterRole)
 	if err != nil {
 		return nil, err
 	}
@@ -113,10 +113,14 @@ func clusterRoleFromManifest(fileName string) (*rbac.ClusterRole, error) {
 	return &clusterRole, nil
 }
 
-func CreateClusterRoleBinding(kubeClient kubernetes.Interface, relativePath string) error {
+func CreateClusterRoleBinding(kubeClient kubernetes.Interface, ns, relativePath string) error {
 	clusterRoleBinding, err := clusterRoleBindingFromManifest(relativePath)
 	if err != nil {
 		return err
+	}
+
+	if len(ns) != 0 {
+		clusterRoleBinding.Subjects[0].Namespace = ns
 	}
 
 	kubeClient.RbacV1().ClusterRoleBindings().Delete(clusterRoleBinding.GetName(), &metav1.DeleteOptions{})
@@ -149,7 +153,7 @@ func clusterRoleBindingFromManifest(fileName string) (*rbac.ClusterRoleBinding, 
 	}
 
 	var clusterRoleBinding rbac.ClusterRoleBinding
-	err = yaml.Unmarshal(data, clusterRoleBinding)
+	err = yaml.Unmarshal(data, &clusterRoleBinding)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +180,7 @@ func CreateDeployment(kubeClient kubernetes.Interface, ns, image, relativePath s
 	return waitDeploymentReady(kubeClient, newDeployment)
 }
 
-func DeleteDeployment(kubeClient kubernetes.Interface, relativePath, ns string) error {
+func DeleteDeployment(kubeClient kubernetes.Interface, ns, relativePath string) error {
 	deployment, err := deploymentFromManifest(relativePath)
 	if err != nil {
 		return err
@@ -219,7 +223,7 @@ func deploymentFromManifest(fileName string) (*apps.Deployment, error) {
 	}
 
 	var deployment apps.Deployment
-	err = yaml.Unmarshal(data, deployment)
+	err = yaml.Unmarshal(data, &deployment)
 	if err != nil {
 		return nil, err
 	}
@@ -252,10 +256,8 @@ func waitDeploymentReady(kubeClient kubernetes.Interface, d *apps.Deployment) er
 }
 
 func DeploymentComplete(deployment *apps.Deployment, newStatus *apps.DeploymentStatus) bool {
-	return newStatus.UpdatedReplicas == *(deployment.Spec.Replicas) &&
-		newStatus.Replicas == *(deployment.Spec.Replicas) &&
-		newStatus.AvailableReplicas == *(deployment.Spec.Replicas) &&
-		newStatus.ObservedGeneration >= deployment.Generation
+	glog.Infof("Number of ready pod %v", newStatus.ReadyReplicas)
+	return newStatus.ReadyReplicas == *(deployment.Spec.Replicas)
 }
 
 func readFile(path string) ([]byte, error) {

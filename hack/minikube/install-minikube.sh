@@ -19,7 +19,7 @@ set -o nounset
 set -o pipefail
 
 export KUBERNETES_VERSION=v1.12.0
-export MINIKUBE_VERSION = v.0.30.0
+export MINIKUBE_VERSION=v0.30.0
 
 curl -Lo minikube https://storage.googleapis.com/minikube/releases/$MINIKUBE_VERSION/minikube-linux-amd64 && \
 chmod +x minikube && \

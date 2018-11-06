@@ -22,11 +22,11 @@ import (
 	"testing"
 	"strings"
 
-	"kubegene.io/kubegene/test/framework"
 	"k8s.io/apimachinery/pkg/util/uuid"
+	"kubegene.io/kubegene/test/e2e"
 )
 
-var config framework.Config
+var config e2e.Config
 
 const Kubegene = "kubegene"
 
@@ -34,6 +34,7 @@ func init() {
 	flag.StringVar(&config.KubeConfig, "kubeconfig", "", "The kube config path")
 	flag.StringVar(&config.KubeDagImage, "image", "", "The kubedag image")
 	flag.StringVar(&config.Namespace, "namespace", "", "Namespace to run the test")
+	flag.Set("logtostderr", "true")
 	flag.Parse()
 }
 
@@ -46,7 +47,7 @@ func TestKubegene(t *testing.T) {
 		t.Fatalf("-image must be provided")
 	}
 
-	framework.Test(t, &config)
+	e2e.Test(t, &config)
 }
 
 func rand(prefix string) string {
@@ -55,3 +56,4 @@ func rand(prefix string) string {
 	str := fmt.Sprintf("%s-%s", prefix, randStr)
 	return str
 }
+
