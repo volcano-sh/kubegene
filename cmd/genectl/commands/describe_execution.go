@@ -66,7 +66,7 @@ func DescribeWorkflow(cmd *cobra.Command, args []string, describeFlags *describe
 	}
 
 	// query exec
-	exec, err := geneClient.GeneV1alpha1().Executions(namespace).Get(executionName, metav1.GetOptions{})
+	exec, err := geneClient.ExecutionV1alpha1().Executions(namespace).Get(executionName, metav1.GetOptions{})
 	if err != nil {
 		ExitWithError(err)
 	}

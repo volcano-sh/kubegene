@@ -87,7 +87,7 @@ var _ = framework.DescribeGene("kube dag", func(gtc *framework.GeneTestContext) 
 		It("whole depend type", func() {
 			By("Create whole execution")
 			execution := makeWholeExecution(ns, "kubegene", claimName)
-			_, err := geneClient.GeneV1alpha1().Executions(ns).Create(execution)
+			_, err := geneClient.ExecutionV1alpha1().Executions(ns).Create(execution)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = WaitForExecutionSuccess(geneClient, execution.Name, ns)
@@ -101,14 +101,14 @@ var _ = framework.DescribeGene("kube dag", func(gtc *framework.GeneTestContext) 
 			Expect(expectResult).Should(ConsistOf(result))
 
 			By("Delete execution")
-			err = geneClient.GeneV1alpha1().Executions(ns).Delete(execution.Name, &metav1.DeleteOptions{})
+			err = geneClient.ExecutionV1alpha1().Executions(ns).Delete(execution.Name, &metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("iterate depend type", func() {
 			By("Create iterate execution")
 			execution := makeIterateExecution(ns, "kubegene", claimName)
-			_, err := geneClient.GeneV1alpha1().Executions(ns).Create(execution)
+			_, err := geneClient.ExecutionV1alpha1().Executions(ns).Create(execution)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = WaitForExecutionSuccess(geneClient, execution.Name, ns)
@@ -129,7 +129,7 @@ var _ = framework.DescribeGene("kube dag", func(gtc *framework.GeneTestContext) 
 			Expect(expectResult).Should(ConsistOf(result))
 
 			By("Delete execution")
-			err = geneClient.GeneV1alpha1().Executions(ns).Delete(execution.Name, &metav1.DeleteOptions{})
+			err = geneClient.ExecutionV1alpha1().Executions(ns).Delete(execution.Name, &metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -379,7 +379,7 @@ func WaitForPersistentVolumeClaimBound(c kubernetes.Interface, ns string, pvcNam
 func WaitForExecutionSuccess(client execclientset.Interface, name, ns string) error {
 	fmt.Printf("Waiting up to %v for Execution %s to be successed\n", ExecutionTimeout, name)
 	for start := time.Now(); time.Since(start) < ExecutionTimeout; time.Sleep(Poll) {
-		execution, err := client.GeneV1alpha1().Executions(ns).Get(name, metav1.GetOptions{})
+		execution, err := client.ExecutionV1alpha1().Executions(ns).Get(name, metav1.GetOptions{})
 		if err != nil {
 			fmt.Printf("Failed to get execution %q, retrying in %v. Error: %v", name, Poll, err)
 			continue
