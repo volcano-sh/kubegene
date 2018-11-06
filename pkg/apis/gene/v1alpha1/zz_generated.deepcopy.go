@@ -121,12 +121,8 @@ func (in *ExecutionSpec) DeepCopyInto(out *ExecutionSpec) {
 	}
 	if in.Affinity != nil {
 		in, out := &in.Affinity, &out.Affinity
-		if *in == nil {
-			*out = nil
-		} else {
-			*out = new(v1.Affinity)
-			(*in).DeepCopyInto(*out)
-		}
+		*out = new(v1.Affinity)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Tolerations != nil {
 		in, out := &in.Tolerations, &out.Tolerations
@@ -137,12 +133,8 @@ func (in *ExecutionSpec) DeepCopyInto(out *ExecutionSpec) {
 	}
 	if in.Parallelism != nil {
 		in, out := &in.Parallelism, &out.Parallelism
-		if *in == nil {
-			*out = nil
-		} else {
-			*out = new(int64)
-			**out = **in
-		}
+		*out = new(int64)
+		**out = **in
 	}
 	return
 }
@@ -166,9 +158,7 @@ func (in *ExecutionStatus) DeepCopyInto(out *ExecutionStatus) {
 		in, out := &in.Vertices, &out.Vertices
 		*out = make(map[string]VertexStatus, len(*in))
 		for key, val := range *in {
-			newVal := new(VertexStatus)
-			val.DeepCopyInto(newVal)
-			(*out)[key] = *newVal
+			(*out)[key] = *val.DeepCopy()
 		}
 	}
 	return
@@ -214,12 +204,8 @@ func (in *Task) DeepCopyInto(out *Task) {
 	}
 	if in.Affinity != nil {
 		in, out := &in.Affinity, &out.Affinity
-		if *in == nil {
-			*out = nil
-		} else {
-			*out = new(v1.Affinity)
-			(*in).DeepCopyInto(*out)
-		}
+		*out = new(v1.Affinity)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Tolerations != nil {
 		in, out := &in.Tolerations, &out.Tolerations
@@ -228,8 +214,8 @@ func (in *Task) DeepCopyInto(out *Task) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.Commands != nil {
-		in, out := &in.Commands, &out.Commands
+	if in.CommandSet != nil {
+		in, out := &in.CommandSet, &out.CommandSet
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
@@ -243,30 +229,18 @@ func (in *Task) DeepCopyInto(out *Task) {
 	in.Resources.DeepCopyInto(&out.Resources)
 	if in.ActiveDeadlineSeconds != nil {
 		in, out := &in.ActiveDeadlineSeconds, &out.ActiveDeadlineSeconds
-		if *in == nil {
-			*out = nil
-		} else {
-			*out = new(int64)
-			**out = **in
-		}
+		*out = new(int64)
+		**out = **in
 	}
 	if in.BackoffLimit != nil {
 		in, out := &in.BackoffLimit, &out.BackoffLimit
-		if *in == nil {
-			*out = nil
-		} else {
-			*out = new(int32)
-			**out = **in
-		}
+		*out = new(int32)
+		**out = **in
 	}
 	if in.Parallelism != nil {
 		in, out := &in.Parallelism, &out.Parallelism
-		if *in == nil {
-			*out = nil
-		} else {
-			*out = new(int64)
-			**out = **in
-		}
+		*out = new(int64)
+		**out = **in
 	}
 	if in.Dependents != nil {
 		in, out := &in.Dependents, &out.Dependents

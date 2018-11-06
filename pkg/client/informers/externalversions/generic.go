@@ -54,7 +54,7 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	switch resource {
 	// Group=execution.kubegene.io, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithResource("executions"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Gene().V1alpha1().Executions().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Execution().V1alpha1().Executions().Informer()}, nil
 
 	}
 

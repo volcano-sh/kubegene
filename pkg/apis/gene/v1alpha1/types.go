@@ -136,8 +136,8 @@ type Task struct {
 	// +optional
 	Tolerations []apiv1.Toleration `json:"tolerations,omitempty"`
 
-	// Conmands is a list of commands run by this task.
-	Commands []string `json:"commands,omitempty"`
+	// CommandSet is a list of commands run by this task.
+	CommandSet []string `json:"commandSet,omitempty"`
 	// Docker image name.
 	// More info: https://kubernetes.io/docs/concepts/containers/images
 	Image string `json:"image,omitempty"`

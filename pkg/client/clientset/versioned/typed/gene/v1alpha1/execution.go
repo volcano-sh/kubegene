@@ -54,7 +54,7 @@ type executions struct {
 }
 
 // newExecutions returns a Executions
-func newExecutions(c *GeneV1alpha1Client, namespace string) *executions {
+func newExecutions(c *ExecutionV1alpha1Client, namespace string) *executions {
 	return &executions{
 		client: c.RESTClient(),
 		ns:     namespace,

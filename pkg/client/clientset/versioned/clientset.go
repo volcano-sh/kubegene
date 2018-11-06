@@ -22,32 +22,32 @@ import (
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
-	genev1alpha1 "kubegene.io/kubegene/pkg/client/clientset/versioned/typed/gene/v1alpha1"
+	executionv1alpha1 "kubegene.io/kubegene/pkg/client/clientset/versioned/typed/gene/v1alpha1"
 )
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
-	GeneV1alpha1() genev1alpha1.GeneV1alpha1Interface
+	ExecutionV1alpha1() executionv1alpha1.ExecutionV1alpha1Interface
 	// Deprecated: please explicitly pick a version if possible.
-	Gene() genev1alpha1.GeneV1alpha1Interface
+	Execution() executionv1alpha1.ExecutionV1alpha1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	geneV1alpha1 *genev1alpha1.GeneV1alpha1Client
+	executionV1alpha1 *executionv1alpha1.ExecutionV1alpha1Client
 }
 
-// GeneV1alpha1 retrieves the GeneV1alpha1Client
-func (c *Clientset) GeneV1alpha1() genev1alpha1.GeneV1alpha1Interface {
-	return c.geneV1alpha1
+// ExecutionV1alpha1 retrieves the ExecutionV1alpha1Client
+func (c *Clientset) ExecutionV1alpha1() executionv1alpha1.ExecutionV1alpha1Interface {
+	return c.executionV1alpha1
 }
 
-// Deprecated: Gene retrieves the default version of GeneClient.
+// Deprecated: Execution retrieves the default version of ExecutionClient.
 // Please explicitly pick a version.
-func (c *Clientset) Gene() genev1alpha1.GeneV1alpha1Interface {
-	return c.geneV1alpha1
+func (c *Clientset) Execution() executionv1alpha1.ExecutionV1alpha1Interface {
+	return c.executionV1alpha1
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -66,7 +66,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
-	cs.geneV1alpha1, err = genev1alpha1.NewForConfig(&configShallowCopy)
+	cs.executionV1alpha1, err = executionv1alpha1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
-	cs.geneV1alpha1 = genev1alpha1.NewForConfigOrDie(c)
+	cs.executionV1alpha1 = executionv1alpha1.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &cs
@@ -91,7 +91,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.geneV1alpha1 = genev1alpha1.New(c)
+	cs.executionV1alpha1 = executionv1alpha1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

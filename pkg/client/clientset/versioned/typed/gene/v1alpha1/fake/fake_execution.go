@@ -30,7 +30,7 @@ import (
 
 // FakeExecutions implements ExecutionInterface
 type FakeExecutions struct {
-	Fake *FakeGeneV1alpha1
+	Fake *FakeExecutionV1alpha1
 	ns   string
 }
 
