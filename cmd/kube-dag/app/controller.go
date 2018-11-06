@@ -137,9 +137,9 @@ func Run(o *options.ExecutionOption, stopCh <-chan struct{}) error {
 	parameter := &controller.ControllerParameters{
 		EventRecorder:     eventRecorder,
 		KubeClient:        kubeClient,
-		ExecutionClient:   geneClient.GeneV1alpha1(),
+		ExecutionClient:   geneClient.ExecutionV1alpha1(),
 		JobInformer:       sharedInformers.Batch().V1().Jobs(),
-		ExecutionInformer: geneInformer.Gene().V1alpha1().Executions(),
+		ExecutionInformer: geneInformer.Execution().V1alpha1().Executions(),
 	}
 
 	execCtrl := controller.NewExecutionController(parameter)

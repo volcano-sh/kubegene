@@ -133,7 +133,7 @@ func ProcessWorkflow(cmd *cobra.Command, workflowPath string, inputs map[string]
 	}
 
 	// submit execution to api server.
-	newExec, err := geneClient.GeneV1alpha1().Executions(execution.Namespace).Create(execution)
+	newExec, err := geneClient.ExecutionV1alpha1().Executions(execution.Namespace).Create(execution)
 	if err != nil {
 		ExitWithError(fmt.Errorf("submit execution error: %v", err))
 	}
