@@ -12,6 +12,12 @@ required = [
   go-tests = true
   unused-packages = true
 
+  [[prune.project]]
+    name = "k8s.io/code-generator"
+    unused-packages = false
+    go-tests = true
+    non-go = false
+
 [[constraint]]
   branch = "master"
   name = "github.com/golang/glog"
