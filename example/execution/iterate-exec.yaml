@@ -1,0 +1,70 @@
+#
+#         A
+#       / | \
+#      /  |  \
+#     B1  B2 B3
+#     |   |  |
+#     C1  C2 C3
+#      \  |  /
+#       \ | /
+#         D
+
+apiVersion: execution.kubegene.io/v1alpha1
+kind: Execution
+metadata:
+  name: iterate-exec
+spec:
+  tasks:
+  - commandSet:
+    - echo A >> /tmp/execution/iterate-exec.txt
+    image: ubuntu
+    name: a
+    type: Job
+    volumes:
+      volumea:
+        mountFrom:
+          pvc: execution-pvc
+        mountPath: /tmp/execution
+  - commandSet:
+    - echo B1 >> /tmp/execution/iterate-exec.txt
+    - echo B2 >> /tmp/execution/iterate-exec.txt
+    - echo B3 >> /tmp/execution/iterate-exec.txt
+    dependents:
+    - target: a
+      type: whole
+    image: ubuntu
+    name: b
+    type: Job
+    volumes:
+      volumeb:
+        mountFrom:
+          pvc: execution-pvc
+        mountPath: /tmp/execution
+  - commandSet:
+    - echo C1 >> /tmp/execution/iterate-exec.txt
+    - echo C2 >> /tmp/execution/iterate-exec.txt
+    - echo C3 >> /tmp/execution/iterate-exec.txt
+    dependents:
+    - target: b
+      type: iterate
+    image: ubuntu
+    name: c
+    type: Job
+    volumes:
+      volumec:
+        mountFrom:
+          pvc: execution-pvc
+        mountPath: /tmp/execution
+  - commandSet:
+    - echo D >> /tmp/execution/iterate-exec.txt
+    dependents:
+    - target: c
+      type: whole
+    image: ubuntu
+    name: d
+    type: Job
+    volumes:
+      volumed:
+        mountFrom:
+          pvc: execution-pvc
+        mountPath: /tmp/execution

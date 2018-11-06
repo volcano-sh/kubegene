@@ -1,11 +1,12 @@
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-    name: test-host-path
+    name: execution-pvc
 spec:
   storageClassName: standard
   accessModes:
     - ReadWriteOnce
+  volumeName: execution-pv
   resources:
     requests:
-      storage: 3Gi
+      storage: 1Gi

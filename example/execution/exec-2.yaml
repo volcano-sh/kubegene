@@ -8,23 +8,21 @@
 apiVersion: execution.kubegene.io/v1alpha1
 kind: Execution
 metadata:
-  creationTimestamp: null
-  name: simple-example
+  name: exec-2
 spec:
   tasks:
   - commandSet:
-    - echo A >> /tmp/hostvolume/test.txt
-    dependents: null
+    - echo A >> /tmp/execution/exec-2.txt
     image: ubuntu
     name: a
     type: Job
     volumes:
       volumea:
         mountFrom:
-          pvc: test-host-path
-        mountPath: /tmp/hostvolume
+          pvc: execution-pvc
+        mountPath: /tmp/execution
   - commandSet:
-    - echo B >> /tmp/hostvolume/test.txt
+    - echo B >> /tmp/execution/exec-2.txt
     dependents:
     - target: a
       type: whole
@@ -34,10 +32,10 @@ spec:
     volumes:
       volumeb:
         mountFrom:
-          pvc: test-host-path
-        mountPath: /tmp/hostvolume
+          pvc: execution-pvc
+        mountPath: /tmp/execution
   - commandSet:
-    - echo C >> /tmp/hostvolume/test.txt
+    - echo C >> /tmp/execution/exec-2.txt
     dependents:
     - target: a
       type: whole
@@ -49,10 +47,10 @@ spec:
     volumes:
       volumec:
         mountFrom:
-          pvc: test-host-path
-        mountPath: /tmp/hostvolume
+          pvc: execution-pvc
+        mountPath: /tmp/execution
   - commandSet:
-    - echo D >> /tmp/hostvolume/test.txt
+    - echo D >> /tmp/execution/exec-2.txt
     dependents:
     - target: b
       type: whole
@@ -62,10 +60,10 @@ spec:
     volumes:
       volumed:
         mountFrom:
-          pvc: test-host-path
-        mountPath: /tmp/hostvolume
+          pvc: execution-pvc
+        mountPath: /tmp/execution
   - commandSet:
-    - echo E >> /tmp/hostvolume/test.txt
+    - echo E >> /tmp/execution/exec-2.txt
     dependents: null
     image: ubuntu
     name: e
@@ -73,10 +71,10 @@ spec:
     volumes:
       volumee:
         mountFrom:
-          pvc: test-host-path
-        mountPath: /tmp/hostvolume
+          pvc: execution-pvc
+        mountPath: /tmp/execution
   - commandSet:
-    - echo F >> /tmp/hostvolume/test.txt
+    - echo F >> /tmp/execution/exec-2.txt
     dependents:
     - target: c
       type: whole
@@ -86,5 +84,5 @@ spec:
     volumes:
       volumef:
         mountFrom:
-          pvc: test-host-path
-        mountPath: /tmp/hostvolume
+          pvc: execution-pvc
+        mountPath: /tmp/execution
