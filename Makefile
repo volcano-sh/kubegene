@@ -23,10 +23,6 @@ genectl:
 	mkdir -p bin
 	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-X main.version=$(REV) -extldflags "-static"' -o ./bin/genectl ./cmd/genectl
 
-e2ebin:
-	mkdir -p bin
-	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-X main.version=$(REV) -extldflags "-static"' -o ./bin/gene2e ./test
-
 clean:
 	-rm -rf bin
 
@@ -34,6 +30,6 @@ container: kube-dag
 	docker build -t $(IMAGE_NAME):$(TAG) .
 
 test:
-	go test `go list ./... | grep -v 'vendor'` $(TESTARGS)
+	go test `go list ./... | grep -v -e 'vendor' -e 'test'` $(TESTARGS)
 	go vet `go list ./... | grep -v vendor`
 	./hack/e2e.sh

@@ -156,7 +156,7 @@ outputs:
 `
 
 func TestValidateWorkflow(t *testing.T) {
-	data, _ := ioutil.ReadFile("../../../example/gatk4-best-practices.yaml")
+	data, _ := ioutil.ReadFile("../../../example/gatk4-best-practices/gatk4-best-practices.yaml")
 	workflow, err := UnmarshalWorkflow(data)
 	if err != nil {
 		t.Fatalf("unmarshal workflow err: %v", err)
