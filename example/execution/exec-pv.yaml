@@ -1,15 +1,13 @@
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: task-pv-volume
-  labels:
-    type: local
+  name: execution-pv
 spec:
   storageClassName: standard
   capacity:
-    storage: 10Gi
+    storage: 1Gi
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: /tmp/data/
-    type: Directory
+    path: /tmp/execution/
+    type: DirectoryOrCreate
