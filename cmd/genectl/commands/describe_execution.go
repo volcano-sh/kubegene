@@ -125,7 +125,7 @@ func DescribeExecution(exec *execv1alpha1.Execution){
 
 	for taskName, vertices := range status {
 		task := FindExecutionTask(exec, taskName)
-		totalJob := len(task.Commands)
+		totalJob := len(task.CommandSet)
 		var succeedJob, failedJob, runningJob, errorJob int
 		for _, vertex := range vertices {
 			switch vertex.Phase {

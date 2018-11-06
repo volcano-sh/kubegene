@@ -177,7 +177,7 @@ func InstantiateWorkflow(workflow *Workflow, inputs map[string]interface{}, tool
 		// generate all commands.
 		iterCommands := Iter2Array(command, vars)
 
-		// merge jobInfo.Commands and jobInfo.iterCommands
+		// merge jobInfo.commands and jobInfo.iterCommands
 		newCommands = append(newCommands, iterCommands...)
 
 		tmpJob.Commands = newCommands
@@ -284,7 +284,7 @@ func TransWorkflow2Execution(workflow *Workflow) (*execv1alpha1.Execution, error
 		task.Image = jobInfo.Image
 		task.Volumes = execVolumes
 		// we have alreay merge workflows command and commandIter.
-		task.Commands = jobInfo.Commands
+		task.CommandSet = jobInfo.Commands
 		task.BackoffLimit = backoffLimit
 		task.ActiveDeadlineSeconds = activeDeadlineSeconds
 

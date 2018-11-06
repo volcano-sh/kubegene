@@ -228,8 +228,8 @@ func (in *Task) DeepCopyInto(out *Task) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.Commands != nil {
-		in, out := &in.Commands, &out.Commands
+	if in.CommandSet != nil {
+		in, out := &in.CommandSet, &out.CommandSet
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}

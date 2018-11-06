@@ -144,10 +144,10 @@ func makeWholeExecution(ns, prefix, pvc string) *genev1alpha1.Execution {
 		Spec: genev1alpha1.ExecutionSpec{
 			Tasks: []genev1alpha1.Task{
 				{
-					Name:     "A",
-					Type:     genev1alpha1.JobTaskType,
-					Commands: []string{"echo A >> /tmp/kubegene/whole.txt"},
-					Image:    "busybox",
+					Name:       "A",
+					Type:       genev1alpha1.JobTaskType,
+					CommandSet: []string{"echo A >> /tmp/kubegene/whole.txt"},
+					Image:      "busybox",
 					Volumes: map[string]genev1alpha1.Volume{
 						"volumeA": {
 							MountPath: "/tmp/kubegene",
@@ -158,10 +158,10 @@ func makeWholeExecution(ns, prefix, pvc string) *genev1alpha1.Execution {
 					},
 				},
 				{
-					Name:     "B",
-					Type:     genev1alpha1.JobTaskType,
-					Commands: []string{"echo B >> /tmp/kubegene/whole.txt"},
-					Image:    "busybox",
+					Name:       "B",
+					Type:       genev1alpha1.JobTaskType,
+					CommandSet: []string{"echo B >> /tmp/kubegene/whole.txt"},
+					Image:      "busybox",
 					Dependents: []genev1alpha1.Dependent{
 						{
 							Target: "A",
@@ -178,10 +178,10 @@ func makeWholeExecution(ns, prefix, pvc string) *genev1alpha1.Execution {
 					},
 				},
 				{
-					Name:     "C",
-					Type:     genev1alpha1.JobTaskType,
-					Commands: []string{"echo C >> /tmp/kubegene/whole.txt"},
-					Image:    "busybox",
+					Name:       "C",
+					Type:       genev1alpha1.JobTaskType,
+					CommandSet: []string{"echo C >> /tmp/kubegene/whole.txt"},
+					Image:      "busybox",
 					Dependents: []genev1alpha1.Dependent{
 						{
 							Target: "A",
@@ -198,10 +198,10 @@ func makeWholeExecution(ns, prefix, pvc string) *genev1alpha1.Execution {
 					},
 				},
 				{
-					Name:     "D",
-					Type:     genev1alpha1.JobTaskType,
-					Commands: []string{"echo D >> /tmp/kubegene/whole.txt"},
-					Image:    "busybox",
+					Name:       "D",
+					Type:       genev1alpha1.JobTaskType,
+					CommandSet: []string{"echo D >> /tmp/kubegene/whole.txt"},
+					Image:      "busybox",
 					Dependents: []genev1alpha1.Dependent{
 						{
 							Target: "B",
@@ -233,10 +233,10 @@ func makeIterateExecution(ns, prefix, pvc string) *genev1alpha1.Execution {
 		Spec: genev1alpha1.ExecutionSpec{
 			Tasks: []genev1alpha1.Task{
 				{
-					Name:     "A",
-					Type:     genev1alpha1.JobTaskType,
-					Commands: []string{"echo A >> /tmp/kubegene/iterate.txt"},
-					Image:    "busybox",
+					Name:       "A",
+					Type:       genev1alpha1.JobTaskType,
+					CommandSet: []string{"echo A >> /tmp/kubegene/iterate.txt"},
+					Image:      "busybox",
 					Volumes: map[string]genev1alpha1.Volume{
 						"volumeA": {
 							MountPath: "/tmp/kubegene",
@@ -247,10 +247,10 @@ func makeIterateExecution(ns, prefix, pvc string) *genev1alpha1.Execution {
 					},
 				},
 				{
-					Name:     "B",
-					Type:     genev1alpha1.JobTaskType,
-					Commands: []string{"echo B1 >> /tmp/kubegene/iterate.txt", "echo B2 >> /tmp/kubegene/iterate.txt"},
-					Image:    "busybox",
+					Name:       "B",
+					Type:       genev1alpha1.JobTaskType,
+					CommandSet: []string{"echo B1 >> /tmp/kubegene/iterate.txt", "echo B2 >> /tmp/kubegene/iterate.txt"},
+					Image:      "busybox",
 					Dependents: []genev1alpha1.Dependent{
 						{
 							Target: "A",
@@ -267,10 +267,10 @@ func makeIterateExecution(ns, prefix, pvc string) *genev1alpha1.Execution {
 					},
 				},
 				{
-					Name:     "C",
-					Type:     genev1alpha1.JobTaskType,
-					Commands: []string{"echo C1 >> /tmp/kubegene/iterate.txt", "echo C2 >> /tmp/kubegene/iterate.txt"},
-					Image:    "busybox",
+					Name:       "C",
+					Type:       genev1alpha1.JobTaskType,
+					CommandSet: []string{"echo C1 >> /tmp/kubegene/iterate.txt", "echo C2 >> /tmp/kubegene/iterate.txt"},
+					Image:      "busybox",
 					Dependents: []genev1alpha1.Dependent{
 						{
 							Target: "B",
