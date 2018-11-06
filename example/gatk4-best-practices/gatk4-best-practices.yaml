@@ -101,20 +101,20 @@ workflow:
     tool: 'zsplit:0.2'
     resources:
       memory: 1G
-    commandsIter:
+    commands_iter:
       command: >
         for i in `seq 0 ${npart}`; do mkdir -p ${volume-path-tmp}/${sample}/$i;
         done && \
 
         zlibfq -b 100000 -t ${npart} ${volume-path-data}/${1}
         ${volume-path-tmp}/${sample} R${item}
-      varsIter:
+      vars_iter:
         - '${fastq-files}'
   bwamapping:
     tool: 'bwa:0.7.12'
     resources:
       memory: 1G
-    commandsIter:
+    commands_iter:
       command: >
         bwa mem -t ${nthread} -M -R
         "@RG\tID:Sample\tPL:illumina\tSM:${sample}\tCN:GATK4"
@@ -132,7 +132,7 @@ workflow:
         ${volume-path-tmp}/${sample}/${sample}.${1}.bam && \
 
         samtools index ${volume-path-tmp}/${sample}/${sample}.${1}.sort.bam
-      varsIter:
+      vars_iter:
         - 'range(0, ${npart})'
     depends:
       - target: splitfq
@@ -168,7 +168,7 @@ workflow:
     tool: 'bwa:0.7.12'
     resources:
       memory: 1G
-    commandsIter:
+    commands_iter:
       command: >
         samtools merge -f -@ ${nthread} -R ${1} -b
         ${volume-path-tmp}/${sample}/mergelist.txt \
@@ -188,7 +188,7 @@ workflow:
 
         sambamba index -t ${nthread} -C
         ${volume-path-tmp}/${sample}/${sample}.sort.mkdup.${1}.cram
-      varsIter:
+      vars_iter:
         - '${chromlist}'
     depends:
       - target: mergemappedbam
@@ -197,7 +197,7 @@ workflow:
     tool: 'gatk:4.0.2.0'
     resources:
       memory: 1G
-    commandsIter:
+    commands_iter:
       command: >
         export chrom=`echo ${1} | cut -d ":" -f1` && \
 
@@ -220,7 +220,7 @@ workflow:
           --emit-ref-confidence GVCF \
           -R ${volume-path-data}/${reference-path}/${fastafile} \
           -L ${1}
-      varsIter:
+      vars_iter:
         - '${chromlist}'
     depends:
       - target: sammerge
