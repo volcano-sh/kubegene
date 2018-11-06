@@ -25,7 +25,7 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
 	cache "k8s.io/client-go/tools/cache"
-	gene_v1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
+	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
 	versioned "kubegene.io/kubegene/pkg/client/clientset/versioned"
 	internalinterfaces "kubegene.io/kubegene/pkg/client/informers/externalversions/internalinterfaces"
 	v1alpha1 "kubegene.io/kubegene/pkg/client/listers/gene/v1alpha1"
@@ -61,16 +61,16 @@ func NewFilteredExecutionInformer(client versioned.Interface, namespace string, 
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.GeneV1alpha1().Executions(namespace).List(options)
+				return client.ExecutionV1alpha1().Executions(namespace).List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.GeneV1alpha1().Executions(namespace).Watch(options)
+				return client.ExecutionV1alpha1().Executions(namespace).Watch(options)
 			},
 		},
-		&gene_v1alpha1.Execution{},
+		&genev1alpha1.Execution{},
 		resyncPeriod,
 		indexers,
 	)
@@ -81,7 +81,7 @@ func (f *executionInformer) defaultInformer(client versioned.Interface, resyncPe
 }
 
 func (f *executionInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&gene_v1alpha1.Execution{}, f.defaultInformer)
+	return f.factory.InformerFor(&genev1alpha1.Execution{}, f.defaultInformer)
 }
 
 func (f *executionInformer) Lister() v1alpha1.ExecutionLister {

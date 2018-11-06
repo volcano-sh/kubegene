@@ -25,8 +25,8 @@ import (
 	fakediscovery "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/testing"
 	clientset "kubegene.io/kubegene/pkg/client/clientset/versioned"
-	genev1alpha1 "kubegene.io/kubegene/pkg/client/clientset/versioned/typed/gene/v1alpha1"
-	fakegenev1alpha1 "kubegene.io/kubegene/pkg/client/clientset/versioned/typed/gene/v1alpha1/fake"
+	executionv1alpha1 "kubegene.io/kubegene/pkg/client/clientset/versioned/typed/gene/v1alpha1"
+	fakeexecutionv1alpha1 "kubegene.io/kubegene/pkg/client/clientset/versioned/typed/gene/v1alpha1/fake"
 )
 
 // NewSimpleClientset returns a clientset that will respond with the provided objects.
@@ -71,12 +71,12 @@ func (c *Clientset) Discovery() discovery.DiscoveryInterface {
 
 var _ clientset.Interface = &Clientset{}
 
-// GeneV1alpha1 retrieves the GeneV1alpha1Client
-func (c *Clientset) GeneV1alpha1() genev1alpha1.GeneV1alpha1Interface {
-	return &fakegenev1alpha1.FakeGeneV1alpha1{Fake: &c.Fake}
+// ExecutionV1alpha1 retrieves the ExecutionV1alpha1Client
+func (c *Clientset) ExecutionV1alpha1() executionv1alpha1.ExecutionV1alpha1Interface {
+	return &fakeexecutionv1alpha1.FakeExecutionV1alpha1{Fake: &c.Fake}
 }
 
-// Gene retrieves the GeneV1alpha1Client
-func (c *Clientset) Gene() genev1alpha1.GeneV1alpha1Interface {
-	return &fakegenev1alpha1.FakeGeneV1alpha1{Fake: &c.Fake}
+// Execution retrieves the ExecutionV1alpha1Client
+func (c *Clientset) Execution() executionv1alpha1.ExecutionV1alpha1Interface {
+	return &fakeexecutionv1alpha1.FakeExecutionV1alpha1{Fake: &c.Fake}
 }

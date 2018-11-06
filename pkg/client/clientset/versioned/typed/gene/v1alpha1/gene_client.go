@@ -25,22 +25,22 @@ import (
 	"kubegene.io/kubegene/pkg/client/clientset/versioned/scheme"
 )
 
-type GeneV1alpha1Interface interface {
+type ExecutionV1alpha1Interface interface {
 	RESTClient() rest.Interface
 	ExecutionsGetter
 }
 
-// GeneV1alpha1Client is used to interact with features provided by the execution.kubegene.io group.
-type GeneV1alpha1Client struct {
+// ExecutionV1alpha1Client is used to interact with features provided by the execution.kubegene.io group.
+type ExecutionV1alpha1Client struct {
 	restClient rest.Interface
 }
 
-func (c *GeneV1alpha1Client) Executions(namespace string) ExecutionInterface {
+func (c *ExecutionV1alpha1Client) Executions(namespace string) ExecutionInterface {
 	return newExecutions(c, namespace)
 }
 
-// NewForConfig creates a new GeneV1alpha1Client for the given config.
-func NewForConfig(c *rest.Config) (*GeneV1alpha1Client, error) {
+// NewForConfig creates a new ExecutionV1alpha1Client for the given config.
+func NewForConfig(c *rest.Config) (*ExecutionV1alpha1Client, error) {
 	config := *c
 	if err := setConfigDefaults(&config); err != nil {
 		return nil, err
@@ -49,12 +49,12 @@ func NewForConfig(c *rest.Config) (*GeneV1alpha1Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &GeneV1alpha1Client{client}, nil
+	return &ExecutionV1alpha1Client{client}, nil
 }
 
-// NewForConfigOrDie creates a new GeneV1alpha1Client for the given config and
+// NewForConfigOrDie creates a new ExecutionV1alpha1Client for the given config and
 // panics if there is an error in the config.
-func NewForConfigOrDie(c *rest.Config) *GeneV1alpha1Client {
+func NewForConfigOrDie(c *rest.Config) *ExecutionV1alpha1Client {
 	client, err := NewForConfig(c)
 	if err != nil {
 		panic(err)
@@ -62,9 +62,9 @@ func NewForConfigOrDie(c *rest.Config) *GeneV1alpha1Client {
 	return client
 }
 
-// New creates a new GeneV1alpha1Client for the given RESTClient.
-func New(c rest.Interface) *GeneV1alpha1Client {
-	return &GeneV1alpha1Client{c}
+// New creates a new ExecutionV1alpha1Client for the given RESTClient.
+func New(c rest.Interface) *ExecutionV1alpha1Client {
+	return &ExecutionV1alpha1Client{c}
 }
 
 func setConfigDefaults(config *rest.Config) error {
@@ -82,7 +82,7 @@ func setConfigDefaults(config *rest.Config) error {
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *GeneV1alpha1Client) RESTClient() rest.Interface {
+func (c *ExecutionV1alpha1Client) RESTClient() rest.Interface {
 	if c == nil {
 		return nil
 	}

@@ -24,17 +24,17 @@ import (
 	v1alpha1 "kubegene.io/kubegene/pkg/client/clientset/versioned/typed/gene/v1alpha1"
 )
 
-type FakeGeneV1alpha1 struct {
+type FakeExecutionV1alpha1 struct {
 	*testing.Fake
 }
 
-func (c *FakeGeneV1alpha1) Executions(namespace string) v1alpha1.ExecutionInterface {
+func (c *FakeExecutionV1alpha1) Executions(namespace string) v1alpha1.ExecutionInterface {
 	return &FakeExecutions{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *FakeGeneV1alpha1) RESTClient() rest.Interface {
+func (c *FakeExecutionV1alpha1) RESTClient() rest.Interface {
 	var ret *rest.RESTClient
 	return ret
 }
