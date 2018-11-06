@@ -11,5 +11,5 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: /xsw/kubegenetest/data/
+    path: /kubegenetest/data/
     type: Directory

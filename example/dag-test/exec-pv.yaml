@@ -11,5 +11,5 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: /xsw/data/
+    path: /tmp/data/
     type: Directory
