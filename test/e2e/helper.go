@@ -20,17 +20,17 @@ import (
 	"fmt"
 	"time"
 
-	"k8s.io/api/core/v1"
-	"k8s.io/client-go/kubernetes"
-	rbac "k8s.io/api/rbac/v1"
-	"path/filepath"
+	"github.com/ghodss/yaml"
+	"github.com/golang/glog"
 	"io/ioutil"
 	apps "k8s.io/api/apps/v1"
-	"github.com/ghodss/yaml"
+	"k8s.io/api/core/v1"
+	rbac "k8s.io/api/rbac/v1"
+	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-	apierrs "k8s.io/apimachinery/pkg/api/errors"
-	"github.com/golang/glog"
+	"k8s.io/client-go/kubernetes"
+	"path/filepath"
 )
 
 func CreateServiceAccount(kubeClient kubernetes.Interface, namespace string, relativePath string) error {
@@ -199,7 +199,7 @@ func DeleteDeployment(kubeClient kubernetes.Interface, ns, relativePath string) 
 
 	// Ensuring deployment Pods were deleted
 	var pods *v1.PodList
-	if err := wait.PollImmediate(time.Second, 3 * time.Minute, func() (bool, error) {
+	if err := wait.PollImmediate(time.Second, 3*time.Minute, func() (bool, error) {
 		pods, err = kubeClient.CoreV1().Pods(ns).List(options)
 		if err != nil {
 			return false, err

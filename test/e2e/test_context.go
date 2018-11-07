@@ -20,9 +20,9 @@ import (
 	"testing"
 
 	"k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	execclientset "kubegene.io/kubegene/pkg/client/clientset/versioned"
 
 	. "github.com/onsi/ginkgo"
