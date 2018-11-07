@@ -18,14 +18,18 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+unset http_proxy
+unset https_proxy
+
 export MINIKUBE_WANTUPDATENOTIFICATION=false
 export MINIKUBE_WANTREPORTERRORPROMPT=false
 export MINIKUBE_HOME=$HOME
 export CHANGE_MINIKUBE_NONE_USER=true
+export KUBERNETES_VERSION=v1.12.0
 mkdir -p $HOME/.kube
 mkdir -p $HOME/.minikube
 touch $HOME/.kube/config
 
 export KUBECONFIG=$HOME/.kube/config
 minikube version
-sudo -E minikube start --vm-driver=none --bootstrapper=localkube --kubernetes-version=$KUBERNETES_VERSION
+sudo -E minikube start --vm-driver=none  --kubernetes-version=$KUBERNETES_VERSION

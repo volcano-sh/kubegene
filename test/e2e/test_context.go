@@ -14,18 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package framework
+package e2e
 
 import (
 	"testing"
 
+	"k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	execclientset "kubegene.io/kubegene/pkg/client/clientset/versioned"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
+
+var gtc *GeneTestContext
 
 // Config provides the configuration for the e2e tests.
 type Config struct {
@@ -43,7 +47,7 @@ type GeneTestContext struct {
 }
 
 func Test(t *testing.T, config *Config) {
-	gtc := &GeneTestContext{
+	gtc = &GeneTestContext{
 		Config: config,
 	}
 
@@ -51,6 +55,14 @@ func Test(t *testing.T, config *Config) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Kubegene Test Suite")
 }
+
+var _ = BeforeSuite(func() {
+	gtc.setup()
+})
+
+var _ = AfterSuite(func() {
+	gtc.teardown()
+})
 
 func (gtc *GeneTestContext) setup() {
 	// build client from kube config
@@ -61,24 +73,31 @@ func (gtc *GeneTestContext) setup() {
 }
 
 func (gtc *GeneTestContext) teardown() {
+	By("Delete service account")
 	err := DeleteServiceAccount(
 		gtc.KubeClient,
 		gtc.Config.Namespace,
-		"../../deploy/serviceAccount.yaml",
+		"deploy/serviceAccount.yaml",
 	)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = DeleteClusterRole(gtc.KubeClient, "../../deploy/clusterRole.yaml")
+	By("Delete cluster role")
+	err = DeleteClusterRole(gtc.KubeClient, "deploy/clusterRole.yaml")
 	Expect(err).NotTo(HaveOccurred())
 
-	err = DeleteClusterRoleBinding(gtc.KubeClient, "../../deploy/clusterRoleBinding.yaml")
+	By("Delete cluster role binding")
+	err = DeleteClusterRoleBinding(gtc.KubeClient, "deploy/clusterRoleBinding.yaml")
 	Expect(err).NotTo(HaveOccurred())
 
+	By("Delete deployment")
 	err = DeleteDeployment(
 		gtc.KubeClient,
 		gtc.Config.Namespace,
-		"../../deploy/deployment.yaml")
+		"deploy/kubedag-deployment.yaml")
 
+	Expect(err).NotTo(HaveOccurred())
+
+	err = gtc.KubeClient.CoreV1().Namespaces().Delete(gtc.Config.Namespace, &metav1.DeleteOptions{})
 	Expect(err).NotTo(HaveOccurred())
 }
 
@@ -96,24 +115,39 @@ func (gtc *GeneTestContext) buildClient() {
 }
 
 func (gtc *GeneTestContext) createKubedag() {
-	err := CreateServiceAccount(
+	_, err := gtc.KubeClient.CoreV1().Namespaces().Get(gtc.Config.Namespace, metav1.GetOptions{})
+	if err != nil {
+		namespace := &v1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: gtc.Config.Namespace,
+			},
+		}
+		_, err := gtc.KubeClient.CoreV1().Namespaces().Create(namespace)
+		Expect(err).NotTo(HaveOccurred())
+	}
+
+	By("Create service account")
+	err = CreateServiceAccount(
 		gtc.KubeClient,
 		gtc.Config.Namespace,
-		"../../deploy/serviceAccount.yaml",
+		"deploy/serviceAccount.yaml",
 	)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = CreateClusterRole(gtc.KubeClient, "../../deploy/clusterRole.yaml")
+	By("Create cluster role")
+	err = CreateClusterRole(gtc.KubeClient, "deploy/clusterRole.yaml")
 	Expect(err).NotTo(HaveOccurred())
 
-	err = CreateClusterRoleBinding(gtc.KubeClient, "../../deploy/clusterRoleBinding.yaml")
+	By("Create cluster role binding")
+	err = CreateClusterRoleBinding(gtc.KubeClient, gtc.Config.Namespace, "deploy/clusterRoleBinding.yaml")
 	Expect(err).NotTo(HaveOccurred())
 
+	By("Create deployment")
 	err = CreateDeployment(
 		gtc.KubeClient,
 		gtc.Config.Namespace,
 		gtc.Config.KubeDagImage,
-		"../../deploy/deployment.yaml")
+		"deploy/kubedag-deployment.yaml")
 
 	Expect(err).NotTo(HaveOccurred())
 }

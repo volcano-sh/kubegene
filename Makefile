@@ -1,5 +1,5 @@
 
-.PHONY: all kube-dag genectl clean test e2ebin
+.PHONY: all kube-dag genectl clean test e2e
 
 IMAGE_NAME=kube-dag
 TAG=$(shell git rev-parse --short HEAD)
@@ -13,7 +13,7 @@ TESTARGS =
 endif
 
 
-all: kube-dag genectl e2ebin
+all: kube-dag genectl
 
 kube-dag:
 	mkdir -p bin
@@ -32,4 +32,8 @@ docker: kube-dag
 test:
 	go test `go list ./... | grep -v -e 'vendor' -e 'test'` $(TESTARGS)
 	go vet `go list ./... | grep -v vendor`
-	./hack/e2e.sh
+
+e2e: KUBECONFIG?=$(HOME)/.kube/config 
+
+e2e:
+	./hack/e2e.sh $(IMAGE_NAME):$(TAG) $(KUBECONFIG) 
