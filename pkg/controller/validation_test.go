@@ -38,12 +38,12 @@ func validateExecution() *genev1alpha1.Execution {
 		Spec: genev1alpha1.ExecutionSpec{
 			Tasks: []genev1alpha1.Task{
 				{
-					Name:       "A",
+					Name:       "a",
 					Type:       genev1alpha1.JobTaskType,
 					CommandSet: []string{"echo A >> /tmp/hostvolume/"},
 					Image:      "hello-word",
 					Volumes: map[string]genev1alpha1.Volume{
-						"volumeA": {
+						"volumea": {
 							MountPath: "/tmp/hostvolume",
 							MountFrom: genev1alpha1.VolumeSource{
 								Pvc: "test-host-path",
@@ -52,18 +52,18 @@ func validateExecution() *genev1alpha1.Execution {
 					},
 				},
 				{
-					Name:       "B",
+					Name:       "b",
 					Type:       genev1alpha1.JobTaskType,
 					CommandSet: []string{"echo B >> /tmp/hostvolume/"},
 					Image:      "hello-word",
 					Dependents: []genev1alpha1.Dependent{
 						{
-							Target: "A",
+							Target: "a",
 							Type:   genev1alpha1.DependTypeWhole,
 						},
 					},
 					Volumes: map[string]genev1alpha1.Volume{
-						"volumeB": {
+						"volumeb": {
 							MountPath: "/tmp/hostvolume",
 							MountFrom: genev1alpha1.VolumeSource{
 								Pvc: "test-host-path",
@@ -72,18 +72,18 @@ func validateExecution() *genev1alpha1.Execution {
 					},
 				},
 				{
-					Name:       "C",
+					Name:       "c",
 					Type:       genev1alpha1.JobTaskType,
 					CommandSet: []string{"echo C >> /tmp/hostvolume/"},
 					Image:      "hello-word",
 					Dependents: []genev1alpha1.Dependent{
 						{
-							Target: "A",
+							Target: "a",
 							Type:   genev1alpha1.DependTypeWhole,
 						},
 					},
 					Volumes: map[string]genev1alpha1.Volume{
-						"volumeC": {
+						"volumec": {
 							MountPath: "/tmp/hostvolume",
 							MountFrom: genev1alpha1.VolumeSource{
 								Pvc: "test-host-path",
@@ -92,18 +92,18 @@ func validateExecution() *genev1alpha1.Execution {
 					},
 				},
 				{
-					Name:       "D",
+					Name:       "d",
 					Type:       genev1alpha1.JobTaskType,
 					CommandSet: []string{"echo hello D"},
 					Image:      "hello-word",
 					Dependents: []genev1alpha1.Dependent{
 						{
-							Target: "B",
+							Target: "b",
 							Type:   genev1alpha1.DependTypeWhole,
 						},
 					},
 					Volumes: map[string]genev1alpha1.Volume{
-						"volumeD": {
+						"volumed": {
 							MountPath: "/tmp/hostvolume",
 							MountFrom: genev1alpha1.VolumeSource{
 								Pvc: "test-host-path",
@@ -133,18 +133,18 @@ func TestValidateExecution(t *testing.T) {
 			ModifyFunc: func(exec *genev1alpha1.Execution) {
 				exec.Spec.Tasks = []genev1alpha1.Task{
 					{
-						Name:       "A",
+						Name:       "a",
 						Type:       genev1alpha1.JobTaskType,
 						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
 						Image:      "hello-word",
 						Dependents: []genev1alpha1.Dependent{
 							{
-								Target: "C",
+								Target: "c",
 								Type:   genev1alpha1.DependTypeWhole,
 							},
 						},
 						Volumes: map[string]genev1alpha1.Volume{
-							"volumeA": {
+							"volumea": {
 								MountPath: "/tmp/hostvolume",
 								MountFrom: genev1alpha1.VolumeSource{
 									Pvc: "test-host-path",
@@ -153,18 +153,18 @@ func TestValidateExecution(t *testing.T) {
 						},
 					},
 					{
-						Name:       "B",
+						Name:       "b",
 						Type:       genev1alpha1.JobTaskType,
 						CommandSet: []string{"echo B >> /tmp/hostvolume/"},
 						Image:      "hello-word",
 						Dependents: []genev1alpha1.Dependent{
 							{
-								Target: "A",
+								Target: "a",
 								Type:   genev1alpha1.DependTypeWhole,
 							},
 						},
 						Volumes: map[string]genev1alpha1.Volume{
-							"volumeB": {
+							"volumeb": {
 								MountPath: "/tmp/hostvolume",
 								MountFrom: genev1alpha1.VolumeSource{
 									Pvc: "test-host-path",
@@ -173,18 +173,18 @@ func TestValidateExecution(t *testing.T) {
 						},
 					},
 					{
-						Name:       "C",
+						Name:       "c",
 						Type:       genev1alpha1.JobTaskType,
 						CommandSet: []string{"echo C >> /tmp/hostvolume/"},
 						Image:      "hello-word",
 						Dependents: []genev1alpha1.Dependent{
 							{
-								Target: "B",
+								Target: "b",
 								Type:   genev1alpha1.DependTypeWhole,
 							},
 						},
 						Volumes: map[string]genev1alpha1.Volume{
-							"volumeC": {
+							"volumec": {
 								MountPath: "/tmp/hostvolume",
 								MountFrom: genev1alpha1.VolumeSource{
 									Pvc: "test-host-path",
@@ -219,7 +219,7 @@ func TestValidateExecution(t *testing.T) {
 						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
 						Image:      "hello-word",
 						Volumes: map[string]genev1alpha1.Volume{
-							"volumeA": {
+							"volumea": {
 								MountPath: "/tmp/hostvolume",
 								MountFrom: genev1alpha1.VolumeSource{
 									Pvc: "test-host-path",
@@ -236,11 +236,11 @@ func TestValidateExecution(t *testing.T) {
 			ModifyFunc: func(exec *genev1alpha1.Execution) {
 				exec.Spec.Tasks = []genev1alpha1.Task{
 					{
-						Name:       "A",
+						Name:       "a",
 						Type:       genev1alpha1.JobTaskType,
 						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
 						Volumes: map[string]genev1alpha1.Volume{
-							"volumeA": {
+							"volumea": {
 								MountPath: "/tmp/hostvolume",
 								MountFrom: genev1alpha1.VolumeSource{
 									Pvc: "test-host-path",
@@ -257,11 +257,11 @@ func TestValidateExecution(t *testing.T) {
 			ModifyFunc: func(exec *genev1alpha1.Execution) {
 				exec.Spec.Tasks = []genev1alpha1.Task{
 					{
-						Name:  "A",
+						Name:  "a",
 						Type:  genev1alpha1.JobTaskType,
 						Image: "hello-word",
 						Volumes: map[string]genev1alpha1.Volume{
-							"volumeA": {
+							"volumea": {
 								MountPath: "/tmp/hostvolume",
 								MountFrom: genev1alpha1.VolumeSource{
 									Pvc: "test-host-path",
@@ -278,13 +278,13 @@ func TestValidateExecution(t *testing.T) {
 			ModifyFunc: func(exec *genev1alpha1.Execution) {
 				exec.Spec.Tasks = []genev1alpha1.Task{
 					{
-						Name:        "A",
+						Name:        "a",
 						Type:        genev1alpha1.JobTaskType,
 						CommandSet:  []string{"echo A >> /tmp/hostvolume/"},
 						Image:       "hello-word",
 						Parallelism: NewInt64(-5),
 						Volumes: map[string]genev1alpha1.Volume{
-							"volumeA": {
+							"volumea": {
 								MountPath: "/tmp/hostvolume",
 								MountFrom: genev1alpha1.VolumeSource{
 									Pvc: "test-host-path",
@@ -301,13 +301,13 @@ func TestValidateExecution(t *testing.T) {
 			ModifyFunc: func(exec *genev1alpha1.Execution) {
 				exec.Spec.Tasks = []genev1alpha1.Task{
 					{
-						Name:         "A",
+						Name:         "a",
 						Type:         genev1alpha1.JobTaskType,
 						CommandSet:   []string{"echo A >> /tmp/hostvolume/"},
 						Image:        "hello-word",
 						BackoffLimit: NewInt32(-5),
 						Volumes: map[string]genev1alpha1.Volume{
-							"volumeA": {
+							"volumea": {
 								MountPath: "/tmp/hostvolume",
 								MountFrom: genev1alpha1.VolumeSource{
 									Pvc: "test-host-path",
@@ -324,13 +324,13 @@ func TestValidateExecution(t *testing.T) {
 			ModifyFunc: func(exec *genev1alpha1.Execution) {
 				exec.Spec.Tasks = []genev1alpha1.Task{
 					{
-						Name:                  "A",
+						Name:                  "a",
 						Type:                  genev1alpha1.JobTaskType,
 						CommandSet:            []string{"echo A >> /tmp/hostvolume/"},
 						Image:                 "hello-word",
 						ActiveDeadlineSeconds: NewInt64(-5),
 						Volumes: map[string]genev1alpha1.Volume{
-							"volumeA": {
+							"volumea": {
 								MountPath: "/tmp/hostvolume",
 								MountFrom: genev1alpha1.VolumeSource{
 									Pvc: "test-host-path",
@@ -347,7 +347,7 @@ func TestValidateExecution(t *testing.T) {
 			ModifyFunc: func(exec *genev1alpha1.Execution) {
 				exec.Spec.Tasks = []genev1alpha1.Task{
 					{
-						Name:       "A",
+						Name:       "a",
 						Type:       genev1alpha1.JobTaskType,
 						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
 						Image:      "hello-word",
@@ -357,7 +357,7 @@ func TestValidateExecution(t *testing.T) {
 							},
 						},
 						Volumes: map[string]genev1alpha1.Volume{
-							"volumeA": {
+							"volumea": {
 								MountPath: "/tmp/hostvolume",
 								MountFrom: genev1alpha1.VolumeSource{
 									Pvc: "test-host-path",
@@ -374,18 +374,18 @@ func TestValidateExecution(t *testing.T) {
 			ModifyFunc: func(exec *genev1alpha1.Execution) {
 				exec.Spec.Tasks = []genev1alpha1.Task{
 					{
-						Name:       "A",
+						Name:       "a",
 						Type:       genev1alpha1.JobTaskType,
 						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
 						Image:      "hello-word",
 						Dependents: []genev1alpha1.Dependent{
 							{
-								Target: "C",
+								Target: "c",
 								Type:   genev1alpha1.DependTypeWhole,
 							},
 						},
 						Volumes: map[string]genev1alpha1.Volume{
-							"volumeA": {
+							"volumea": {
 								MountPath: "/tmp/hostvolume",
 								MountFrom: genev1alpha1.VolumeSource{
 									Pvc: "test-host-path",
@@ -402,18 +402,18 @@ func TestValidateExecution(t *testing.T) {
 			ModifyFunc: func(exec *genev1alpha1.Execution) {
 				exec.Spec.Tasks = []genev1alpha1.Task{
 					{
-						Name:       "A",
+						Name:       "a",
 						Type:       genev1alpha1.JobTaskType,
 						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
 						Image:      "hello-word",
 						Dependents: []genev1alpha1.Dependent{
 							{
-								Target: "C",
+								Target: "c",
 								Type:   genev1alpha1.DependType("test"),
 							},
 						},
 						Volumes: map[string]genev1alpha1.Volume{
-							"volumeA": {
+							"volumea": {
 								MountPath: "/tmp/hostvolume",
 								MountFrom: genev1alpha1.VolumeSource{
 									Pvc: "test-host-path",
@@ -422,12 +422,12 @@ func TestValidateExecution(t *testing.T) {
 						},
 					},
 					{
-						Name:       "C",
+						Name:       "c",
 						Type:       genev1alpha1.JobTaskType,
 						CommandSet: []string{"echo C >> /tmp/hostvolume/"},
 						Image:      "hello-word",
 						Volumes: map[string]genev1alpha1.Volume{
-							"volumeC": {
+							"volumec": {
 								MountPath: "/tmp/hostvolume",
 								MountFrom: genev1alpha1.VolumeSource{
 									Pvc: "test-host-path",
