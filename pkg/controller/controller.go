@@ -190,7 +190,6 @@ func (c *ExecutionController) processNextJobItem() bool {
 		return true
 	}
 
-
 	utilruntime.HandleError(fmt.Errorf("error syncing job: %v", err))
 	c.jobQueue.AddRateLimited(key)
 

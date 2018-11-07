@@ -19,8 +19,8 @@ package test
 import (
 	"flag"
 	"fmt"
-	"testing"
 	"strings"
+	"testing"
 
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"kubegene.io/kubegene/test/e2e"
@@ -56,4 +56,3 @@ func rand(prefix string) string {
 	str := fmt.Sprintf("%s-%s", prefix, randStr)
 	return str
 }
-

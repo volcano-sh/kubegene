@@ -78,8 +78,8 @@ func MergeInputs(inputsDefult map[string]Input, inputs map[string]interface{}) (
 		if !ok {
 			inputType := GetInputType(value)
 			mergedInputs[key] = Input{
-				Value:value,
-				Type:inputType,
+				Value: value,
+				Type:  inputType,
 			}
 		}
 	}
