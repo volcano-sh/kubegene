@@ -1,0 +1,21 @@
+# Golang CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-go/ for more details
+version: 2
+jobs:
+  build:
+    docker:
+      # specify the version
+      - image: circleci/golang:1.10
+
+    working_directory: /go/src/kubegene.io/kubegene
+    steps:
+      - checkout
+
+      # specify any bash command here prefixed with `run: `
+      - run: make kube-dag
+      - run: make genectl
+      - run: bash hack/update-gofmt.sh
+      - run: bash hack/update-codegen.sh
+      - run: make test
+      - run: make e2e
