@@ -1,18 +1,49 @@
 # Golang CircleCI 2.0 configuration file
 #
 # Check https://circleci.com/docs/2.0/language-go/ for more details
+# based on https://github.com/gavinzhou/ci-minikube
+# https://github.com/kubernetes/minikube#linux-continuous-integration-without-vm-support
 version: 2
 jobs:
   build:
-    docker:
-      # specify the version
-      - image: circleci/golang:1.10
-
-    working_directory: /go/src/kubegene.io/kubegene
+    machine:
+      image: circleci/classic:201808-01
+    working_directory: ~/go/src/kubegene.io/kubegene
+    environment:
+      GOPATH: /home/circleci/go
+      K8S_VERSION: v1.10.0
+      KUBECONFIG: /home/circleci/.kube/config
+      MINIKUBE_VERSION: v0.30.0
+      MINIKUBE_WANTUPDATENOTIFICATION: false
+      MINIKUBE_WANTREPORTERRORPROMPT: false
+      MINIKUBE_HOME: /home/circleci
+      CHANGE_MINIKUBE_NONE_USER: true
     steps:
+      - run: mkdir -p ~/go/{lib,pkg,src/kubegene.io/kubegene}
       - checkout
+      - run:
+          name: setup kubectl
+          command: |
+            curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+            mkdir -p ${HOME}/.kube
+            touch ${HOME}/.kube/config
+      - run:
+          name: setup minikube
+          command: |
+            curl -Lo minikube https://github.com/kubernetes/minikube/releases/download/${MINIKUBE_VERSION}/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
+      - run:
+          name: start minikube
+          command: |
+            sudo -E minikube start --vm-driver=none --kubernetes-version=${K8S_VERSION} --feature-gates=CustomResourceSubresources=true
+      - run:
+          name: wait for minikube
+          command: |
+            JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}';
+            until kubectl get nodes -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do
+              sleep 1;
+            done
 
-      # specify any bash command here prefixed with `run: `
+      # CI
       - run: bash hack/verify-gofmt.sh
       - run: bash hack/verify-codegen.sh
       - run: make kube-dag

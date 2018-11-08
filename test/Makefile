@@ -6,7 +6,7 @@ gene2e: Makefile
 	go test $(LDFLAGS) -c -o gene2e
 
 install: gene2e
-	cp gene2e /usr/bin/
+	mv gene2e ../
 
 clean:
 	rm -f gene2e
