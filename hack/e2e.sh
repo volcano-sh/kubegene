@@ -18,23 +18,18 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
-
-"${SCRIPT_DIR}"/minikube/install-minikube.sh
-"${SCRIPT_DIR}"/minikube/minikube-create-cluster.sh
-
 make docker
 
 cd test
   make clean install || exit 1
 cd ..
+cp gene2e ./hack/
 
 unset http_proxy
 unset https_proxy
 
-gene2e --image=$1 --kubeconfig=$2
+./gene2e --image=$1 --kubeconfig=$2
 
-rm /usr/bin/gene2e
+rm gene2e
 
-"${SCRIPT_DIR}"/minikube/minikube-delete-cluster.sh
 

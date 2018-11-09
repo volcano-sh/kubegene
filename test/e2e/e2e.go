@@ -95,11 +95,6 @@ var _ = DescribeGene("kube dag", func(gtc *GeneTestContext) {
 		By("Delete execution")
 		err = geneClient.ExecutionV1alpha1().Executions(ns).Delete(execution.Name, &metav1.DeleteOptions{})
 		Expect(err).NotTo(HaveOccurred())
-
-		By("Clean up result")
-		path := filepath.Join(TestPath, "whole.txt")
-		err = os.Remove(path)
-		Expect(err).NotTo(HaveOccurred())
 	})
 
 	It("iterate depend type", func() {
@@ -127,11 +122,6 @@ var _ = DescribeGene("kube dag", func(gtc *GeneTestContext) {
 
 		By("Delete execution")
 		err = geneClient.ExecutionV1alpha1().Executions(ns).Delete(execution.Name, &metav1.DeleteOptions{})
-		Expect(err).NotTo(HaveOccurred())
-
-		By("Clean up result")
-		path := filepath.Join(TestPath, "iterate.txt")
-		err = os.Remove(path)
 		Expect(err).NotTo(HaveOccurred())
 	})
 })
