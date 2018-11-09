@@ -236,32 +236,9 @@ func TransWorkflow2Execution(workflow *Workflow) (*execv1alpha1.Execution, error
 	namespace := GetExecutionNamespace(workflow.Inputs)
 	name := GetExecutionName(workflow.Inputs)
 	execVolumes := TransVolume2ExecVolume(workflow.Volumes)
-	parallelism := GetParallelism(workflow.Inputs)
 
-	activeDeadlineSeconds, err := GetActiveDeadlineSeconds(workflow.Inputs)
-	if err != nil {
-		return nil, fmt.Errorf("parse activeDeadlineSeconds error: %v", err)
-	}
-
-	backoffLimit, err := GetBackoffLimit(workflow.Inputs)
-	if err != nil {
-		return nil, fmt.Errorf("parse backoffLimit error: %v", err)
-	}
-
-	affinity, err := GetAffinityFromInputs(workflow.Inputs)
-	if err != nil {
-		return nil, fmt.Errorf("parse affinity error: %v", err)
-	}
-
-	tolerations, err := GetTolerationsFromInputs(workflow.Inputs)
-	if err != nil {
-		return nil, fmt.Errorf("parse tolerations error: %v", err)
-	}
-
-	nodeSelector, err := GetNodeSelectorFromInputs(workflow.Inputs)
-	if err != nil {
-		return nil, fmt.Errorf("parse nodeSelector error: %v", err)
-	}
+	// TODO make parallelism configurable
+	parallelism := int64(5)
 
 	exec := &execv1alpha1.Execution{
 		ObjectMeta: metav1.ObjectMeta{
@@ -269,11 +246,8 @@ func TransWorkflow2Execution(workflow *Workflow) (*execv1alpha1.Execution, error
 			Namespace: namespace,
 		},
 		Spec: execv1alpha1.ExecutionSpec{
-			Parallelism:  parallelism,
-			Affinity:     affinity,
-			Tolerations:  tolerations,
-			NodeSelector: nodeSelector,
-			Tasks:        []execv1alpha1.Task{},
+			Parallelism: &parallelism,
+			Tasks:       []execv1alpha1.Task{},
 		},
 	}
 
@@ -285,8 +259,6 @@ func TransWorkflow2Execution(workflow *Workflow) (*execv1alpha1.Execution, error
 		task.Volumes = execVolumes
 		// we have alreay merge workflows command and commandIter.
 		task.CommandSet = jobInfo.Commands
-		task.BackoffLimit = backoffLimit
-		task.ActiveDeadlineSeconds = activeDeadlineSeconds
 
 		// parse Res
 		cpuNum := strings.TrimRight(jobInfo.Resources.Cpu, "cC")

@@ -11,5 +11,5 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: /sample
-    type: Directory
+    path: /tmp/sample
+    type: DirectoryOrCreate
