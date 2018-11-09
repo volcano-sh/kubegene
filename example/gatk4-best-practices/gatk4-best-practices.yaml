@@ -194,7 +194,7 @@ workflow:
       - target: mergemappedbam
         type: whole
   mkdupbqsr:
-    tool: 'gatk:4.0.2.0'
+    tool: 'gatk:4.0.9.0'
     resources:
       memory: 1G
     commands_iter:
@@ -226,7 +226,7 @@ workflow:
       - target: sammerge
         type: whole
   mergevcf:
-    tool: 'gatk:4.0.2.0'
+    tool: 'gatk:4.0.9.0'
     resources:
       memory: 1G
     commands:
