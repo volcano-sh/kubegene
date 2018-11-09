@@ -51,6 +51,10 @@ func FetchTools(cmd *cobra.Command) (map[string]Tool, error) {
 	}
 
 	// local tool repo
+	if flag, err := util.PathExists(toolRepo); !flag {
+		return nil, fmt.Errorf("tool repo path %v is not exist: %v", toolRepo, err)
+	}
+
 	toolFiles, err := GetAllToolFile(toolRepo)
 	if err != nil {
 		return nil, fmt.Errorf("fetch local repo tools error: %v", err)
