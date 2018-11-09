@@ -93,7 +93,7 @@ func (gtc *GeneTestContext) teardown() {
 	err = DeleteDeployment(
 		gtc.KubeClient,
 		gtc.Config.Namespace,
-		"deploy/kubedag-deployment.yaml")
+		"deploy/deployment.yaml")
 
 	Expect(err).NotTo(HaveOccurred())
 
@@ -147,7 +147,7 @@ func (gtc *GeneTestContext) createKubedag() {
 		gtc.KubeClient,
 		gtc.Config.Namespace,
 		gtc.Config.KubeDagImage,
-		"deploy/kubedag-deployment.yaml")
+		"deploy/deployment.yaml")
 
 	Expect(err).NotTo(HaveOccurred())
 }
