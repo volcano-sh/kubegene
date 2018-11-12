@@ -1,5 +1,5 @@
 # KubeGene
-[![CircleCI](https://circleci.com/gh/kubegene/kubegene.svg?style=svg)](https://circleci.com/gh/kubegene/kubegene)
+[![Go Report Card](https://goreportcard.com/badge/github.com/kubegene/kubegene)](https://goreportcard.com/report/github.com/kubegene/kubegene)
 
 <img src="./images/Kubegene_logo.png">
 
@@ -25,6 +25,7 @@ Kubernetes can automatically scale your cluster based on your genome sequencing 
 
 
 - Kubernetes 1.10+
+- golang 1.10+
 
 If you have an older version of Kubernetes, we recommend upgrading Kubernetes first and then use the kubeGene.  
 If you use 1.10 kubernetes, you should make sure that the feature gate `CustomResourceSubresources` is open.  
