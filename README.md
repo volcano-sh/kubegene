@@ -1,5 +1,5 @@
 # KubeGene
-https://circleci.com/gh/Huawei-PaaS/kubegene.svg?style=svg
+[![CircleCI](https://circleci.com/gh/kubegene/kubegene.svg?style=svg)](https://circleci.com/gh/kubegene/kubegene)
 
 <img src="./images/Kubegene_logo.png">
 
