@@ -1,7 +1,7 @@
 # KubeGene
 [![Go Report Card](https://goreportcard.com/badge/github.com/kubegene/kubegene)](https://goreportcard.com/report/github.com/kubegene/kubegene)
 
-<img src="./images/Kubegene_logo.png">
+<img src="./images/kubegene_logo.png">
 
 ## What is KubeGene
 The KubeGene is dedicated to making genome sequencing process simple, portable and scalable. It provides a complete solution for genome sequencing on the kubernetes and supports mainstream biological genome sequencing scenarios such as DNA, RNA, and liquid biopsy. KubeGene is based on lightweight container technology and official standard algorithms. You can make a flexible and customizable genome sequencing process by using KubeGene.
@@ -159,9 +159,9 @@ workflow:
     execution-bf0dc.jobfinish.0  Succeeded  success       
 ```
 
-## Future on the road  
+## Feature on the road  
 
-KubeGene has provide the basic functionalities for running the genome sequencing workflow. More future will be added:
+KubeGene has provide the basic functionalities for running the genome sequencing workflow. More feature will be added:
 
 - Support other workflow engine, such as argo and so on.
 - User-defined workflow grammar plugin support.

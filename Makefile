@@ -4,8 +4,6 @@
 IMAGE_NAME=kube-dag
 TAG=$(shell git rev-parse --short HEAD)
 
-REV=$(shell git describe --long --match='v*' --dirty)
-
 ifdef V
 TESTARGS = -v -args -alsologtostderr -v 10
 else
@@ -17,11 +15,11 @@ all: kube-dag genectl
 
 kube-dag:
 	mkdir -p bin
-	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-X main.version=$(REV) -extldflags "-static"' -o ./bin/kube-dag ./cmd/kube-dag
+	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -o ./bin/kube-dag ./cmd/kube-dag
 
 genectl:
 	mkdir -p bin
-	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-X main.version=$(REV) -extldflags "-static"' -o ./bin/genectl ./cmd/genectl
+	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -o ./bin/genectl ./cmd/genectl
 
 clean:
 	-rm -rf bin
