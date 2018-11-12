@@ -252,15 +252,10 @@ workflow:
         type: whole
 volumes:
   gendata:
-    mountPath: '${volume-path-data}'
-    mountFrom:
+    mount_path: '${volume-path-data}'
+    mount_from:
       pvc: 'gcs-data'
   gentmp:
-    mountPath: '${volume-path-tmp}'
-    mountFrom:
+    mount_path: '${volume-path-tmp}'
+    mount_from:
       pvc: 'gcs-tmp-result'
-outputs:
-  gene-report-vcf:
-    paths:
-      - '${sample}/merge.HaplotypeCaller.raw.vcf.gz'
-      - '${sample}/merge.HaplotypeCaller.raw.vcf.gz.tbi'

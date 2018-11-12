@@ -1,37 +1,36 @@
 version: genecontainer_0_1
-
 inputs:
   sub-folder:
     default: sample-x
-    description: 输出文件在hostpath卷中的路径
+    description: The path of the output file in the hostpath volume
     type: string
   result:
     default: test-result.txt
-    description: 输出文件的地址
+    description: Output file name
     type: string
   output:
     default: result
-    description: 输出文件的路径
+    description: Output file path
     type: string
   samplemountpath:
     default: /sample
-    description: hostpath卷挂载地址
+    description: hostpath mount path
     type: string
   output-prefix:
     default: '$(date "+%F %r"): '
-    description: 输出到结果文件时的前缀
+    description: Prefix when outputting to the result file
     type: string
   wait-base:
     default: 1
-    description: 等待时间的基数
+    description: Base of waiting time
     type: number
   prepare-command:
     default: "echo job-prepare"
-    description: 执行在所有命令之前的命令
+    description: Execute commands before all commands
     type: string
   sample-pvc:
     default: sample-pvc
-    description: 使用的存储pvc
+    description: name of pvc used
     type: string
 
 workflow:
@@ -85,17 +84,8 @@ workflow:
     depends:
       - target: jobd
         type: whole
-
 volumes:
   samplepv:
-    mountPath: ${samplemountpath}
-    mountFrom:
+    mount_path: ${samplemountpath}
+    mount_from:
       pvc: ${sample-pvc}
-
-outputs:
-  result:
-    paths:
-    - ${output}/${result}
-
-
-
