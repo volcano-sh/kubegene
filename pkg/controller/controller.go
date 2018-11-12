@@ -29,10 +29,10 @@ import (
 	batchinformers "k8s.io/client-go/informers/batch/v1"
 	clientset "k8s.io/client-go/kubernetes"
 	batchv1listers "k8s.io/client-go/listers/batch/v1"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 
-	"k8s.io/client-go/tools/cache"
 	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
 	geneclientset "kubegene.io/kubegene/pkg/client/clientset/versioned/typed/gene/v1alpha1"
 	geneinformers "kubegene.io/kubegene/pkg/client/informers/externalversions/gene/v1alpha1"
