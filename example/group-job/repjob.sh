@@ -1,5 +1,5 @@
 #!/bin/bash
 
-bash /kubegenetest/subrepjob/print-date.sh
-bash /kubegenetest/subrepjob/print-number.sh
+bash /tmp/subrepjob/print-date.sh
+bash /tmp/subrepjob/print-number.sh
 

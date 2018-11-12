@@ -32,69 +32,69 @@ func TestValidateVolumes(t *testing.T) {
 			Name: "valid volume",
 			Volumes: `
   reference:
-    mountPath: /root
-    mountFrom:
+    mount_path: /root
+    mount_from:
       pvc: ${gcs-pvc}`,
 			Inputs:    makeInputs(),
 			ExpectErr: false,
 		},
 		{
-			Name: "volumes[reference].mountFrom: volume only support pvc and mountFrom.pvc should not be empty",
+			Name: "volumes[reference].mount_from: volume only support pvc and mount_from.pvc should not be empty",
 			Volumes: `
   reference:
-    mountPath: /root
-    mountFrom:
+    mount_path: /root
+    mount_from:
       xxx: ${gcs-pvc}`,
 			Inputs:    makeInputs(),
 			ExpectErr: true,
 		},
 		{
-			Name: "volumes[reference].mountFrom.pvc: the variant [xxx] is not defined in the inputs",
+			Name: "volumes[reference].mount_from.pvc: the variant [xxx] is not defined in the inputs",
 			Volumes: `
   reference:
-    mountPath: /root
-    mountFrom:
+    mount_path: /root
+    mount_from:
       pvc: ${xxx}`,
 			Inputs:    makeInputs(),
 			ExpectErr: true,
 		},
 		{
-			Name: "volumes[reference].mountFrom.pvc: the type of bwaArray can only be in [string], but the real one is array",
+			Name: "volumes[reference].mount_from.pvc: the type of bwaArray can only be in [string], but the real one is array",
 			Volumes: `
 volumes:
   reference:
-    mountPath: /root
-    mountFrom:
+    mount_path: /root
+    mount_from:
       pvc: ${bwaArray}`,
 			Inputs:    makeInputs(),
 			ExpectErr: true,
 		},
 		{
-			Name: "volumes[reference].mountPath: the type of bwaArray can only be in [string], but the real one is array",
+			Name: "volumes[reference].mount_path: the type of bwaArray can only be in [string], but the real one is array",
 			Volumes: `
   reference:
-    mountPath: ${bwaArray}
-    mountFrom:
+    mount_path: ${bwaArray}
+    mount_from:
       pvc: ${gcs-pvc}`,
 			Inputs:    makeInputs(),
 			ExpectErr: true,
 		},
 		{
-			Name: "volumes[reference].mountPath: mount path should be empty",
+			Name: "volumes[reference].mount_path: mount path should be empty",
 			Volumes: `
   reference:
-    mountPath:
-    mountFrom:
+    mount_path:
+    mount_from:
       pvc: ${gcs-pvc}`,
 			Inputs:    makeInputs(),
 			ExpectErr: true,
 		},
 		{
-			Name: "volumes[reference].mountPath: mount path should be an absolute path, but the real one is fdafdasf/fdaf",
+			Name: "volumes[reference].mount_path: mount path should be an absolute path, but the real one is fdafdasf/fdaf",
 			Volumes: `
   reference:
-    mountPath: fdafdasf/fdaf
-    mountFrom:
+    mount_path: fdafdasf/fdaf
+    mount_from:
       pvc: ${gcs-pvc}`,
 			Inputs:    makeInputs(),
 			ExpectErr: true,

@@ -115,7 +115,7 @@ type Resources struct {
 
 type Var []interface{}
 
-// CommandsIter defines command for workflows job. If both Vars and VarsIter are specified,
+// CommandsIter defines command for workflows job. If both Vars and Vars_iter are specified,
 // the generate command will be merged.
 type CommandsIter struct {
 	// Command is the base command that contains variables.
@@ -206,7 +206,7 @@ type JobInfo struct {
 type PathsIter struct {
 	Path     string        `json:"path" yaml:"path"`
 	Vars     []interface{} `json:"vars,omitempty" yaml:"vars,omitempty"`
-	VarsIter []interface{} `json:"varsIter,omitempty" yaml:"varsIter,omitempty"`
+	VarsIter []interface{} `json:"vars_iter,omitempty" yaml:"vars_iter,omitempty"`
 }
 
 type VolumeSource struct {
@@ -214,13 +214,13 @@ type VolumeSource struct {
 }
 
 type Volume struct {
-	MountPath string       `json:"mountPath" yaml:"mountPath"`
-	MountFrom VolumeSource `json:"mountFrom" yaml:"mountFrom"`
+	MountPath string       `json:"mount_path" yaml:"mount_path"`
+	MountFrom VolumeSource `json:"mount_from" yaml:"mount_from"`
 }
 
 type OutputDesc struct {
 	Paths     []string  `json:"paths" yaml:"paths"`
-	PathsIter PathsIter `json:"pathsIter,omitempty" yaml:"pathsIter,omitempty"`
+	PathsIter PathsIter `json:"paths_iter,omitempty" yaml:"paths_iter,omitempty"`
 }
 
 //
