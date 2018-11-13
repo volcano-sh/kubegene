@@ -53,8 +53,8 @@ workflow:
       {{- end}}
 volumes:
   sample-data:
-    mountPath: ${mount-path}
-    mountFrom:
+    mount_path: ${mount-path}
+    mount_from:
       pvc: ${pvc-name}
 `
 )
