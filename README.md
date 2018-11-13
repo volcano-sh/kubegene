@@ -53,7 +53,7 @@ $ git clone https://github.com/kubegene/kubegene.git
 We have provide the YAML file that contains all API objects that are necessary to run kubedag, you can easily deploy the kubedag using the follow commands:
 
 ```bash
-$ kubectl create -f deploy/setup-kubedag.yaml
+$ ./hack/local-up-kubedag.sh
 ```
 
 kubedag will automatically create a Kubernetes Custom Resource Definition (CRD):
