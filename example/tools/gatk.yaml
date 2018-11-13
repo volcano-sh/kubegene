@@ -1,0 +1,6 @@
+name: broadinstitute/gatk
+version: 4.0.2.0
+image: broadinstitute/gatk:4.0.2.0
+cpu: 2C
+memory: 2G
+description: gatk
