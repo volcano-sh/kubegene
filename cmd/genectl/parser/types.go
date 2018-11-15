@@ -35,15 +35,17 @@ var InputTypeList = []string{StringType, NumberType, BoolType, ArrayType}
 // Name: GATK
 // version: 4.0.1
 // image: 1.0.0.21:/root/GATK:4.0.1
-// cpu: 2C
-// memory: 2G
 // command: gatk hello world
+// type: basic
 // description: software package to analyze next-generation sequencing data
 //
 // use example
 //
 // job-GATK:
 //   tool: GATK:4.0.1
+//   resources:
+//     memory: 2G
+//     cpu: 2C
 //   command:
 //     - sh ${obs-path}/${jobid}/bwa_mem.sh obs/path/sample1.fastq.gz obs/path/hg19.fa >obs/path/sample1.sam
 //     - sh ${obs-path}/${jobid}/bwa_mem.sh obs/path/sample1.fastq.gz obs/path/hg19.fa >obs/path/sample2.sam
@@ -69,15 +71,11 @@ type Tool struct {
 	// Docker image Name.
 	// Required.
 	Image string `json:"image" yaml:"image"`
-	// Cpu is the recommended Res resources request for this tool to run.
-	// If we do not specify Res request in the workflows, this value will be used.
-	Cpu string `json:"cpu,omitempty" yaml:"cpu,omitempty"`
-	// Res is the recommended Res resources request for this tool to run.
-	// If we do not specify memory request in the workflows, this value will be used.
-	Memory string `json:"memory,omitempty" yaml:"memory,omitempty"`
 	// Command is the task that will be run for gene sequencing.
 	// If set, it will append to workflows commands.
 	Command string `json:"command,omitempty" yaml:"command,omitempty"`
+	// the type of tool.
+	Type string `json:"type" yaml:"type"`
 	// Description describes what the tool is used for.
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 }

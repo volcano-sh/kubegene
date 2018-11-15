@@ -130,13 +130,6 @@ func InstantiateWorkflow(workflow *Workflow, inputs map[string]interface{}, tool
 		if len(jobInfo.Resources.Cpu) != 0 {
 			tmpJob.Resources.Cpu = strings.ToUpper(jobInfo.Resources.Cpu)
 		}
-		if len(tmpJob.Resources.Memory) == 0 {
-			tmpJob.Resources.Memory = tool.Memory
-		}
-		if len(tmpJob.Resources.Cpu) == 0 {
-			tmpJob.Resources.Cpu = tool.Cpu
-		}
-
 		if len(jobInfo.Commands) == 0 && IsCommandIterEmpty(jobInfo.CommandsIter) {
 			tmpJob.Commands = append(tmpJob.Commands, tool.Command)
 		}
