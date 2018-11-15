@@ -1,5 +1,4 @@
 name: nginx
 version: latest
 image: nginx
-cpu: 2C
-memory: 2G
+type: basic

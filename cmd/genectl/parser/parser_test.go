@@ -29,19 +29,20 @@ func makeTools() map[string]Tool {
 		Name:        "GATK",
 		Version:     "4.0.1",
 		Image:       "1.0.0.21:/root/GATK:4.0.1",
-		Cpu:         "1c",
-		Memory:      "2G",
+		Type:        "basic",
 		Description: "GATK",
 	}
 	bwa := Tool{
 		Name:    "bwa",
 		Version: "0.71r",
+		Type:    "basic",
 		Image:   "1.0.0.21:/root/bwa:0.71r",
 	}
 	zsplit := Tool{
 		Name:    "zsplit",
 		Version: "0.2",
 		Image:   "1.0.0.21:/root/zsplit:0.2",
+		Type:    "basic",
 	}
 
 	tools := make(map[string]Tool)
