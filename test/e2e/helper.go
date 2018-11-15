@@ -269,3 +269,33 @@ func readFile(path string) ([]byte, error) {
 	data, err := ioutil.ReadFile(absPath)
 	return data, err
 }
+
+func volumeFromManifest(fileName string) (*v1.PersistentVolume, error) {
+	data, err := readFile(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	var persistentVolume v1.PersistentVolume
+	err = yaml.Unmarshal(data, &persistentVolume)
+	if err != nil {
+		return nil, err
+	}
+
+	return &persistentVolume, nil
+}
+
+func claimFromManifest(fileName string) (*v1.PersistentVolumeClaim, error) {
+	data, err := readFile(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	var claim v1.PersistentVolumeClaim
+	err = yaml.Unmarshal(data, &claim)
+	if err != nil {
+		return nil, err
+	}
+
+	return &claim, nil
+}

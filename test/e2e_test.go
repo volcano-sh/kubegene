@@ -32,6 +32,7 @@ const Kubegene = "kubegene"
 
 func init() {
 	flag.StringVar(&config.KubeConfig, "kubeconfig", "", "The kube config path")
+	flag.StringVar(&config.GenectlPath, "genectl", "", "The path of genectl binary")
 	flag.StringVar(&config.KubeDagImage, "image", "", "The kubedag image")
 	flag.StringVar(&config.Namespace, "namespace", "", "Namespace to run the test")
 	flag.Set("logtostderr", "true")

@@ -28,7 +28,7 @@ cp gene2e ./hack/
 unset http_proxy
 unset https_proxy
 
-./gene2e --image=$1 --kubeconfig=$2
+./gene2e --image=$1 --kubeconfig=$2 --genectl=$3
 
 rm gene2e
 

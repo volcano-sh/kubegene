@@ -253,17 +253,26 @@ func TransWorkflow2Execution(workflow *Workflow) (*execv1alpha1.Execution, error
 		// we have alreay merge workflows command and commandIter.
 		task.CommandSet = jobInfo.Commands
 
-		// parse Res
-		cpuNum := strings.TrimRight(jobInfo.Resources.Cpu, "cC")
-		cpuQuantity, err := resource.ParseQuantity(cpuNum)
-		if err != nil {
-			return nil, fmt.Errorf("parse Res quantity error: %v", err)
+		var cpuQuantity resource.Quantity
+		var memoryQuantity resource.Quantity
+		var err error
+
+		// parse cpu
+		if len(jobInfo.Resources.Cpu) > 0 {
+			cpuNum := strings.TrimRight(jobInfo.Resources.Cpu, "cC")
+			cpuQuantity, err = resource.ParseQuantity(cpuNum)
+			if err != nil {
+				return nil, fmt.Errorf("parse cpu quantity error: %v", err)
+			}
 		}
 		// parse memory
-		memoryQuantity, err := resource.ParseQuantity(jobInfo.Resources.Memory)
-		if err != nil {
-			return nil, fmt.Errorf("parse mem quantity error: %v", err)
+		if len(jobInfo.Resources.Memory) > 0 {
+			memoryQuantity, err = resource.ParseQuantity(jobInfo.Resources.Memory)
+			if err != nil {
+				return nil, fmt.Errorf("parse mem quantity error: %v", err)
+			}
 		}
+
 		task.Resources = execv1alpha1.ResourceRequirements{
 			Cpu:    cpuQuantity,
 			Memory: memoryQuantity,

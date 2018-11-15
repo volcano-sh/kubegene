@@ -29,13 +29,14 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var gtc *GeneTestContext
+var geneTestContext *GeneTestContext
 
 // Config provides the configuration for the e2e tests.
 type Config struct {
 	KubeConfig   string
 	KubeDagImage string
 	Namespace    string
+	GenectlPath  string
 }
 
 // GeneTestContext holds the variables that each test can depend on. It
@@ -47,21 +48,21 @@ type GeneTestContext struct {
 }
 
 func Test(t *testing.T, config *Config) {
-	gtc = &GeneTestContext{
+	geneTestContext = &GeneTestContext{
 		Config: config,
 	}
 
-	registerTestsInGinkgo(gtc)
+	registerTestsInGinkgo(geneTestContext)
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Kubegene Test Suite")
 }
 
 var _ = BeforeSuite(func() {
-	gtc.setup()
+	geneTestContext.setup()
 })
 
 var _ = AfterSuite(func() {
-	gtc.teardown()
+	geneTestContext.teardown()
 })
 
 func (gtc *GeneTestContext) setup() {
