@@ -31,7 +31,7 @@ test:
 	go test `go list ./... | grep -v -e 'vendor' -e 'test'` $(TESTARGS)
 	go vet `go list ./... | grep -v vendor`
 
-e2e: KUBECONFIG?=$(HOME)/.kube/config 
+e2e: KUBECONFIG?=$(HOME)/.kube/config
 
 e2e:
-	./hack/e2e.sh $(IMAGE_NAME):$(TAG) $(KUBECONFIG) 
+	./hack/e2e.sh $(IMAGE_NAME):$(TAG) $(KUBECONFIG) ./bin/genectl
