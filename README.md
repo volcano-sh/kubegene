@@ -95,9 +95,9 @@ We have several example workflow yaml in the example directory. A simple sample 
 For submit the workflow, you need create the storage volume first:
 
 ```bash
-$ kubectl create -f example/simale-sample/sample-pv.yaml
+$ kubectl create -f example/simple-sample/sample-pv.yaml
 persistentvolume "sample-pv" created
-$ kubectl create -f example/simale-sample/sample-pvc.yaml
+$ kubectl create -f example/simple-sample/sample-pvc.yaml
 persistentvolumeclaim "sample-pvc" created
 ```
 Then you can submit the workflow by the following command:
