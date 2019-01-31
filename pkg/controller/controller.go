@@ -273,6 +273,15 @@ func (c *ExecutionController) syncJob(key string) (bool, error) {
 	// get job condition
 	jobConditionType, message := util.GetJobCondition(job)
 
+	// in case missing the running event, following status set will cause panic
+	if util.GetVertexStatus(exec, job.Name) == nil {
+		vertexStatus := util.InitializeVertexStatus(vertex.Data.Job.Name, genev1alpha1.VertexRunning, vertexRunningMessage, vertex.Children)
+		if exec.Status.Vertices == nil {
+			exec.Status.Vertices = make(map[string]genev1alpha1.VertexStatus)
+		}
+		exec.Status.Vertices[vertexStatus.ID] = vertexStatus
+	}
+
 	switch jobConditionType {
 	case batch.JobFailed:
 		// Job is failed, mark the vertex as failed.
