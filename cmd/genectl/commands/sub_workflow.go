@@ -39,11 +39,11 @@ var submitSuccessMessage = template.Must(template.New("message").Parse(dedent.De
 
 		or use the follow command to query the detail info for workflow execution.
 
-			genectl describe {{ .name }} -n {{ .namespace }}
+			genectl describe execution {{ .name }} -n {{ .namespace }}
 
 		or use the follow command to delete the workflow execution.
 
-			genectl del {{ .name }} -n {{ .namespace }}
+			genectl del execution {{ .name }} -n {{ .namespace }}
 
 		`)))
 
