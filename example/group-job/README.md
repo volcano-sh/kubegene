@@ -16,5 +16,5 @@ This is a simple example to demonstrate how to submit a group job using `genectl
 ## Command
 
 ```bash
-$ gcs sub job /tmp/subrepjob/repjob.sh  --tool nginx:latest --pvc subrepjob-pvc
+$ genectl sub job /tmp/subrepjob/repjob.sh  --tool nginx:latest --pvc subrepjob-pvc
 ```
