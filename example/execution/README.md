@@ -23,10 +23,10 @@ The below example is with the nfs
 
 ## Prerequisites
 
- * k8s is deployed with minikube in a machine /laptop.
- * kubegene is deployed
- * deploy the nfs-provisioner on the same machine/laptop as explained below
-
+ * deploy the k8s
+ * deploy the kubegene
+ * deploy the nfs-provisioner as explained below or execute the start.sh script [ForMoreInfo](https://kubegene.io/docs/guides/nfssetup-usage)
+```bash
      just clone and build the project
      $ cd $GOPATH/src/github.com/kubernetes-incubator
      $ git clone https://github.com/kubernetes-incubator/external-storage.git
@@ -37,7 +37,8 @@ The below example is with the nfs
      -kubeconfig=$HOME/.kube/config
      -run-server=false
      -use-ganesha=false
-
+     -server-hostname=HOSTIPADDR
+```
 
    ```bash
    $ kubectl create -f nfs-storageclass.yaml
