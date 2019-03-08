@@ -14,5 +14,5 @@ This is a simple example to demonstrate how to submit a workflow using `genectl`
 ## Command
 
 ```bash
-$ gcs sub workflow simple-sample.yaml
+$ genectl sub workflow simple-sample.yaml
 ```

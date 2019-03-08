@@ -1,0 +1,63 @@
+#
+#       A
+#      / \
+#     B   C
+#    /
+#   D
+
+apiVersion: execution.kubegene.io/v1alpha1
+kind: Execution
+metadata:
+  name: exec-1
+spec:
+  tasks:
+  - commandSet:
+    - echo A >> /tmp/execution/exec-1.txt
+    dependents: null
+    image: ubuntu
+    name: a
+    type: Job
+    volumes:
+      volumea:
+        mountFrom:
+          pvc: nfs-pvc
+        mountPath: /tmp/execution
+  - commandSet:
+    - echo B >> /tmp/execution/exec-1.txt
+    dependents:
+    - target: a
+      type: whole
+    image: ubuntu
+    name: b
+    type: Job
+    volumes:
+      volumeb:
+        mountFrom:
+          pvc: nfs-pvc
+        mountPath: /tmp/execution
+  - commandSet:
+    - echo C >> /tmp/execution/exec-1.txt
+    dependents:
+    - target: a
+      type: whole
+    image: ubuntu
+    name: c
+    type: Job
+    volumes:
+      volumec:
+        mountFrom:
+          pvc: nfs-pvc
+        mountPath: /tmp/execution
+  - commandSet:
+    - echo D >> /tmp/execution/exec-1.txt
+    dependents:
+    - target: b
+      type: whole
+    image: ubuntu
+    name: d
+    type: Job
+    volumes:
+      volumed:
+        mountFrom:
+          pvc: nfs-pvc
+        mountPath: /tmp/execution

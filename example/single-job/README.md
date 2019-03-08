@@ -16,5 +16,5 @@ This is a simple example to demonstrate how to submit a single job using `genect
 ## Command
 
 ```bash
-$ gcs sub job /tmp/subjob/print.sh  --tool nginx:latest --pvc subjob-pvc
+$ genectl sub job /tmp/subjob/print.sh  --tool nginx:latest --pvc subjob-pvc
 ```
