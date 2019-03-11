@@ -115,7 +115,7 @@ or use the follow command to query the detail info for workflow execution.
 
 or use the follow command to delete the workflow execution.
 
-        genectl del execution execution-bf0dc -n default
+        genectl delete execution execution-bf0dc -n default
 ```
 
 Query the detail execution status of workflow:

@@ -43,7 +43,7 @@ var submitSuccessMessage = template.Must(template.New("message").Parse(dedent.De
 
 		or use the follow command to delete the workflow execution.
 
-			genectl del execution {{ .name }} -n {{ .namespace }}
+			genectl delete execution {{ .name }} -n {{ .namespace }}
 
 		`)))
 

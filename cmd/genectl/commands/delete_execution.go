@@ -24,7 +24,7 @@ import (
 	"kubegene.io/kubegene/cmd/genectl/client"
 )
 
-var delExecExample = `genectl del execution my-exec –n gene-system`
+var delExecExample = `genectl delete execution my-exec –n gene-system`
 
 type delExecutionFlags struct {
 	namespace string
@@ -34,7 +34,7 @@ func NewDeleteCommand() *cobra.Command {
 	var delExecutionFlags delExecutionFlags
 
 	var command = &cobra.Command{
-		Use:     "del execution NAME [flags]",
+		Use:     "delete execution NAME [flags]",
 		Short:   "delete a execution",
 		Args:    cobra.ExactArgs(2),
 		Example: delExecExample,
@@ -49,8 +49,8 @@ func NewDeleteCommand() *cobra.Command {
 }
 
 func DeleteWorkflow(cmd *cobra.Command, args []string, delExecutionFlags *delExecutionFlags) {
-	if args[0] != "execution" {
-		ExitWithError(fmt.Errorf("first args of del execution must be `execution` "))
+	if args[0] != "execution" && args[0] != "executions" {
+		ExitWithError(fmt.Errorf("first args of del execution must be `execution` or `executions` "))
 	}
 	executionName := args[1]
 	if len(executionName) == 0 {

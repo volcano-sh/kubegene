@@ -56,8 +56,8 @@ func NewDescribeExecutionCommand() *cobra.Command {
 }
 
 func DescribeWorkflow(cmd *cobra.Command, args []string, describeFlags *describeFlags) {
-	if args[0] != "execution" {
-		ExitWithError(fmt.Errorf("first args of describe execution must be `execution` "))
+	if args[0] != "execution" && args[0] != "executions" {
+		ExitWithError(fmt.Errorf("first args of describe execution must be `execution` or `executions` "))
 	}
 	executionName := args[1]
 	if len(executionName) == 0 {
