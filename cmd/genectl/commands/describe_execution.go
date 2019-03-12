@@ -31,6 +31,8 @@ import (
 	execv1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
 )
 
+var descExecExample = `genectl describe execution my-exec –n gene-system`
+
 type describeFlags struct {
 	namespace string
 }
@@ -39,9 +41,10 @@ func NewDescribeExecutionCommand() *cobra.Command {
 	var describeFlags describeFlags
 
 	var command = &cobra.Command{
-		Use:   "describe",
-		Short: "describe execution info",
-		Args:  cobra.ExactArgs(1),
+		Use:     "describe execution NAME [flags]",
+		Short:   "describe execution info",
+		Args:    cobra.ExactArgs(2),
+		Example: descExecExample,
 		Run: func(cmd *cobra.Command, args []string) {
 			DescribeWorkflow(cmd, args, &describeFlags)
 		},
@@ -53,7 +56,10 @@ func NewDescribeExecutionCommand() *cobra.Command {
 }
 
 func DescribeWorkflow(cmd *cobra.Command, args []string, describeFlags *describeFlags) {
-	executionName := args[0]
+	if args[0] != "execution" && args[0] != "executions" {
+		ExitWithError(fmt.Errorf("first args of describe execution must be `execution` or `executions` "))
+	}
+	executionName := args[1]
 	if len(executionName) == 0 {
 		ExitWithError(fmt.Errorf("executionName can not be empty"))
 	}
