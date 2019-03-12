@@ -33,6 +33,7 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 
+	"kubegene.io/kubegene"
 	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
 	geneclientset "kubegene.io/kubegene/pkg/client/clientset/versioned/typed/gene/v1alpha1"
 	geneinformers "kubegene.io/kubegene/pkg/client/informers/externalversions/gene/v1alpha1"
@@ -126,7 +127,7 @@ func (c *ExecutionController) Run(workers int, stopCh <-chan struct{}) {
 	defer c.execQueue.ShutDown()
 	defer c.jobQueue.ShutDown()
 
-	glog.Infof("Starting execution controller")
+	glog.Infof("Starting execution controller with version %s", kubegene.GetVersion())
 	defer glog.Infof("Shutting down execution controller")
 
 	if !cache.WaitForCacheSync(stopCh, c.execSynced, c.jobSynced) {
