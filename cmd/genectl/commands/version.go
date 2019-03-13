@@ -1,5 +1,5 @@
 /*
-Copyright 2018 The Kubegene Authors.
+Copyright 2019 The Kubegene Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package commands
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"kubegene.io/kubegene"
+	"kubegene.io/kubegene/pkg/version"
 )
 
 var versionExample = `genectl version`
@@ -39,15 +39,6 @@ func NewVersionCommand() *cobra.Command {
 }
 
 func VersionInfo(cmd *cobra.Command, args []string) {
-	version := kubegene.GetVersion()
-	fmt.Printf("  Version: %s\n", version.Version)
-	fmt.Printf("  BuildDate: %s\n", version.BuildDate)
-	fmt.Printf("  GitCommit: %s\n", version.GitCommit)
-	fmt.Printf("  GitTreeState: %s\n", version.GitTreeState)
-	if version.GitTag != "" {
-		fmt.Printf("  GitTag: %s\n", version.GitTag)
-	}
-	fmt.Printf("  GoVersion: %s\n", version.GoVersion)
-	fmt.Printf("  Compiler: %s\n", version.Compiler)
-	fmt.Printf("  Platform: %s\n", version.Platform)
+	version := version.GetVersion()
+	fmt.Printf("  genectl Version: %s\n", version)
 }

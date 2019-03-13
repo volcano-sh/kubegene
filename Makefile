@@ -1,7 +1,7 @@
 
 .PHONY: all kube-dag genectl clean test e2e
 
-PACKAGE=kubegene.io/kubegene
+PACKAGE=kubegene.io/kubegene/pkg/version
 CURRENT_DIR=$(shell pwd)
 VERSION=$(shell git describe --long --match='v*' --dirty)
 BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')

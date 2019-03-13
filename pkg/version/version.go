@@ -1,5 +1,5 @@
 /*
-Copyright 2018 The Kubegene Authors.
+Copyright 2019 The Kubegene Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package kubegene
+package version
 
 import (
 	"fmt"
@@ -72,4 +72,19 @@ func GetVersion() Version {
 		Compiler:     runtime.Compiler,
 		Platform:     fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
 	}
+}
+
+func (v Version) String() string {
+
+	s := fmt.Sprintf("  Version: %s\n", v.Version)
+	s += fmt.Sprintf("  BuildDate: %s\n", v.BuildDate)
+	s += fmt.Sprintf("  GitCommit: %s\n", v.GitCommit)
+	s += fmt.Sprintf("  GitTreeState: %s\n", v.GitTreeState)
+	if v.GitTag != "" {
+		s += fmt.Sprintf("  GitTag: %s\n", v.GitTag)
+	}
+	s += fmt.Sprintf("  GoVersion: %s\n", v.GoVersion)
+	s += fmt.Sprintf("  Compiler: %s\n", v.Compiler)
+	s += fmt.Sprintf("  Platform: %s\n", v.Platform)
+	return s
 }
