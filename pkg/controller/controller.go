@@ -38,6 +38,7 @@ import (
 	geneinformers "kubegene.io/kubegene/pkg/client/informers/externalversions/gene/v1alpha1"
 	genelisters "kubegene.io/kubegene/pkg/client/listers/gene/v1alpha1"
 	"kubegene.io/kubegene/pkg/util"
+	"kubegene.io/kubegene/pkg/version"
 )
 
 // controllerKind contains the schema.GroupVersionKind for this controller type.
@@ -126,7 +127,7 @@ func (c *ExecutionController) Run(workers int, stopCh <-chan struct{}) {
 	defer c.execQueue.ShutDown()
 	defer c.jobQueue.ShutDown()
 
-	glog.Infof("Starting execution controller")
+	glog.Infof("Starting execution controller with version %s", version.GetVersion())
 	defer glog.Infof("Shutting down execution controller")
 
 	if !cache.WaitForCacheSync(stopCh, c.execSynced, c.jobSynced) {

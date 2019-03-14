@@ -50,6 +50,7 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(NewDeleteCommand())
 	command.AddCommand(NewDescribeExecutionCommand())
 	command.AddCommand(NewGetExecutionCommand())
+	command.AddCommand(NewVersionCommand())
 
 	return command
 }
