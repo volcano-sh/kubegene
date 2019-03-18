@@ -108,13 +108,11 @@ func ProcessWorkflow(cmd *cobra.Command, workflowPath string, inputs map[string]
 		PrintErrList(errList)
 		os.Exit(1)
 	}
-
 	// instantiate workflow
 	err = parser.InstantiateWorkflow(workflow, inputs, tools)
 	if err != nil {
 		ExitWithError(err)
 	}
-
 	if util.GetFlagBool(cmd, "dry-run") {
 		util.PrintYAML(workflow)
 		return
@@ -145,7 +143,6 @@ func ProcessWorkflow(cmd *cobra.Command, workflowPath string, inputs map[string]
 
 	var msg bytes.Buffer
 	submitSuccessMessage.Execute(&msg, ctx)
-	fmt.Println(msg.String())
 }
 
 func readInputJson(inputFile string) (map[string]interface{}, error) {

@@ -204,6 +204,54 @@ func InstantiateVars(prefix string, vars []interface{}, data map[string]string) 
 	return result, nil
 }
 
+func InstantiateVarsIter(prefix string, vars []interface{}, data map[string]string) ([]Var, map[string]bool, error) {
+	result := make([]Var, 0, len(vars))
+	dependsResult := map[string]bool{}
+	for i, v := range vars {
+		if strValue, ok := v.(string); ok {
+			prefix := fmt.Sprintf("%s[%d]", prefix, i)
+			if IsRangeFunc(strValue) {
+				rangeValue, err := InstantiateRangeFunc(prefix, strValue, data)
+				if err != nil {
+					return nil, dependsResult, err
+				}
+				result = append(result, rangeValue)
+				continue
+			} else if IsGetResultFunc(strValue) {
+				getresult, dep, err := InstantiategetResultFunc(prefix, strValue, data)
+				if err != nil {
+					return nil, dependsResult, err
+				}
+				if dep != nil {
+					for name, flag := range dep {
+						dependsResult[name] = flag
+					}
+				}
+
+				result = append(result, getresult)
+				continue
+			} else {
+				variant := GetVariantName(strValue)
+				var array Var
+				err := json.Unmarshal([]byte(data[variant]), &array)
+				if err != nil {
+					return nil, dependsResult, fmt.Errorf("unmarshal %s error", prefix)
+				}
+				result = append(result, array)
+			}
+		} else if array, ok := v.([]interface{}); ok {
+			for j, s := range array {
+				if varStr, ok := s.(string); ok {
+					array[j] = ReplaceVariant(varStr, data)
+				}
+			}
+			result = append(result, array)
+		}
+	}
+
+	return result, dependsResult, nil
+}
+
 func Iter2Array(base string, vars []Var) []string {
 	result := make([]string, 0, len(vars))
 	for i, varsRow := range vars {
@@ -456,11 +504,67 @@ func ValidateVarsTypes(prefix string, vars interface{}, inputs map[string]Input)
 	return allErr
 }
 
+func ValidateVarsIterTypes(prefix string, vars interface{}, inputs map[string]Input, jobName string, workflow *Workflow) ErrorList {
+	allErr := ErrorList{}
+	switch v := vars.(type) {
+	case string:
+		if IsVariant(v) {
+			if err := ValidateVariant(prefix, v, []string{ArrayType}, inputs); err != nil {
+				return append(allErr, err)
+			}
+		} else if strings.HasPrefix(v, "range") {
+			if !IsRangeFunc(v) {
+				err := fmt.Errorf("%s: the range function should be defined as range(start, end, step), but the real one is %s", prefix, v)
+				return append(allErr, err)
+			} else {
+				errors := ValidateRangeFunc(prefix, v, inputs)
+				if len(errors) != 0 {
+					return append(allErr, errors...)
+				}
+			}
+		} else if strings.HasPrefix(v, "get_result") {
+			if !IsGetResultFunc(v) {
+				err := fmt.Errorf("%s: the get_result function should be defined as get_result(jobName, sep), but the real one is %s", prefix, v)
+				return append(allErr, err)
+			} else {
+				errors := validategetResultFunc(prefix, v, inputs, jobName, workflow)
+				if len(errors) != 0 {
+					return append(allErr, errors...)
+				}
+			}
+		} else {
+			err := fmt.Errorf("%s:the element of vars array should only be array variant or array, but the real one is %v", prefix, v)
+			return append(allErr, err)
+		}
+	case []interface{}:
+		for i, varValue := range v {
+			prefix = fmt.Sprintf("%s[%d]", prefix, i)
+			err := ValidateVarType(prefix, varValue, inputs)
+			if err != nil {
+				return append(allErr, err)
+			}
+		}
+	default:
+		err := fmt.Errorf("%s:the element of vars array should only be array variant or array, but the real one is %v", prefix, v)
+		return append(allErr, err)
+	}
+	return allErr
+}
+
 func ValidateVarsArray(prefix string, varsArray []interface{}, inputs map[string]Input) ErrorList {
 	allErr := ErrorList{}
 	for i, vars := range varsArray {
 		prefix := fmt.Sprintf("%s[%d]", prefix, i)
 		allErr = append(allErr, ValidateVarsTypes(prefix, vars, inputs)...)
+	}
+	return allErr
+}
+
+func ValidateVarsIterArray(prefix string, varsArray []interface{}, inputs map[string]Input, jobName string, workflow *Workflow) ErrorList {
+	allErr := ErrorList{}
+	for i, vars := range varsArray {
+		prefix := fmt.Sprintf("%s[%d]", prefix, i)
+		allErr = append(allErr, ValidateVarsIterTypes(prefix, vars, inputs, jobName, workflow)...)
 	}
 	return allErr
 }

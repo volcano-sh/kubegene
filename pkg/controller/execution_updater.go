@@ -1,5 +1,5 @@
 /*
-Copyright 2018 The Kubegene Authors.
+Copyright 2019 The Kubegene Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,59 +28,57 @@ import (
 	"kubegene.io/kubegene/pkg/util"
 )
 
-// ExecutionStatusUpdater is an interface used to update the ExecutionStatus associated with a Execution.
-type ExecutionStatusUpdater interface {
-	// UpdateStatefulSetStatus sets the set's Status to status. Implementations are required to retry on conflicts,
-	// but fail on other errors. If the returned error is nil set's Status has been successfully set to status.
-	UpdateExecutionStatus(modified *genev1alpha1.Execution, original *genev1alpha1.Execution) error
+// ExecutionUpdater is an interface used to update the ExecutionSpec associated with a Execution.
+type ExecutionUpdater interface {
+	UpdateExecution(modified *genev1alpha1.Execution, original *genev1alpha1.Execution) error
 }
 
-// NewExecutionStatusUpdater returns a ExecutionStatusUpdater that updates the Status of a Execution,
+// NewExecutionUpdater returns a ExecutionUpdater that updates the Spec of a Execution,
 // using the supplied client and setLister.
-func NewExecutionStatusUpdater(client geneclientset.ExecutionsGetter) ExecutionStatusUpdater {
-	return &executionStatusUpdater{client}
+func NewExecutionUpdater(client geneclientset.ExecutionsGetter) ExecutionUpdater {
+	return &executionUpdater{client}
 }
 
-type executionStatusUpdater struct {
+type executionUpdater struct {
 	execClient geneclientset.ExecutionsGetter
 }
 
-func (esu *executionStatusUpdater) UpdateExecutionStatus(modified *genev1alpha1.Execution, original *genev1alpha1.Execution) error {
-	patchBytes, err := preparePatchBytesForExecutionStatus(modified, original)
+func (esu *executionUpdater) UpdateExecution(modified *genev1alpha1.Execution, original *genev1alpha1.Execution) error {
+	patchBytes, err := preparePatchBytesForExecution(modified, original)
 	if err != nil {
 		return err
 	}
 
-	for i := 0; i < statusUpdateRetries; i++ {
+	for i := 0; i < specUpdateRetries; i++ {
 		var current *genev1alpha1.Execution
 		current, err = esu.execClient.Executions(modified.Namespace).Get(modified.Name, metav1.GetOptions{})
 		if err != nil {
-			glog.V(2).Infof("getting the execution is failed. Error: %v", err)
+			glog.Error("getting the execution is failed. Error: %v", err)
 			break
 		}
 
 		var curBytes []byte
 		curBytes, err = json.Marshal(current)
 		if err != nil {
-			glog.V(2).Infof("after getting the execution json.Marshal failed. Error: %v", err)
+			glog.Error("after getting the execution json.Marshal failed. Error: %v", err)
 			break
 		}
 
 		var bytes []byte
 		bytes, err = jsonpatch.MergePatch(curBytes, patchBytes)
 		if err != nil {
-			glog.V(2).Infof("after getting the execution jsonpatch.MergePatch failed. Error: %v", err)
+			glog.Error("after getting the execution jsonpatch.MergePatch failed. Error: %v", err)
 			break
 		}
 
 		var updated genev1alpha1.Execution
 		err = json.Unmarshal(bytes, &updated)
 		if err != nil {
-			glog.V(2).Infof("after getting the execution json.Unmarshal failed. Error: %v", err)
+			glog.Error("after getting the execution json.Unmarshal failed. Error: %v", err)
 			break
 		}
 
-		_, err = esu.execClient.Executions(modified.Namespace).UpdateStatus(&updated)
+		_, err = esu.execClient.Executions(modified.Namespace).Update(&updated)
 		if err == nil {
 			break
 		}
@@ -89,19 +87,22 @@ func (esu *executionStatusUpdater) UpdateExecutionStatus(modified *genev1alpha1.
 	return err
 }
 
-func preparePatchBytesForExecutionStatus(modifiedExec *genev1alpha1.Execution, originExec *genev1alpha1.Execution) ([]byte, error) {
+func preparePatchBytesForExecution(modifiedExec *genev1alpha1.Execution, originExec *genev1alpha1.Execution) ([]byte, error) {
 	origin, err := json.Marshal(originExec)
 	if err != nil {
+		glog.Error("In preparePatchBytesForExecution func  json.Marshal failed for %s Error: %v", util.KeyOf(originExec), err)
 		return nil, fmt.Errorf("unable to marshal execution %s", util.KeyOf(originExec))
 	}
 
 	modified, err := json.Marshal(modifiedExec)
 	if err != nil {
+		glog.Error("In preparePatchBytesForExecution func  json.Marshal failed for %s Error: %v", util.KeyOf(modifiedExec), err)
 		return nil, fmt.Errorf("unable to marshal execution %s", util.KeyOf(modifiedExec))
 	}
 
 	patchBytes, err := jsonpatch.CreateMergePatch(origin, modified)
 	if err != nil {
+		glog.Error("In preparePatchBytesForExecution func  jsonpatch.CreateMergePatch failed for %s Error: %v", util.KeyOf(modifiedExec), err)
 		return nil, fmt.Errorf("failed to CreateMergePatch for execution %q: %v", util.KeyOf(modifiedExec), err)
 	}
 

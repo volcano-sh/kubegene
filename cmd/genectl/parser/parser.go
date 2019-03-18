@@ -65,7 +65,7 @@ func ValidateWorkflow(workflow *Workflow) ErrorList {
 		allErr = append(allErr, ValidateCommands(jobName, job.Commands, workflow.Inputs)...)
 
 		// validate commandsIter
-		allErr = append(allErr, ValidateCommandsIter(jobName, job.CommandsIter, workflow.Inputs)...)
+		allErr = append(allErr, ValidateCommandsIter(jobName, job.CommandsIter, workflow.Inputs, workflow)...)
 
 		// validate depends
 		allErr = append(allErr, ValidateDepends(jobName, job.Depends, workflow.Jobs)...)
@@ -88,6 +88,16 @@ func ValidateWorkflow(workflow *Workflow) ErrorList {
 	}
 
 	return allErr
+}
+
+func convert2ArrayOfIfs(data []Var) []interface{} {
+	vars := make([]interface{}, 0)
+	for _, arr := range data {
+		for _, a := range arr {
+			vars = append(vars, a)
+		}
+	}
+	return vars
 }
 
 func InstantiateWorkflow(workflow *Workflow, inputs map[string]interface{}, tools map[string]Tool) error {
@@ -138,11 +148,13 @@ func InstantiateWorkflow(workflow *Workflow, inputs map[string]interface{}, tool
 		newCommands := ReplaceArray(jobInfo.Commands, inputsReplaceData)
 
 		// populate data for commandIter.vars
-		prefix := fmt.Sprintf("workflows.commands_iter.%s.vars", jobName)
+		prefix := fmt.Sprintf("***workflows.commands_iter.%s.vars", jobName)
+		//fmt.Println(" before InstantiateVars", prefix, jobInfo.CommandsIter.Vars)
 		vars, err := InstantiateVars(prefix, jobInfo.CommandsIter.Vars, inputsReplaceData)
 		if err != nil {
 			return err
 		}
+		//fmt.Println(" ****after InstantiateVars", vars)
 		length, err := ValidateInstantiatedVars("workflows."+jobName, vars)
 		if err != nil {
 			return err
@@ -150,32 +162,52 @@ func InstantiateWorkflow(workflow *Workflow, inputs map[string]interface{}, tool
 
 		// populate data for commandIter.varsIter
 		prefix = fmt.Sprintf("workflows.commands_iter.%s.varsIter", jobName)
-		varsIter, err := InstantiateVars(prefix, jobInfo.CommandsIter.VarsIter, inputsReplaceData)
+		//fmt.Println(" before InstantiateVarsIter", prefix, jobInfo.CommandsIter.Vars)
+		varsIter, dep, err := InstantiateVarsIter(prefix, jobInfo.CommandsIter.VarsIter, inputsReplaceData)
 		if err != nil {
 			return err
 		}
-		if length != 0 && len(varsIter) != 0 && len(varsIter) != length {
-			return fmt.Errorf("workflows.%s: the length of vars is %d, but the length of varsIter is %d", jobName, length, len(varsIter))
+		// if no get_result then len(dep) is zero
+		if len(dep) == 0 {
+			if length != 0 && len(varsIter) != 0 && len(varsIter) != length {
+				return fmt.Errorf("workflows.%s: the length of vars is %d, but the length of varsIter is %d", jobName, length, len(varsIter))
+			}
+
+			// convert varsIter to var
+			iterVars := VarIter2Vars(varsIter)
+
+			// merge vars
+			vars = append(vars, iterVars...)
+
+			// populate data for CommandsIter.Command.
+			command := ReplaceVariant(jobInfo.CommandsIter.Command, inputsReplaceData)
+
+			// generate all commands.
+			iterCommands := Iter2Array(command, vars)
+
+			// merge jobInfo.commands and jobInfo.iterCommands
+			newCommands = append(newCommands, iterCommands...)
+
+			tmpJob.Commands = newCommands
+			tmpJob.Depends = jobInfo.Depends
+			jobs[jobName] = tmpJob
+
+			//fmt.Println("tmpJob", tmpJob)
+		} else {
+
+			tmpJob.Commands = newCommands
+			// populate data for CommandsIter.Command.
+			command := ReplaceVariant(jobInfo.CommandsIter.Command, inputsReplaceData)
+
+			tmpJob.CommandsIter.Command = command
+			tmpJob.CommandsIter.Depends = dep
+			tmpJob.CommandsIter.Vars = convert2ArrayOfIfs(vars)
+			tmpJob.CommandsIter.VarsIter = convert2ArrayOfIfs(varsIter)
+
+			tmpJob.Depends = jobInfo.Depends
+			jobs[jobName] = tmpJob
+
 		}
-
-		// convert varsIter to var
-		iterVars := VarIter2Vars(varsIter)
-
-		// merge vars
-		vars = append(vars, iterVars...)
-
-		// populate data for CommandsIter.Command.
-		command := ReplaceVariant(jobInfo.CommandsIter.Command, inputsReplaceData)
-
-		// generate all commands.
-		iterCommands := Iter2Array(command, vars)
-
-		// merge jobInfo.commands and jobInfo.iterCommands
-		newCommands = append(newCommands, iterCommands...)
-
-		tmpJob.Commands = newCommands
-		tmpJob.Depends = jobInfo.Depends
-		jobs[jobName] = tmpJob
 	}
 	workflow.Jobs = jobs
 
@@ -252,6 +284,11 @@ func TransWorkflow2Execution(workflow *Workflow) (*execv1alpha1.Execution, error
 		task.Volumes = execVolumes
 		// we have alreay merge workflows command and commandIter.
 		task.CommandSet = jobInfo.Commands
+
+		//if job has get_result function in vars_iter
+		if len(jobInfo.CommandsIter.Depends) > 0 {
+			task.CommandsIter = TransCommandIter2ExecCommandIter(jobInfo.CommandsIter)
+		}
 
 		var cpuQuantity resource.Quantity
 		var memoryQuantity resource.Quantity

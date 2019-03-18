@@ -21,6 +21,7 @@ import (
 	"strings"
 	"sync"
 
+	"fmt"
 	batch "k8s.io/api/batch/v1"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -84,13 +85,26 @@ func newGraph(execution *genev1alpha1.Execution) *graph.Graph {
 
 		jobNamePrefix := execution.Name + Separator + task.Name + Separator
 
-		for index, command := range task.CommandSet {
-			jobName := jobNamePrefix + strconv.Itoa(index)
+		if len(task.CommandsIter.Depends) > 0 {
+			localtask := task
+			fmt.Println("task.CommandSet", task.CommandSet)
+			jobName := jobNamePrefix //+ strconv.Itoa(0)
 			// make up k8s job resource
-			job := newJob(jobName, command, execution, &task)
-			jobInfo := graph.NewJobInfo(job, false, task.Type)
+			job := newJob(jobName, "", execution, &task)
+			jobInfo := graph.NewJobInfo(job, false, task.Type, &localtask)
 			jobInfos = append(jobInfos, jobInfo)
-			vertices = append(vertices, graph.NewVertex(jobInfo))
+			vertices = append(vertices, graph.NewVertex(jobInfo, true))
+
+		} else {
+
+			for index, command := range task.CommandSet {
+				jobName := jobNamePrefix + strconv.Itoa(index)
+				// make up k8s job resource
+				job := newJob(jobName, command, execution, &task)
+				jobInfo := graph.NewJobInfo(job, false, task.Type, nil)
+				jobInfos = append(jobInfos, jobInfo)
+				vertices = append(vertices, graph.NewVertex(jobInfo, false))
+			}
 		}
 	}
 

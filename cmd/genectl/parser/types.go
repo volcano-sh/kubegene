@@ -159,6 +159,8 @@ type CommandsIter struct {
 	// sh /tmp/scripts/step1.splitfq.sh sample1 1 /tmp/data 25
 	// sh /tmp/scripts/step1.splitfq.sh sample2 1 /tmp/data 25
 	VarsIter []interface{} `json:"vars_iter,omitempty" yaml:"vars_iter,omitempty"`
+
+	Depends map[string]bool `json:"depends,omitempty" yaml:"depends,omitempty"`
 }
 
 const (

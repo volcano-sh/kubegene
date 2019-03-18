@@ -23,6 +23,7 @@ import (
 	"github.com/golang/glog"
 	batch "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -30,9 +31,13 @@ import (
 	batchv1listers "k8s.io/client-go/listers/batch/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-
+	"kubegene.io/kubegene/cmd/genectl/parser"
 	genelisters "kubegene.io/kubegene/pkg/client/listers/gene/v1alpha1"
+	"kubegene.io/kubegene/pkg/graph"
 	"kubegene.io/kubegene/pkg/util"
+
+	"strconv"
+	"strings"
 )
 
 type EventType string
@@ -66,6 +71,7 @@ type ExecutionJobController struct {
 	executionLister  genelisters.ExecutionLister
 	queue            workqueue.RateLimitingInterface
 	execGraphBuilder *GraphBuilder
+	execUpdater      ExecutionUpdater
 }
 
 func NewExecutionJobController(
@@ -74,6 +80,7 @@ func NewExecutionJobController(
 	executionLister genelisters.ExecutionLister,
 	eventQueue workqueue.RateLimitingInterface,
 	execGraphBuilder *GraphBuilder,
+	execUpdater ExecutionUpdater,
 ) *ExecutionJobController {
 	return &ExecutionJobController{
 		queue:            eventQueue,
@@ -81,6 +88,7 @@ func NewExecutionJobController(
 		jobLister:        jobLister,
 		executionLister:  executionLister,
 		execGraphBuilder: execGraphBuilder,
+		execUpdater:      execUpdater,
 	}
 }
 
@@ -177,6 +185,27 @@ func (e *ExecutionJobController) syncHandler(event Event) error {
 			if allDependentsFinished {
 				glog.V(2).Infof("all dependent of job %v has run successfully, start running.", child.Data.Job.Name)
 
+				/*start changes related to dynamicconcurrency / get_result */
+				if child.Data.DynamicJob != nil {
+					// get the result of the dependent job using getJobResult()
+					result, err := e.getJobResult(vertex.Data.Job)
+					if err != nil {
+						glog.Infof("getJobResult failed %v", err)
+						return fmt.Errorf("getJobResult failed : %v", err)
+					}
+
+					// construct the dynamic job based on result
+					err1 := e.createDynamicJob(child, result, graph, event.Key)
+					if err1 != nil {
+						glog.Infof("createDynamicJob failed %v", err1)
+						return fmt.Errorf("createDynamicJob failed : %v", err1)
+					}
+					// update the graph
+					// update the execution e.execUpdater.UpdateExecution(exec, execution)
+					return nil
+
+				}
+				/*end changes related to dynamic concurrency or get_result*/
 				if e.shouldStartJob(event.Key, child.Data.Job) {
 					if err := e.createJob(child.Data.Job); err != nil {
 						key := util.KeyOf(child.Data.Job)
@@ -188,6 +217,138 @@ func (e *ExecutionJobController) syncHandler(event Event) error {
 			}
 		}
 	}
+	return nil
+}
+
+func evalgetResult(output string, vars []interface{}) ([]parser.Var, string, error) {
+
+	result := make([]parser.Var, 0, len(vars))
+	var parentJobName string
+	for _, vs := range vars {
+		v := vs.([]interface{})
+
+		if item, ok := v[0].(string); ok && item == "get_result" {
+
+			parentJobName := v[1].(string)
+			sep := v[2].(string)
+
+			if sep == "" {
+				temp := []interface{}{output}
+				result = append(result, temp)
+			} else {
+				var strslice []interface{}
+				for _, str := range strings.Split(output, sep) {
+					if str != "" {
+						strslice = append(strslice, str)
+					}
+				}
+				temp := []interface{}{strslice}
+				result = append(result, temp)
+			}
+			glog.Infof("In evalgetResult jobName: %s sep:%s", parentJobName, sep)
+		}
+	}
+	glog.Infof("In evalgetResult result: %v", result)
+	return result, parentJobName, nil
+}
+func ConvertVars(vars []interface{}) []parser.Var {
+	result := make([]parser.Var, 0, len(vars))
+
+	for _, v := range vars {
+		res := make([]interface{}, 0)
+		res = append(res, v)
+		result = append(result, res)
+	}
+	return result
+}
+
+func (e *ExecutionJobController) createDynamicJob(child *graph.Vertex, jobresult string, graph1 *graph.Graph, key string) error {
+
+	job := child.Data.Job
+	controllerRef := metav1.GetControllerOf(job)
+
+	if controllerRef == nil {
+		err := fmt.Errorf("controllerRef is null")
+		glog.Infof("can not find ownerReference for job %s", job.Name)
+		return err
+	}
+
+	task := child.Data.DynamicJob.DeepCopy()
+	varsIter, parentJobName, err := evalgetResult(jobresult, child.Data.DynamicJob.CommandsIter.VarsIter)
+	if err != nil {
+		glog.V(2).Infof("Error in evalgetResult execution job name %q , . Error: %v", job.Name, err)
+		return err
+	}
+	glog.V(2).Infof("evalgetResult output parentJobName:%s , varsIter: %v", parentJobName, varsIter)
+
+	newCommands := child.Data.DynamicJob.CommandSet
+
+	vars := ConvertVars(child.Data.DynamicJob.CommandsIter.Vars)
+
+	// convert varsIter to var
+	iterVars := parser.VarIter2Vars(varsIter)
+
+	// merge vars
+	vars = append(vars, iterVars...)
+
+	command := child.Data.DynamicJob.CommandsIter.Command
+
+	// generate all commands.
+	iterCommands := parser.Iter2Array(command, vars)
+
+	// merge jobInfo.commands and jobInfo.iterCommands
+	newCommands = append(newCommands, iterCommands...)
+
+	//now need to update the task based on the new parameters
+
+	task.CommandSet = newCommands
+
+	glog.V(2).Infof("final commandset task.CommandSet %v ", task.CommandSet)
+
+	//update this task in the execution struct then call the Update()
+	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
+	execution, err := e.executionLister.Executions(namespace).Get(name)
+	if err != nil {
+		glog.Errorf("Get execution %s error: %v", key, err)
+		return err
+	}
+
+	execcopy := execution.DeepCopy()
+
+	for _, tt := range execcopy.Spec.Tasks {
+		if tt.Name == task.Name {
+			tt.CommandSet = task.CommandSet
+		}
+	}
+	glog.V(2).Infof("Original Execution %v ", execution)
+
+	glog.V(2).Infof("Updated Execution %v ", execcopy)
+
+	err = e.execUpdater.UpdateExecution(execcopy, execution)
+	if err != nil {
+		glog.Errorf("execUpdater.UpdateExecution failed %s error: %v", err)
+		return err
+	}
+
+	// TODO need to recreate/update the graph currently
+	// single vertex is used for workflow job which can have multiple k8s jobs
+	// other validations may not work like num vertex & job completed event in syncJob
+	// once we reconstruct the graph then we may need not required create the k8s jobs here
+
+	// temporary create all the jobs here
+	jobNamePrefix := execution.Name + Separator + task.Name + Separator
+	for index, command := range task.CommandSet {
+		jobName := jobNamePrefix + strconv.Itoa(index)
+		// make up k8s job resource
+		job := newJob(jobName, command, execution, task)
+
+		if err := e.createJob(job); err != nil {
+			glog.Errorf("createJob failed error: %v", err)
+			key := util.KeyOf(job)
+			return fmt.Errorf("create job %s error: %v", key, err)
+		}
+	}
+
 	return nil
 }
 
@@ -204,6 +365,44 @@ func (e *ExecutionJobController) createJob(job *batch.Job) error {
 	}
 
 	return err
+}
+
+func (e *ExecutionJobController) getJobResult(job *batch.Job) (string, error) {
+	result := ""
+	job, err := e.jobLister.Jobs(job.Namespace).Get(job.Name)
+
+	if err != nil {
+		glog.V(2).Infof("In getJobResult func get job failed: %v", err)
+		return result, err
+	}
+
+	sel, err := metav1.LabelSelectorAsSelector(job.Spec.Selector)
+	if err != nil {
+		glog.V(2).Infof("In getJobResult func LabelSelectorAsSelector failed: %v", err)
+		return result, err
+	}
+	var opts metav1.ListOptions
+
+	opts.LabelSelector = sel.String()
+	podList, err := e.kubeClient.CoreV1().Pods(job.Namespace).List(opts)
+	if err != nil {
+		glog.V(2).Infof("In getJobResult func get pods list failed: %v", err)
+		return result, err
+	}
+
+	if len(podList.Items) != 1 {
+		glog.V(2).Infof("In getJobResult func  pods list has more than one pod ")
+		err := fmt.Errorf("Received  podList has more than one pod")
+		return result, err
+	}
+
+	res, err := e.kubeClient.CoreV1().Pods(job.Namespace).GetLogs(podList.Items[0].Name, nil).Param("limitBytes", "1024").DoRaw()
+	if err != nil {
+		glog.V(2).Infof("In getJobResult func get logs failed: %v", err)
+		return result, err
+	}
+	result = string(res)
+	return result, err
 }
 
 func (e *ExecutionJobController) handleErr(err error, event Event) {

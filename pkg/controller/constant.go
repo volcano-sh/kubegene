@@ -20,6 +20,9 @@ const (
 	// Number of retry when update execution status.
 	statusUpdateRetries = 3
 
+	// Number of retry when update execution spec.
+	specUpdateRetries = 3
+
 	executionSuccessMessage = "execution has run successfully"
 	executionRunningMessage = "execution is running"
 	missVertexMessage       = "execution is running but can not find vertex in the graph"
