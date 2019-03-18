@@ -32,13 +32,13 @@ func NewVersionCommand() *cobra.Command {
 		Long:    "Print the version information",
 		Example: versionExample,
 		Run: func(cmd *cobra.Command, args []string) {
-			VersionInfo(cmd, args)
+			versionInfo(cmd, args)
 		},
 	}
 	return command
 }
 
-func VersionInfo(cmd *cobra.Command, args []string) {
+func versionInfo(cmd *cobra.Command, args []string) {
 	version := version.GetVersion()
 	fmt.Printf("  genectl Version: %s\n", version)
 }
