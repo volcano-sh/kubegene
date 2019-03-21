@@ -57,7 +57,7 @@ func IsGetResultFunc(str string) bool {
 	return false
 }
 
-// GetgetResultFuncParam extract parameter from range function.
+// getResultFuncParam extract parameter from range function.
 // for example:
 //
 // 		Str ---> get_result(job-a,"\n")
@@ -65,16 +65,10 @@ func IsGetResultFunc(str string) bool {
 //
 // 		Str ---> get_result(job-target,sep )
 // 		result ---> job-target,sep
-func GetgetResultFuncParam(str string) (jobName string, sep string) {
+func getResultFuncParam(str string) (jobName string, sep string) {
 	submatch := getResultRegExp.FindStringSubmatch(str)
 
-	for i := 0; i < len(submatch); i++ {
-		fmt.Println("submatch ", i, submatch[i])
-	}
-
 	jobName = strings.Replace(submatch[1], " ", "", -1)
-
-	fmt.Println("jobName ", jobName)
 
 	if matched := inputsVarRegExp.MatchString(str); matched {
 		return
@@ -85,10 +79,7 @@ func GetgetResultFuncParam(str string) (jobName string, sep string) {
 	} else {
 		sep = submatch[5]
 	}
-
-	fmt.Println("Before sep ", sep)
 	sep = decodeNonPrintChar(sep)
-	fmt.Println("After sep ", sep)
 	return
 }
 
@@ -105,7 +96,7 @@ func validatedependecy(prefix string, jobName string, dependjobName string, work
 		return err
 	}
 
-	//depend job should have single command only because it should be single k8s- job related to that job
+	// depend job should have single command only because it should be single k8s- job related to that job
 
 	if (len(dependJob.Commands) > 1) || (len(dependJob.CommandsIter.Vars) > 1) || (len(dependJob.CommandsIter.VarsIter) > 1) {
 		err := fmt.Errorf("the get_result function dependecy job has more than one command %s dependjobName :%s", prefix, dependjobName)
@@ -132,7 +123,7 @@ func validatedependecy(prefix string, jobName string, dependjobName string, work
 // validategetResultFunc validate parameter of get_result function is valid.
 func validategetResultFunc(prefix, str string, inputs map[string]Input, jobName string, workflow *Workflow) ErrorList {
 	allErr := ErrorList{}
-	dependjobName, _ := GetgetResultFuncParam(str)
+	dependjobName, _ := getResultFuncParam(str)
 	if isJobExists(jobName, workflow) {
 		err := fmt.Errorf("%s: the get_result function dependecy job is missing, but the real one is %s", prefix, dependjobName)
 		allErr = append(allErr, err)
@@ -144,9 +135,10 @@ func validategetResultFunc(prefix, str string, inputs map[string]Input, jobName 
 	}
 	return allErr
 }
+
 func InstantiategetResultFunc(prefix, str string, data map[string]string) (Var, map[string]bool, error) {
 	dependsResult := map[string]bool{}
-	jobName, sep := GetgetResultFuncParam(str)
+	jobName, sep := getResultFuncParam(str)
 
 	getresult := []interface{}{"get_result", jobName, sep}
 

@@ -18,6 +18,8 @@ package controller
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/golang/glog"
@@ -35,9 +37,6 @@ import (
 	genelisters "kubegene.io/kubegene/pkg/client/listers/gene/v1alpha1"
 	"kubegene.io/kubegene/pkg/graph"
 	"kubegene.io/kubegene/pkg/util"
-
-	"strconv"
-	"strings"
 )
 
 type EventType string
@@ -185,27 +184,23 @@ func (e *ExecutionJobController) syncHandler(event Event) error {
 			if allDependentsFinished {
 				glog.V(2).Infof("all dependent of job %v has run successfully, start running.", child.Data.Job.Name)
 
-				/*start changes related to dynamicconcurrency / get_result */
 				if child.Data.DynamicJob != nil {
-					// get the result of the dependent job using getJobResult()
+					// get the result of the dependent job using
 					result, err := e.getJobResult(vertex.Data.Job)
 					if err != nil {
-						glog.Infof("getJobResult failed %v", err)
 						return fmt.Errorf("getJobResult failed : %v", err)
 					}
 
 					// construct the dynamic job based on result
-					err1 := e.createDynamicJob(child, result, graph, event.Key)
-					if err1 != nil {
-						glog.Infof("createDynamicJob failed %v", err1)
-						return fmt.Errorf("createDynamicJob failed : %v", err1)
+					err = e.createDynamicJob(child, result, graph, event.Key)
+					if err != nil {
+						return fmt.Errorf("createDynamicJob failed : %v", err)
 					}
 					// update the graph
 					// update the execution e.execUpdater.UpdateExecution(exec, execution)
 					return nil
 
 				}
-				/*end changes related to dynamic concurrency or get_result*/
 				if e.shouldStartJob(event.Key, child.Data.Job) {
 					if err := e.createJob(child.Data.Job); err != nil {
 						key := util.KeyOf(child.Data.Job)
@@ -220,7 +215,7 @@ func (e *ExecutionJobController) syncHandler(event Event) error {
 	return nil
 }
 
-func evalgetResult(output string, vars []interface{}) ([]parser.Var, string, error) {
+func evalJobResult(jobresult string, vars []interface{}) ([]parser.Var, string, error) {
 
 	result := make([]parser.Var, 0, len(vars))
 	var parentJobName string
@@ -233,11 +228,11 @@ func evalgetResult(output string, vars []interface{}) ([]parser.Var, string, err
 			sep := v[2].(string)
 
 			if sep == "" {
-				temp := []interface{}{output}
+				temp := []interface{}{jobresult}
 				result = append(result, temp)
 			} else {
 				var strslice []interface{}
-				for _, str := range strings.Split(output, sep) {
+				for _, str := range strings.Split(jobresult, sep) {
 					if str != "" {
 						strslice = append(strslice, str)
 					}
@@ -245,10 +240,10 @@ func evalgetResult(output string, vars []interface{}) ([]parser.Var, string, err
 				temp := []interface{}{strslice}
 				result = append(result, temp)
 			}
-			glog.Infof("In evalgetResult jobName: %s sep:%s", parentJobName, sep)
+			glog.Infof("In evalJobResult jobName: %s sep:%s", parentJobName, sep)
 		}
 	}
-	glog.Infof("In evalgetResult result: %v", result)
+	glog.Infof("In evalJobResult result: %v", result)
 	return result, parentJobName, nil
 }
 func ConvertVars(vars []interface{}) []parser.Var {
@@ -274,12 +269,12 @@ func (e *ExecutionJobController) createDynamicJob(child *graph.Vertex, jobresult
 	}
 
 	task := child.Data.DynamicJob.DeepCopy()
-	varsIter, parentJobName, err := evalgetResult(jobresult, child.Data.DynamicJob.CommandsIter.VarsIter)
+	varsIter, parentJobName, err := evalJobResult(jobresult, child.Data.DynamicJob.CommandsIter.VarsIter)
 	if err != nil {
-		glog.V(2).Infof("Error in evalgetResult execution job name %q , . Error: %v", job.Name, err)
+		glog.V(2).Infof("Error in evalJobResult execution job name %q , . Error: %v", job.Name, err)
 		return err
 	}
-	glog.V(2).Infof("evalgetResult output parentJobName:%s , varsIter: %v", parentJobName, varsIter)
+	glog.V(2).Infof("evalJobResult output parentJobName:%s , varsIter: %v", parentJobName, varsIter)
 
 	newCommands := child.Data.DynamicJob.CommandSet
 
@@ -299,13 +294,11 @@ func (e *ExecutionJobController) createDynamicJob(child *graph.Vertex, jobresult
 	// merge jobInfo.commands and jobInfo.iterCommands
 	newCommands = append(newCommands, iterCommands...)
 
-	//now need to update the task based on the new parameters
-
 	task.CommandSet = newCommands
 
 	glog.V(2).Infof("final commandset task.CommandSet %v ", task.CommandSet)
 
-	//update this task in the execution struct then call the Update()
+	// update this task in the execution struct then call the Update()
 	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
 	execution, err := e.executionLister.Executions(namespace).Get(name)
 	if err != nil {
@@ -326,7 +319,7 @@ func (e *ExecutionJobController) createDynamicJob(child *graph.Vertex, jobresult
 
 	err = e.execUpdater.UpdateExecution(execcopy, execution)
 	if err != nil {
-		glog.Errorf("execUpdater.UpdateExecution failed %s error: %v", err)
+		glog.Errorf("execUpdater.UpdateExecution failed error: %v", err)
 		return err
 	}
 

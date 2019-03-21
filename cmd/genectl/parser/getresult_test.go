@@ -17,11 +17,10 @@ limitations under the License.
 package parser
 
 import (
-	"fmt"
 	"testing"
 )
 
-func TestIsGetResultFuncFunc(t *testing.T) {
+func TestIsGetResultFunc(t *testing.T) {
 	testCases := []struct {
 		str    string
 		expect bool
@@ -68,7 +67,7 @@ func TestIsGetResultFuncFunc(t *testing.T) {
 	}
 }
 
-func TestGetgetResultFuncParam(t *testing.T) {
+func TestGetResultFuncParam(t *testing.T) {
 	testCases := []struct {
 		Str         string
 		ExpectjName string
@@ -88,14 +87,12 @@ func TestGetgetResultFuncParam(t *testing.T) {
 	}
 
 	for i, testCase := range testCases {
-		jName, sep := GetgetResultFuncParam(testCase.Str)
+		jName, sep := getResultFuncParam(testCase.Str)
 		if jName != testCase.ExpectjName {
 			t.Errorf("%d: unexpected jobName; got %s, expected %s", i, jName, testCase.ExpectjName)
 		}
 		if sep != testCase.ExpectSep {
 			t.Errorf("%d: unexpected separator; got %s, expected %s", i, sep, testCase.ExpectSep)
 		}
-		fmt.Println("succes===")
-
 	}
 }

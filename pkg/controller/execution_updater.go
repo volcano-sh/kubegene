@@ -53,28 +53,28 @@ func (esu *executionUpdater) UpdateExecution(modified *genev1alpha1.Execution, o
 		var current *genev1alpha1.Execution
 		current, err = esu.execClient.Executions(modified.Namespace).Get(modified.Name, metav1.GetOptions{})
 		if err != nil {
-			glog.Error("getting the execution is failed. Error: %v", err)
+			glog.Error("getting the execution is failed %#v", err)
 			break
 		}
 
 		var curBytes []byte
 		curBytes, err = json.Marshal(current)
 		if err != nil {
-			glog.Error("after getting the execution json.Marshal failed. Error: %v", err)
+			glog.Error("after getting the execution json.Marshal failed %#v", err)
 			break
 		}
 
 		var bytes []byte
 		bytes, err = jsonpatch.MergePatch(curBytes, patchBytes)
 		if err != nil {
-			glog.Error("after getting the execution jsonpatch.MergePatch failed. Error: %v", err)
+			glog.Error("after getting the execution jsonpatch.MergePatch failed. Error: %#v", err)
 			break
 		}
 
 		var updated genev1alpha1.Execution
 		err = json.Unmarshal(bytes, &updated)
 		if err != nil {
-			glog.Error("after getting the execution json.Unmarshal failed. Error: %v", err)
+			glog.Error("after getting the execution json.Unmarshal failed. Error: %#v", err)
 			break
 		}
 
@@ -90,20 +90,17 @@ func (esu *executionUpdater) UpdateExecution(modified *genev1alpha1.Execution, o
 func preparePatchBytesForExecution(modifiedExec *genev1alpha1.Execution, originExec *genev1alpha1.Execution) ([]byte, error) {
 	origin, err := json.Marshal(originExec)
 	if err != nil {
-		glog.Error("In preparePatchBytesForExecution func  json.Marshal failed for %s Error: %v", util.KeyOf(originExec), err)
 		return nil, fmt.Errorf("unable to marshal execution %s", util.KeyOf(originExec))
 	}
 
 	modified, err := json.Marshal(modifiedExec)
 	if err != nil {
-		glog.Error("In preparePatchBytesForExecution func  json.Marshal failed for %s Error: %v", util.KeyOf(modifiedExec), err)
 		return nil, fmt.Errorf("unable to marshal execution %s", util.KeyOf(modifiedExec))
 	}
 
 	patchBytes, err := jsonpatch.CreateMergePatch(origin, modified)
 	if err != nil {
-		glog.Error("In preparePatchBytesForExecution func  jsonpatch.CreateMergePatch failed for %s Error: %v", util.KeyOf(modifiedExec), err)
-		return nil, fmt.Errorf("failed to CreateMergePatch for execution %q: %v", util.KeyOf(modifiedExec), err)
+		return nil, fmt.Errorf("failed to CreateMergePatch for execution %s: %#v", util.KeyOf(modifiedExec), err)
 	}
 
 	return patchBytes, nil
