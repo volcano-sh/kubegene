@@ -18,6 +18,7 @@ package parser
 
 import (
 	"fmt"
+	"kubegene.io/kubegene/pkg/common"
 	"regexp"
 	"strings"
 )
@@ -66,13 +67,10 @@ func IsGetResultFunc(str string) bool {
 // 		Str ---> get_result(job-target,sep )
 // 		result ---> job-target,sep
 func getResultFuncParam(str string) (jobName string, sep string) {
+
 	submatch := getResultRegExp.FindStringSubmatch(str)
 
 	jobName = strings.Replace(submatch[1], " ", "", -1)
-
-	if matched := inputsVarRegExp.MatchString(str); matched {
-		return
-	}
 
 	if submatch[4] != "" {
 		sep = submatch[4]
@@ -119,14 +117,29 @@ func validatedependecy(prefix string, jobName string, dependjobName string, work
 
 	return err
 }
+func ValidategetResultFuncParam(prefix, param string, inputs map[string]Input) error {
+	if IsVariant(param) {
+		if err := ValidateVariant(prefix, param, []string{StringType}, inputs); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 // validategetResultFunc validate parameter of get_result function is valid.
 func validategetResultFunc(prefix, str string, inputs map[string]Input, jobName string, workflow *Workflow) ErrorList {
 	allErr := ErrorList{}
-	dependjobName, _ := getResultFuncParam(str)
+	dependjobName, sep := getResultFuncParam(str)
 	if isJobExists(jobName, workflow) {
 		err := fmt.Errorf("%s: the get_result function dependecy job is missing, but the real one is %s", prefix, dependjobName)
 		allErr = append(allErr, err)
+	}
+
+	if sep != "" {
+		err := ValidategetResultFuncParam(prefix, sep, inputs)
+		if err != nil {
+			allErr = append(allErr, err)
+		}
 	}
 	// validate the dependency
 	err := validatedependecy(prefix, jobName, dependjobName, workflow)
@@ -136,12 +149,12 @@ func validategetResultFunc(prefix, str string, inputs map[string]Input, jobName 
 	return allErr
 }
 
-func InstantiategetResultFunc(prefix, str string, data map[string]string) (Var, map[string]bool, error) {
-	dependsResult := map[string]bool{}
-	jobName, sep := getResultFuncParam(str)
+func InstantiategetResultFunc(prefix, str string, data map[string]string) (common.Var, error) {
 
+	jobName, sep := getResultFuncParam(str)
+	// replace variant for sep
+	sep = common.ReplaceVariant(sep, data)
 	getresult := []interface{}{"get_result", jobName, sep}
 
-	dependsResult[jobName] = true
-	return getresult, dependsResult, nil
+	return getresult, nil
 }

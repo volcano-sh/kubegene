@@ -229,7 +229,10 @@ func (in *Task) DeepCopyInto(out *Task) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	in.CommandsIter.DeepCopyInto(&out.CommandsIter)
+	if in.CommandsIter != nil {
+		in, out := &in.CommandsIter, &out.CommandsIter
+		*out = (*in).DeepCopy()
+	}
 	if in.Volumes != nil {
 		in, out := &in.Volumes, &out.Volumes
 		*out = make(map[string]Volume, len(*in))

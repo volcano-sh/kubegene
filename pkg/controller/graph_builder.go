@@ -21,7 +21,6 @@ import (
 	"strings"
 	"sync"
 
-	"fmt"
 	batch "k8s.io/api/batch/v1"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -85,10 +84,9 @@ func newGraph(execution *genev1alpha1.Execution) *graph.Graph {
 
 		jobNamePrefix := execution.Name + Separator + task.Name + Separator
 
-		if len(task.CommandsIter.Depends) > 0 {
+		if task.CommandsIter != nil {
 			localtask := task
-			fmt.Println("task.CommandSet", task.CommandSet)
-			jobName := jobNamePrefix //+ strconv.Itoa(0)
+			jobName := jobNamePrefix
 			// make up k8s job resource
 			job := newJob(jobName, "", execution, &task)
 			jobInfo := graph.NewJobInfo(job, false, task.Type, &localtask)

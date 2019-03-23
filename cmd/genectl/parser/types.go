@@ -111,8 +111,6 @@ type Resources struct {
 	Cpu    string `json:"cpu,omitempty" yaml:"cpu,omitempty"`
 }
 
-type Var []interface{}
-
 // CommandsIter defines command for workflows job. If both Vars and Vars_iter are specified,
 // the generate command will be merged.
 type CommandsIter struct {
@@ -159,8 +157,6 @@ type CommandsIter struct {
 	// sh /tmp/scripts/step1.splitfq.sh sample1 1 /tmp/data 25
 	// sh /tmp/scripts/step1.splitfq.sh sample2 1 /tmp/data 25
 	VarsIter []interface{} `json:"vars_iter,omitempty" yaml:"vars_iter,omitempty"`
-
-	Depends map[string]bool `json:"depends,omitempty" yaml:"depends,omitempty"`
 }
 
 const (

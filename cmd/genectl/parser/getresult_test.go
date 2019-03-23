@@ -84,6 +84,16 @@ func TestGetResultFuncParam(t *testing.T) {
 			ExpectjName: "{start}",
 			ExpectSep:   " ",
 		},
+		{
+			Str:         `get_result(job-a, "2")`,
+			ExpectjName: "job-a",
+			ExpectSep:   "2",
+		},
+		{
+			Str:         `get_result(job-b, "${start}")`,
+			ExpectjName: "job-b",
+			ExpectSep:   "${start}",
+		},
 	}
 
 	for i, testCase := range testCases {

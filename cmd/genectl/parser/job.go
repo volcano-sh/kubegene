@@ -220,11 +220,9 @@ func TransDepend2ExecDepend(depends []Depend) []execv1alpha1.Dependent {
 	return execDepends
 }
 
-func TransCommandIter2ExecCommandIter(commandsIter CommandsIter) execv1alpha1.CommandsIter {
+func TransCommandIter2ExecCommandIter(commandsIter CommandsIter) *execv1alpha1.CommandsIter {
 	var execCommandIter execv1alpha1.CommandsIter
-
 	execCommandIter.Command = commandsIter.Command
-	execCommandIter.Depends = map[string]bool{}
 	execCommandIter.Vars = make([]interface{}, len(commandsIter.Vars))
 	execCommandIter.VarsIter = make([]interface{}, len(commandsIter.VarsIter))
 
@@ -234,8 +232,5 @@ func TransCommandIter2ExecCommandIter(commandsIter CommandsIter) execv1alpha1.Co
 	for _, var1 := range commandsIter.VarsIter {
 		execCommandIter.VarsIter = append(execCommandIter.VarsIter, var1)
 	}
-	for name, flag := range commandsIter.Depends {
-		execCommandIter.Depends[name] = flag
-	}
-	return execCommandIter
+	return &execCommandIter
 }

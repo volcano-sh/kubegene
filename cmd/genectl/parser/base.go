@@ -22,12 +22,14 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"kubegene.io/kubegene/pkg/common"
 )
 
 func ReplaceArray(base []string, kv map[string]string) []string {
 	array := make([]string, 0, len(base))
 	for _, str := range base {
-		newStr := ReplaceVariant(str, kv)
+		newStr := common.ReplaceVariant(str, kv)
 		array = append(array, newStr)
 	}
 	return array
@@ -128,18 +130,18 @@ func ValidateRangeFunc(prefix, str string, inputs map[string]Input) ErrorList {
 	return allErr
 }
 
-func InstantiateRangeFunc(prefix, str string, data map[string]string) (Var, error) {
+func InstantiateRangeFunc(prefix, str string, data map[string]string) (common.Var, error) {
 	start, end, step := GetRangeFuncParam(str)
 
 	// replace variant for start
-	start = ReplaceVariant(start, data)
+	start = common.ReplaceVariant(start, data)
 	startNum, err := strconv.ParseFloat(start, 64)
 	if err != nil {
 		return nil, fmt.Errorf("%s convert start to float err: %v", prefix, err)
 	}
 
 	// replace variant for end
-	end = ReplaceVariant(end, data)
+	end = common.ReplaceVariant(end, data)
 	endNum, err := strconv.ParseFloat(end, 64)
 	if err != nil {
 		return nil, fmt.Errorf("%s convert end to float err: %v", prefix, err)
@@ -147,7 +149,7 @@ func InstantiateRangeFunc(prefix, str string, data map[string]string) (Var, erro
 
 	var stepNum float64 = 1
 	if len(step) != 0 {
-		step = ReplaceVariant(step, data)
+		step = common.ReplaceVariant(step, data)
 		stepNum, err = strconv.ParseFloat(step, 64)
 		if err != nil {
 			return nil, fmt.Errorf("%s convert step to float err: %v", prefix, err)
@@ -170,8 +172,8 @@ func InstantiateRangeFunc(prefix, str string, data map[string]string) (Var, erro
 	return numbers, nil
 }
 
-func InstantiateVars(prefix string, vars []interface{}, data map[string]string) ([]Var, error) {
-	result := make([]Var, 0, len(vars))
+func InstantiateVars(prefix string, vars []interface{}, data map[string]string) ([]common.Var, error) {
+	result := make([]common.Var, 0, len(vars))
 	for i, v := range vars {
 		if strValue, ok := v.(string); ok {
 			prefix := fmt.Sprintf("%s[%d]", prefix, i)
@@ -184,7 +186,7 @@ func InstantiateVars(prefix string, vars []interface{}, data map[string]string) 
 				continue
 			} else {
 				variant := GetVariantName(strValue)
-				var array Var
+				var array common.Var
 				err := json.Unmarshal([]byte(data[variant]), &array)
 				if err != nil {
 					return nil, fmt.Errorf("unmarshal %s error", prefix)
@@ -194,7 +196,7 @@ func InstantiateVars(prefix string, vars []interface{}, data map[string]string) 
 		} else if array, ok := v.([]interface{}); ok {
 			for j, s := range array {
 				if varStr, ok := s.(string); ok {
-					array[j] = ReplaceVariant(varStr, data)
+					array[j] = common.ReplaceVariant(varStr, data)
 				}
 			}
 			result = append(result, array)
@@ -204,157 +206,47 @@ func InstantiateVars(prefix string, vars []interface{}, data map[string]string) 
 	return result, nil
 }
 
-func InstantiateVarsIter(prefix string, vars []interface{}, data map[string]string) ([]Var, map[string]bool, error) {
-	result := make([]Var, 0, len(vars))
-	dependsResult := map[string]bool{}
+func InstantiateVarsIter(prefix string, vars []interface{}, data map[string]string) ([]common.Var, bool, error) {
+	result := make([]common.Var, 0, len(vars))
+	dynamicjob := false
 	for i, v := range vars {
 		if strValue, ok := v.(string); ok {
 			prefix := fmt.Sprintf("%s[%d]", prefix, i)
 			if IsRangeFunc(strValue) {
 				rangeValue, err := InstantiateRangeFunc(prefix, strValue, data)
 				if err != nil {
-					return nil, dependsResult, err
+					return nil, false, err
 				}
 				result = append(result, rangeValue)
 				continue
 			} else if IsGetResultFunc(strValue) {
-				getresult, dep, err := InstantiategetResultFunc(prefix, strValue, data)
+				getresult, err := InstantiategetResultFunc(prefix, strValue, data)
 				if err != nil {
-					return nil, dependsResult, err
+					return nil, false, err
 				}
-				if dep != nil {
-					for name, flag := range dep {
-						dependsResult[name] = flag
-					}
-				}
-
+				dynamicjob = true
 				result = append(result, getresult)
 				continue
 			} else {
 				variant := GetVariantName(strValue)
-				var array Var
+				var array common.Var
 				err := json.Unmarshal([]byte(data[variant]), &array)
 				if err != nil {
-					return nil, dependsResult, fmt.Errorf("unmarshal %s error", prefix)
+					return nil, false, fmt.Errorf("unmarshal %s error", prefix)
 				}
 				result = append(result, array)
 			}
 		} else if array, ok := v.([]interface{}); ok {
 			for j, s := range array {
 				if varStr, ok := s.(string); ok {
-					array[j] = ReplaceVariant(varStr, data)
+					array[j] = common.ReplaceVariant(varStr, data)
 				}
 			}
 			result = append(result, array)
 		}
 	}
 
-	return result, dependsResult, nil
-}
-
-func Iter2Array(base string, vars []Var) []string {
-	result := make([]string, 0, len(vars))
-	for i, varsRow := range vars {
-		varMap := make(map[string]string)
-		for j, varCol := range varsRow {
-			varMap[strconv.Itoa(j+1)] = ToString(varCol)
-			varMap["item"] = ToString(i)
-		}
-		result = append(result, ReplaceVariant(base, varMap))
-	}
-	return result
-}
-
-func AddVar(varIter []Var, rowCnt, rowNum int, vars Var, result *[]Var) {
-	for _, v := range varIter[rowNum] {
-		newVar := make([]interface{}, rowNum, rowCnt)
-		copy(newVar, vars)
-		newVar = append(newVar, v)
-		if rowNum+1 == rowCnt {
-			*result = append(*result, newVar)
-		} else {
-			AddVar(varIter, rowCnt, rowNum+1, newVar, result)
-		}
-	}
-}
-
-// VarIter2Vars convert varIter to var.
-//
-// example
-//
-//   varIter ---> [[1, 2], [3, 4], [5]]
-//   result  ---> [[1, 3, 5], [1, 4, 5], [2, 3, 5], [2, 4, 5]]
-func VarIter2Vars(varIter []Var) []Var {
-	var result []Var
-	if len(varIter) == 0 {
-		return result
-	}
-	vars := make([]interface{}, 0, len(varIter))
-	AddVar(varIter, len(varIter), 0, vars, &result)
-
-	return result
-}
-
-// ReplaceVariant replace all the ${var} variant with the real data.
-// for example:
-// s = "${foo} kubegene ${bar}"
-// data = {"foo": "hello", "bar": "world"}
-// result: hello kubegene world
-func ReplaceVariant(s string, data map[string]string) string {
-	buf := make([]byte, 0, 2*len(s))
-	i := 0
-	for j := 0; j < len(s); j++ {
-		if s[j] == '$' && j+3 < len(s) && s[j+1] == '{' {
-			buf = append(buf, s[i:j]...)
-			var k int
-			for k = j + 2; k < len(s); k++ {
-				if s[k] == '}' {
-					break
-				}
-			}
-			if v, ok := data[s[j+2:k]]; ok {
-				buf = append(buf, v...)
-			} else {
-				buf = append(buf, s[j:k+1]...)
-			}
-			j = k + 1
-			i = j
-		}
-	}
-	return string(buf) + s[i:]
-}
-
-func ToString(i interface{}) string {
-	switch v := i.(type) {
-	case string:
-		return v
-	case float64:
-		return strconv.FormatFloat(v, 'f', -1, 64)
-	case float32:
-		return strconv.FormatFloat(float64(v), 'f', -1, 32)
-	case int:
-		return strconv.Itoa(v)
-	case int16:
-		return strconv.Itoa(int(v))
-	case int32:
-		return strconv.Itoa(int(v))
-	case uint:
-		return strconv.Itoa(int(v))
-	case uint32:
-		return strconv.Itoa(int(v))
-	case uint16:
-		return strconv.Itoa(int(v))
-	case int8:
-		return strconv.Itoa(int(v))
-	case bool:
-		return strconv.FormatBool(v)
-	default:
-		jsonValue, err := json.Marshal(v)
-		if err != nil {
-			return "unknownType"
-		}
-		return string(jsonValue)
-	}
+	return result, dynamicjob, nil
 }
 
 func sliceContain(strArr []string, str string) int {
@@ -581,7 +473,7 @@ func ValidateVariant(prefix, varStr string, types []string, inputs map[string]In
 	return nil
 }
 
-func ValidateInstantiatedVars(prefix string, varsArray []Var) (int, error) {
+func ValidateInstantiatedVars(prefix string, varsArray []common.Var) (int, error) {
 	var length int
 	if len(varsArray) != 0 {
 		length = len(varsArray[0])

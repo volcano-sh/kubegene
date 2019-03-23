@@ -43,39 +43,63 @@ func NewJobInfo(job *batch.Job, finished bool, taskType genev1alpha1.TaskType, d
 }
 
 type Vertex struct {
-	Data     *JobInfo
-	Children []*Vertex
-	dynamic  bool
+	Data          *JobInfo
+	Children      []*Vertex
+	dynamic       bool
+	dynamicJobCnt int
+	successCnt    int
 }
 
 type Graph struct {
 	sync.RWMutex
-	NumOfSuccess int
-	VertexCount  int
-	Size         int
-	VertexArray  []*Vertex
-	AdjMatrix    []int
+	NumOfSuccess  int
+	VertexCount   int
+	Size          int
+	VertexArray   []*Vertex
+	AdjMatrix     []int
+	DynamicJobCnt int
 }
 
 func NewGraph(size int) *Graph {
 	return &Graph{
-		Size:        size,
-		VertexArray: make([]*Vertex, size),
-		AdjMatrix:   make([]int, size*size),
+		Size:          size,
+		VertexArray:   make([]*Vertex, size),
+		AdjMatrix:     make([]int, size*size),
+		DynamicJobCnt: 0,
 	}
 }
 
 func NewVertex(data *JobInfo, flag bool, children ...*Vertex) *Vertex {
 	vertex := &Vertex{
-		Data:     data,
-		Children: make([]*Vertex, 0),
-		dynamic:  flag,
+		Data:          data,
+		Children:      make([]*Vertex, 0),
+		dynamic:       flag,
+		dynamicJobCnt: 0,
+		successCnt:    0,
 	}
 	vertex.Children = append(vertex.Children, children...)
 
 	return vertex
 }
+func (n *Vertex) IsDynamic() bool {
+	return n.dynamic
+}
+func (n *Vertex) SetdynamicJobCnt(cnt int) {
+	if cnt < 0 {
+		return
+	}
+	n.dynamicJobCnt = cnt
+}
+func (n *Vertex) GetdynamicJobCnt() int {
+	return n.dynamicJobCnt
+}
+func (n *Vertex) IncdynamicJobSuccCnt() {
 
+	n.successCnt++
+}
+func (n *Vertex) GetdynamicSuccJobCnt() int {
+	return n.successCnt
+}
 func (n *Vertex) AddChild(vertex *Vertex) {
 	if vertex != nil {
 		n.Children = append(n.Children, vertex)
@@ -224,6 +248,12 @@ func (g *Graph) FindChildrenByName(jobName string) []*Vertex {
 		if jobInfo := vertex.Data; jobInfo.Job.Name == jobName {
 			return vertex.Children
 		}
+		//jobNamePrefix := execution.Name + Separator + task.Name + Separator
+		if vertex.IsDynamic() {
+			if jobInfo := vertex.Data; strings.HasPrefix(jobName, jobInfo.Job.Name) {
+				return vertex.Children
+			}
+		}
 	}
 
 	return nil
@@ -233,6 +263,12 @@ func (g *Graph) FindDependentsByName(jobName string) []int {
 	for i, vertex := range g.VertexArray {
 		if jobInfo := vertex.Data; jobInfo.Job.Name == jobName {
 			return g.FindDependents(i)
+		}
+		//jobNamePrefix := execution.Name + Separator + task.Name + Separator
+		if vertex.IsDynamic() {
+			if jobInfo := vertex.Data; strings.HasPrefix(jobName, jobInfo.Job.Name) {
+				return g.FindDependents(i)
+			}
 		}
 	}
 
@@ -255,7 +291,7 @@ func (g *Graph) FindVertexByName(jobName string) *Vertex {
 			return vertex
 		}
 		//jobNamePrefix := execution.Name + Separator + task.Name + Separator
-		if vertex.dynamic {
+		if vertex.IsDynamic() {
 			if jobInfo := vertex.Data; strings.HasPrefix(jobName, jobInfo.Job.Name) {
 				return vertex
 			}
@@ -277,4 +313,11 @@ func (g *Graph) PlusNumOfSuccess() {
 	g.Lock()
 	defer g.Unlock()
 	g.NumOfSuccess++
+}
+
+func (g *Graph) AddDynamicJobCnt(cnt int) {
+	if cnt < 0 {
+		return
+	}
+	g.DynamicJobCnt += cnt
 }

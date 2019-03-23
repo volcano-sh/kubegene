@@ -24,6 +24,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	execv1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
+
+	"kubegene.io/kubegene/pkg/common"
 )
 
 func UnmarshalWorkflow(workflowData []byte) (*Workflow, error) {
@@ -90,7 +92,7 @@ func ValidateWorkflow(workflow *Workflow) ErrorList {
 	return allErr
 }
 
-func convert2ArrayOfIfs(data []Var) []interface{} {
+func convert2ArrayOfIfs(data []common.Var) []interface{} {
 	vars := make([]interface{}, 0)
 	for _, arr := range data {
 		for _, a := range arr {
@@ -113,8 +115,8 @@ func InstantiateWorkflow(workflow *Workflow, inputs map[string]interface{}, tool
 	// populate data for volumes.
 	volumes := make(map[string]Volume, len(workflow.Volumes))
 	for key, volume := range workflow.Volumes {
-		volume.MountPath = ReplaceVariant(volume.MountPath, inputsReplaceData)
-		volume.MountFrom.PVC = ReplaceVariant(volume.MountFrom.PVC, inputsReplaceData)
+		volume.MountPath = common.ReplaceVariant(volume.MountPath, inputsReplaceData)
+		volume.MountFrom.PVC = common.ReplaceVariant(volume.MountFrom.PVC, inputsReplaceData)
 		volumes[key] = volume
 	}
 	workflow.Volumes = volumes
@@ -149,12 +151,12 @@ func InstantiateWorkflow(workflow *Workflow, inputs map[string]interface{}, tool
 
 		// populate data for commandIter.vars
 		prefix := fmt.Sprintf("***workflows.commands_iter.%s.vars", jobName)
-		//fmt.Println(" before InstantiateVars", prefix, jobInfo.CommandsIter.Vars)
+
 		vars, err := InstantiateVars(prefix, jobInfo.CommandsIter.Vars, inputsReplaceData)
 		if err != nil {
 			return err
 		}
-		//fmt.Println(" ****after InstantiateVars", vars)
+
 		length, err := ValidateInstantiatedVars("workflows."+jobName, vars)
 		if err != nil {
 			return err
@@ -163,27 +165,27 @@ func InstantiateWorkflow(workflow *Workflow, inputs map[string]interface{}, tool
 		// populate data for commandIter.varsIter
 		prefix = fmt.Sprintf("workflows.commands_iter.%s.varsIter", jobName)
 		//fmt.Println(" before InstantiateVarsIter", prefix, jobInfo.CommandsIter.Vars)
-		varsIter, dep, err := InstantiateVarsIter(prefix, jobInfo.CommandsIter.VarsIter, inputsReplaceData)
+		varsIter, flag, err := InstantiateVarsIter(prefix, jobInfo.CommandsIter.VarsIter, inputsReplaceData)
 		if err != nil {
 			return err
 		}
-		// if no get_result then len(dep) is zero
-		if len(dep) == 0 {
+		// if no get_result then flag is false
+		if !flag {
 			if length != 0 && len(varsIter) != 0 && len(varsIter) != length {
 				return fmt.Errorf("workflows.%s: the length of vars is %d, but the length of varsIter is %d", jobName, length, len(varsIter))
 			}
 
 			// convert varsIter to var
-			iterVars := VarIter2Vars(varsIter)
+			iterVars := common.VarIter2Vars(varsIter)
 
 			// merge vars
 			vars = append(vars, iterVars...)
 
 			// populate data for CommandsIter.Command.
-			command := ReplaceVariant(jobInfo.CommandsIter.Command, inputsReplaceData)
+			command := common.ReplaceVariant(jobInfo.CommandsIter.Command, inputsReplaceData)
 
 			// generate all commands.
-			iterCommands := Iter2Array(command, vars)
+			iterCommands := common.Iter2Array(command, vars)
 
 			// merge jobInfo.commands and jobInfo.iterCommands
 			newCommands = append(newCommands, iterCommands...)
@@ -197,10 +199,9 @@ func InstantiateWorkflow(workflow *Workflow, inputs map[string]interface{}, tool
 
 			tmpJob.Commands = newCommands
 			// populate data for CommandsIter.Command.
-			command := ReplaceVariant(jobInfo.CommandsIter.Command, inputsReplaceData)
+			command := common.ReplaceVariant(jobInfo.CommandsIter.Command, inputsReplaceData)
 
 			tmpJob.CommandsIter.Command = command
-			tmpJob.CommandsIter.Depends = dep
 			tmpJob.CommandsIter.Vars = convert2ArrayOfIfs(vars)
 			tmpJob.CommandsIter.VarsIter = convert2ArrayOfIfs(varsIter)
 
@@ -236,16 +237,16 @@ func InstantiateWorkflow(workflow *Workflow, inputs map[string]interface{}, tool
 		}
 
 		// convert varsIter to var
-		varsIter = VarIter2Vars(varsIter)
+		varsIter = common.VarIter2Vars(varsIter)
 
 		// merge vars
 		vars = append(vars, varsIter...)
 
 		// populate data for PathsIter.Path.
-		path := ReplaceVariant(outputInfo.PathsIter.Path, inputsReplaceData)
+		path := common.ReplaceVariant(outputInfo.PathsIter.Path, inputsReplaceData)
 
 		// generate all paths.
-		iterPaths := Iter2Array(path, vars)
+		iterPaths := common.Iter2Array(path, vars)
 
 		newPaths = append(newPaths, iterPaths...)
 		output.Paths = newPaths
@@ -286,7 +287,7 @@ func TransWorkflow2Execution(workflow *Workflow) (*execv1alpha1.Execution, error
 		task.CommandSet = jobInfo.Commands
 
 		// if job has get_result function in vars_iter
-		if len(jobInfo.CommandsIter.Depends) > 0 {
+		if jobInfo.CommandsIter.Command != "" && len(jobInfo.CommandsIter.VarsIter) > 0 {
 			task.CommandsIter = TransCommandIter2ExecCommandIter(jobInfo.CommandsIter)
 		}
 
