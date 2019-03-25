@@ -19,27 +19,28 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/evanphx/json-patch"
 	"github.com/golang/glog"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+
 	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
 	geneclientset "kubegene.io/kubegene/pkg/client/clientset/versioned/typed/gene/v1alpha1"
 	"kubegene.io/kubegene/pkg/util"
-	"time"
 )
 
 // DefaultRetry is a default retry backoff settings when retrying API calls
 var DefaultRetry = wait.Backoff{
-	Steps:    UpdateRetries,
-	Duration: 10 * time.Millisecond,
-	Factor:   1.0,
-	Jitter:   0.1,
+	Steps:    UpdateRetries,         // Exit with error after this many steps
+	Duration: 10 * time.Millisecond, // the base duration
+	Factor:   1.0,                   // Duration is multiplied by factor each iteration
+	Jitter:   0.1,                   // The amount of jitter applied each iteration
 }
 
 // ExecutionStatusUpdater is an interface used to update the ExecutionStatus associated with a Execution.
-type ExecutionStatusUpdater interface {
+type ExecutionUpdater interface {
 	// UpdateStatefulSetStatus sets the set's Status to status. Implementations are required to retry on conflicts,
 	// but fail on other errors. If the returned error is nil set's Status has been successfully set to status.
 	UpdateExecutionStatus(modified *genev1alpha1.Execution, original *genev1alpha1.Execution) error
@@ -48,15 +49,15 @@ type ExecutionStatusUpdater interface {
 
 // NewExecutionStatusUpdater returns a ExecutionStatusUpdater that updates the Status of a Execution,
 // using the supplied client and setLister.
-func NewExecutionStatusUpdater(client geneclientset.ExecutionsGetter) ExecutionStatusUpdater {
-	return &executionStatusUpdater{client}
+func NewExecutionStatusUpdater(client geneclientset.ExecutionsGetter) ExecutionUpdater {
+	return &executionUpdater{client}
 }
 
-type executionStatusUpdater struct {
+type executionUpdater struct {
 	execClient geneclientset.ExecutionsGetter
 }
 
-func (esu *executionStatusUpdater) UpdateExecutionStatus(modified *genev1alpha1.Execution, original *genev1alpha1.Execution) error {
+func (esu *executionUpdater) UpdateExecutionStatus(modified *genev1alpha1.Execution, original *genev1alpha1.Execution) error {
 	patchBytes, err := preparePatchBytesForExecutionStatus(modified, original)
 	if err != nil {
 		return err
@@ -101,7 +102,7 @@ func (esu *executionStatusUpdater) UpdateExecutionStatus(modified *genev1alpha1.
 
 	return err
 }
-func (esu *executionStatusUpdater) UpdateExecution(modified *genev1alpha1.Execution, original *genev1alpha1.Execution) error {
+func (esu *executionUpdater) UpdateExecution(modified *genev1alpha1.Execution, original *genev1alpha1.Execution) error {
 	patchBytes, err := preparePatchBytesForExecutionStatus(modified, original)
 	if err != nil {
 		return err

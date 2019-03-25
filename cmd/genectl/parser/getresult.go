@@ -18,9 +18,10 @@ package parser
 
 import (
 	"fmt"
-	"kubegene.io/kubegene/pkg/common"
 	"regexp"
 	"strings"
+
+	"kubegene.io/kubegene/pkg/common"
 )
 
 const IsGetResultFuncRegexFmt = `^get_result\(\s*([^,]+)\s*(,\s*("([^,]+)"|'([^,]+)'|\$\{[^,]+\}))?\)$`
@@ -52,10 +53,7 @@ func decodeNonPrintChar(sep string) string {
 // ---- get_result(job-target)
 // ---- get_result(job-target, ${input})
 func IsGetResultFunc(str string) bool {
-	if matched := getResultRegExp.MatchString(str); matched {
-		return true
-	}
-	return false
+	return getResultRegExp.MatchString(str)
 }
 
 // getResultFuncParam extract parameter from range function.
@@ -86,48 +84,46 @@ func isJobExists(jobName string, workflow *Workflow) bool {
 	return ok
 }
 
-func validatedependecy(prefix string, jobName string, dependjobName string, workflow *Workflow) error {
+func validateDependecy(prefix string, jobName string, dependJobName string, workflow *Workflow) error {
 
-	dependJob, ok := workflow.Jobs[dependjobName]
+	dependJob, ok := workflow.Jobs[dependJobName]
 	if !ok {
-		err := fmt.Errorf("%s: the get_result function dependecy job is missing, but the real one is %s", prefix, dependjobName)
+		err := fmt.Errorf("%s: the get_result function dependecy job is missing, but the real one is %s", prefix, dependJobName)
 		return err
 	}
 
 	// depend job should have single command only because it should be single k8s- job related to that job
 
 	if (len(dependJob.Commands) > 1) || (len(dependJob.CommandsIter.Vars) > 1) || (len(dependJob.CommandsIter.VarsIter) > 1) {
-		err := fmt.Errorf("the get_result function dependecy job has more than one command %s dependjobName :%s", prefix, dependjobName)
+		err := fmt.Errorf("the get_result function dependecy job has more than one command %s dependjobName :%s", prefix, dependJobName)
 		return err
 	}
 
 	currentJob, ok := workflow.Jobs[jobName]
 	if !ok {
-		err := fmt.Errorf("%s: the get_result function dependecy job is missing, but the real one is %s", prefix, dependjobName)
+		err := fmt.Errorf("%s: the get_result function  job is missing, but the real one is %s", prefix, dependJobName)
 		return err
 	}
+
+	if len(currentJob.Depends) != 1 {
+		err := fmt.Errorf("%s: the get_result  job has more dependecies %v", prefix, currentJob.Depends)
+		return err
+	}
+
 	for i := 0; i < len(currentJob.Depends); i++ {
-		if (currentJob.Depends[i].Target == dependjobName) &&
+		if (currentJob.Depends[i].Target == dependJobName) &&
 			(currentJob.Depends[i].Type) == "whole" {
 			return nil
 		}
 	}
 
-	err := fmt.Errorf("%s: the get_result function dependecy job type is wrong %s", prefix, dependjobName)
+	err := fmt.Errorf("%s: the get_result function dependecy job type is wrong %s", prefix, dependJobName)
 
 	return err
 }
-func ValidategetResultFuncParam(prefix, param string, inputs map[string]Input) error {
-	if IsVariant(param) {
-		if err := ValidateVariant(prefix, param, []string{StringType}, inputs); err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
-// validategetResultFunc validate parameter of get_result function is valid.
-func validategetResultFunc(prefix, str string, inputs map[string]Input, jobName string, workflow *Workflow) ErrorList {
+// validateGetResultFunc validate parameter of get_result function is valid.
+func validateGetResultFunc(prefix, str string, inputs map[string]Input, jobName string, workflow *Workflow) ErrorList {
 	allErr := ErrorList{}
 	dependjobName, sep := getResultFuncParam(str)
 	if isJobExists(jobName, workflow) {
@@ -136,25 +132,26 @@ func validategetResultFunc(prefix, str string, inputs map[string]Input, jobName 
 	}
 
 	if sep != "" {
-		err := ValidategetResultFuncParam(prefix, sep, inputs)
-		if err != nil {
-			allErr = append(allErr, err)
+		if IsVariant(sep) {
+			if err := ValidateVariant(prefix, sep, []string{StringType}, inputs); err != nil {
+				allErr = append(allErr, err)
+			}
 		}
 	}
 	// validate the dependency
-	err := validatedependecy(prefix, jobName, dependjobName, workflow)
+	err := validateDependecy(prefix, jobName, dependjobName, workflow)
 	if err != nil {
 		allErr = append(allErr, err)
 	}
 	return allErr
 }
 
-func InstantiategetResultFunc(prefix, str string, data map[string]string) (common.Var, error) {
+func InstantiateGetResultFunc(prefix, str string, data map[string]string) common.Var {
 
 	jobName, sep := getResultFuncParam(str)
 	// replace variant for sep
 	sep = common.ReplaceVariant(sep, data)
 	getresult := []interface{}{"get_result", jobName, sep}
 
-	return getresult, nil
+	return getresult
 }

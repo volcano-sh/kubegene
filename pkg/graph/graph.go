@@ -19,10 +19,12 @@ package graph
 import (
 	"container/list"
 	"fmt"
-	batch "k8s.io/api/batch/v1"
-	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
 	"strings"
 	"sync"
+
+	batch "k8s.io/api/batch/v1"
+
+	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
 )
 
 // JobInfo stores job information for running
@@ -84,22 +86,27 @@ func NewVertex(data *JobInfo, flag bool, children ...*Vertex) *Vertex {
 func (n *Vertex) IsDynamic() bool {
 	return n.dynamic
 }
-func (n *Vertex) SetdynamicJobCnt(cnt int) {
+
+func (n *Vertex) SetDynamicJobCnt(cnt int) {
 	if cnt < 0 {
 		return
 	}
 	n.dynamicJobCnt = cnt
 }
-func (n *Vertex) GetdynamicJobCnt() int {
+
+func (n *Vertex) GetDynamicJobCnt() int {
 	return n.dynamicJobCnt
 }
-func (n *Vertex) IncdynamicJobSuccCnt() {
+
+func (n *Vertex) IncDynamicJobSuccCnt() {
 
 	n.successCnt++
 }
-func (n *Vertex) GetdynamicSuccJobCnt() int {
+
+func (n *Vertex) GetDynamicSuccJobCnt() int {
 	return n.successCnt
 }
+
 func (n *Vertex) AddChild(vertex *Vertex) {
 	if vertex != nil {
 		n.Children = append(n.Children, vertex)

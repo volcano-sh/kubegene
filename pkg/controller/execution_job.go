@@ -33,6 +33,7 @@ import (
 	batchv1listers "k8s.io/client-go/listers/batch/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+
 	genelisters "kubegene.io/kubegene/pkg/client/listers/gene/v1alpha1"
 	"kubegene.io/kubegene/pkg/common"
 	"kubegene.io/kubegene/pkg/graph"
@@ -70,7 +71,7 @@ type ExecutionJobController struct {
 	executionLister  genelisters.ExecutionLister
 	queue            workqueue.RateLimitingInterface
 	execGraphBuilder *GraphBuilder
-	execUpdater      ExecutionStatusUpdater
+	execUpdater      ExecutionUpdater
 }
 
 func NewExecutionJobController(
@@ -79,7 +80,7 @@ func NewExecutionJobController(
 	executionLister genelisters.ExecutionLister,
 	eventQueue workqueue.RateLimitingInterface,
 	execGraphBuilder *GraphBuilder,
-	execUpdater ExecutionStatusUpdater,
+	execUpdater ExecutionUpdater,
 ) *ExecutionJobController {
 	return &ExecutionJobController{
 		queue:            eventQueue,
@@ -265,25 +266,15 @@ func (e *ExecutionJobController) createDynamicJob(vertex *graph.Vertex, jobresul
 	}
 	glog.V(2).Infof("evalJobResult output parentJobName:%s , varsIter: %v", parentJobName, varsIter)
 
-	newCommands := vertex.Data.DynamicJob.CommandSet
-
-	vars := ConvertVars(vertex.Data.DynamicJob.CommandsIter.Vars)
-
 	// convert varsIter to var
 	iterVars := common.VarIter2Vars(varsIter)
-
-	// merge vars
-	vars = append(vars, iterVars...)
 
 	command := vertex.Data.DynamicJob.CommandsIter.Command
 
 	// generate all commands.
-	iterCommands := common.Iter2Array(command, vars)
+	iterCommands := common.Iter2Array(command, iterVars)
 
-	// merge jobInfo.commands and jobInfo.iterCommands
-	newCommands = append(newCommands, iterCommands...)
-
-	task.CommandSet = newCommands
+	task.CommandSet = iterCommands
 
 	glog.V(2).Infof("final commandset task.CommandSet %v ", task.CommandSet)
 
@@ -295,7 +286,7 @@ func (e *ExecutionJobController) createDynamicJob(vertex *graph.Vertex, jobresul
 		return err
 	}
 	//set the dynamic job Count of this vertex
-	vertex.SetdynamicJobCnt(len(task.CommandSet))
+	vertex.SetDynamicJobCnt(len(task.CommandSet))
 	glog.V(2).Infof("Original Execution %v ", execution)
 
 	// create all the jobs here

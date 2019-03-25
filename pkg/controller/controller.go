@@ -80,7 +80,7 @@ type ExecutionController struct {
 
 	execJobController *ExecutionJobController
 
-	execStatusUpdater ExecutionStatusUpdater
+	execStatusUpdater ExecutionUpdater
 }
 
 func NewExecutionController(p *ControllerParameters) *ExecutionController {
@@ -305,8 +305,8 @@ func (c *ExecutionController) syncJob(key string) (bool, error) {
 		// if success count == to dynamic job count then made the
 		// vertex finished flag tru so that then only other depend jobs can start
 		if vertex.IsDynamic() {
-			vertex.GetdynamicSuccJobCnt()
-			if vertex.GetdynamicJobCnt() == vertex.GetdynamicSuccJobCnt() {
+			vertex.GetDynamicSuccJobCnt()
+			if vertex.GetDynamicJobCnt() == vertex.GetDynamicSuccJobCnt() {
 				// the vertex has been finished.
 				vertex.Data.Finished = true
 			}
@@ -336,7 +336,7 @@ func (c *ExecutionController) syncJob(key string) (bool, error) {
 			// if vertex is dynamic we can add JobAfterEvent once completing all the
 			// k8s jobs related to the dynamic job
 			if vertex.IsDynamic() {
-				if vertex.GetdynamicJobCnt() == vertex.GetdynamicSuccJobCnt() {
+				if vertex.GetDynamicJobCnt() == vertex.GetDynamicSuccJobCnt() {
 					// add execution to event queue to trigger running.
 					event := Event{Type: JobsAfter, Name: job.Name, Key: util.KeyOf(exec)}
 					c.eventQueue.Add(event)

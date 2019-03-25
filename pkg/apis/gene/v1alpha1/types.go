@@ -198,26 +198,6 @@ type CommandsIter struct {
 	// Command is the base command that contains variables.
 	Command string `json:"command"`
 
-	// Vars list all the parameters for the command.
-	//
-	// commandsIter example
-	//
-	//    commands_iter:
-	//      command: sh /tmp/scripts/step1.splitfq.sh ${1} ${2} /tmp/data ${3}
-	//      vars:
-	//        - ["sample1", 0, 25] # Each member of the array will be the ${1}, ${2}, ${3}
-	//        - ["sample2", 0, 25]
-	//        - ["sample1", 1, 25]
-	//        - ["sample2", 1, 25]
-	//
-	// then the final command will be:
-	//
-	// sh /tmp/scripts/step1.splitfq.sh sample1 0 ${sample-path} 25
-	// sh /tmp/scripts/step1.splitfq.sh sample2 0 ${sample-path} 25
-	// sh /tmp/scripts/step1.splitfq.sh sample1 1 ${sample-path} 25
-	// sh /tmp/scripts/step1.splitfq.sh sample2 1 ${sample-path} 25
-	Vars []interface{} `json:"vars,omitempty"`
-
 	// VarsIter list all the possible parameters for every position in the command line.
 	// And we will use algorithm Of Full Permutation to generate all the permutation and
 	// combinations for these parameter that will be used to replace the ${number} variable.

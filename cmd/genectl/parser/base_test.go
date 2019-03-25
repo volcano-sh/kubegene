@@ -17,10 +17,11 @@ limitations under the License.
 package parser
 
 import (
-	"kubegene.io/kubegene/pkg/common"
 	"reflect"
 	"strconv"
 	"testing"
+
+	"kubegene.io/kubegene/pkg/common"
 )
 
 func TestIsVariant(t *testing.T) {

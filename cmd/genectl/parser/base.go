@@ -220,10 +220,8 @@ func InstantiateVarsIter(prefix string, vars []interface{}, data map[string]stri
 				result = append(result, rangeValue)
 				continue
 			} else if IsGetResultFunc(strValue) {
-				getresult, err := InstantiategetResultFunc(prefix, strValue, data)
-				if err != nil {
-					return nil, false, err
-				}
+				getresult := InstantiateGetResultFunc(prefix, strValue, data)
+
 				dynamicjob = true
 				result = append(result, getresult)
 				continue
@@ -367,16 +365,6 @@ func ValidateVarsTypes(prefix string, vars interface{}, inputs map[string]Input)
 			if err := ValidateVariant(prefix, v, []string{ArrayType}, inputs); err != nil {
 				return append(allErr, err)
 			}
-		} else if strings.HasPrefix(v, "range") {
-			if !IsRangeFunc(v) {
-				err := fmt.Errorf("%s: the range function should be defined as range(start, end, step), but the real one is %s", prefix, v)
-				return append(allErr, err)
-			} else {
-				errors := ValidateRangeFunc(prefix, v, inputs)
-				if len(errors) != 0 {
-					return append(allErr, errors...)
-				}
-			}
 		} else {
 			err := fmt.Errorf("%s:the element of vars array should only be array variant or array, but the real one is %v", prefix, v)
 			return append(allErr, err)
@@ -419,7 +407,7 @@ func ValidateVarsIterTypes(prefix string, vars interface{}, inputs map[string]In
 				err := fmt.Errorf("%s: the get_result function should be defined as get_result(jobName, sep), but the real one is %s", prefix, v)
 				return append(allErr, err)
 			} else {
-				errors := validategetResultFunc(prefix, v, inputs, jobName, workflow)
+				errors := validateGetResultFunc(prefix, v, inputs, jobName, workflow)
 				if len(errors) != 0 {
 					return append(allErr, errors...)
 				}
