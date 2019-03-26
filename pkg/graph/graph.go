@@ -322,7 +322,15 @@ func (g *Graph) PlusNumOfSuccess() {
 	g.NumOfSuccess++
 }
 
+func (g *Graph) GetNumOfSuccess() int {
+	g.Lock()
+	defer g.Unlock()
+	return g.NumOfSuccess
+}
+
 func (g *Graph) AddDynamicJobCnt(cnt int) {
+	g.Lock()
+	defer g.Unlock()
 	if cnt < 0 {
 		return
 	}

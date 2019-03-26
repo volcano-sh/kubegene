@@ -95,9 +95,7 @@ func ValidateWorkflow(workflow *Workflow) ErrorList {
 func convert2ArrayOfIfs(data []common.Var) []interface{} {
 	vars := make([]interface{}, 0)
 	for _, arr := range data {
-		for _, a := range arr {
-			vars = append(vars, a)
-		}
+		vars = append(vars, arr)
 	}
 	return vars
 }
@@ -169,6 +167,7 @@ func InstantiateWorkflow(workflow *Workflow, inputs map[string]interface{}, tool
 		if err != nil {
 			return err
 		}
+
 		// if no get_result then flag is false
 		if !flag {
 			if length != 0 && len(varsIter) != 0 && len(varsIter) != length {
@@ -201,9 +200,7 @@ func InstantiateWorkflow(workflow *Workflow, inputs map[string]interface{}, tool
 			command := common.ReplaceVariant(jobInfo.CommandsIter.Command, inputsReplaceData)
 
 			tmpJob.CommandsIter.Command = command
-			tmpJob.CommandsIter.Vars = convert2ArrayOfIfs(vars)
 			tmpJob.CommandsIter.VarsIter = convert2ArrayOfIfs(varsIter)
-
 			tmpJob.Depends = jobInfo.Depends
 			jobs[jobName] = tmpJob
 

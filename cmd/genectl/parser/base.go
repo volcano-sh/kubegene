@@ -207,7 +207,7 @@ func InstantiateVars(prefix string, vars []interface{}, data map[string]string) 
 }
 
 func InstantiateVarsIter(prefix string, vars []interface{}, data map[string]string) ([]common.Var, bool, error) {
-	result := make([]common.Var, 0, len(vars))
+	result := make([]common.Var, 0)
 	dynamicjob := false
 	for i, v := range vars {
 		if strValue, ok := v.(string); ok {

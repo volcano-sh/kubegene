@@ -125,9 +125,10 @@ func validateDependecy(prefix string, jobName string, dependJobName string, work
 // validateGetResultFunc validate parameter of get_result function is valid.
 func validateGetResultFunc(prefix, str string, inputs map[string]Input, jobName string, workflow *Workflow) ErrorList {
 	allErr := ErrorList{}
-	dependjobName, sep := getResultFuncParam(str)
-	if isJobExists(jobName, workflow) {
-		err := fmt.Errorf("%s: the get_result function dependecy job is missing, but the real one is %s", prefix, dependjobName)
+	dependJobName, sep := getResultFuncParam(str)
+
+	if !isJobExists(jobName, workflow) {
+		err := fmt.Errorf("%s: the get_result function dependecy job is missing, but the real one is %s", prefix, dependJobName)
 		allErr = append(allErr, err)
 	}
 
@@ -139,7 +140,7 @@ func validateGetResultFunc(prefix, str string, inputs map[string]Input, jobName 
 		}
 	}
 	// validate the dependency
-	err := validateDependecy(prefix, jobName, dependjobName, workflow)
+	err := validateDependecy(prefix, jobName, dependJobName, workflow)
 	if err != nil {
 		allErr = append(allErr, err)
 	}

@@ -18,12 +18,14 @@ package controller
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/golang/glog"
 	batch "k8s.io/api/batch/v1"
+	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -214,10 +216,10 @@ func (e *ExecutionJobController) syncHandler(event Event) error {
 	return nil
 }
 
-func evalJobResult(jobresult string, vars []interface{}) ([]common.Var, string, error) {
-
+func evalJobResult(jobResult string, vars []interface{}) ([]common.Var, error) {
 	result := make([]common.Var, 0, len(vars))
-	var parentJobName string
+	glog.Infof("In evalJobResult vars:%v", vars)
+
 	for _, vs := range vars {
 		v := vs.([]interface{})
 
@@ -227,23 +229,27 @@ func evalJobResult(jobresult string, vars []interface{}) ([]common.Var, string, 
 			sep := v[2].(string)
 
 			if sep == "" {
-				temp := []interface{}{jobresult}
+				temp := []interface{}{jobResult}
 				result = append(result, temp)
 			} else {
 				var strslice []interface{}
-				for _, str := range strings.Split(jobresult, sep) {
+				for _, str := range strings.Split(jobResult, sep) {
 					if str != "" {
 						strslice = append(strslice, str)
 					}
 				}
-				temp := []interface{}{strslice}
-				result = append(result, temp)
+				glog.Infof("In evalJobResult strslice:%v", strslice)
+
+				result = append(result, strslice)
 			}
 			glog.Infof("In evalJobResult jobName: %s sep:%s", parentJobName, sep)
+		} else {
+			//except get_result other parameters need to be appended
+			result = append(result, v)
 		}
 	}
 	glog.Infof("In evalJobResult result: %v", result)
-	return result, parentJobName, nil
+	return result, nil
 }
 func ConvertVars(vars []interface{}) []common.Var {
 	result := make([]common.Var, 0, len(vars))
@@ -256,20 +262,26 @@ func ConvertVars(vars []interface{}) []common.Var {
 	return result
 }
 
-func (e *ExecutionJobController) createDynamicJob(vertex *graph.Vertex, jobresult string, graph *graph.Graph, key string) error {
+func (e *ExecutionJobController) createDynamicJob(vertex *graph.Vertex, jobResult string, graph *graph.Graph, key string) error {
 
 	task := vertex.Data.DynamicJob
-	varsIter, parentJobName, err := evalJobResult(jobresult, vertex.Data.DynamicJob.CommandsIter.VarsIter)
+
+	glog.V(2).Infof("vertex.Data.DynamicJob.CommandsIter.VarsIter : %#v", vertex.Data.DynamicJob.CommandsIter.VarsIter)
+	varsIter, err := evalJobResult(jobResult, vertex.Data.DynamicJob.CommandsIter.VarsIter)
 	if err != nil {
 		glog.V(2).Infof("Error in evalJobResult execution job name %q , . Error: %v", task.Name, err)
 		return err
 	}
-	glog.V(2).Infof("evalJobResult output parentJobName:%s , varsIter: %v", parentJobName, varsIter)
+	glog.V(2).Infof("evalJobResult output varsIter: %v", varsIter)
 
 	// convert varsIter to var
 	iterVars := common.VarIter2Vars(varsIter)
 
+	glog.V(2).Infof(" In createDynamicJob iterVars: %v", iterVars)
+
 	command := vertex.Data.DynamicJob.CommandsIter.Command
+
+	glog.V(2).Infof(" In createDynamicJob command: %v", command)
 
 	// generate all commands.
 	iterCommands := common.Iter2Array(command, iterVars)
@@ -287,7 +299,6 @@ func (e *ExecutionJobController) createDynamicJob(vertex *graph.Vertex, jobresul
 	}
 	//set the dynamic job Count of this vertex
 	vertex.SetDynamicJobCnt(len(task.CommandSet))
-	glog.V(2).Infof("Original Execution %v ", execution)
 
 	// create all the jobs here
 	jobNamePrefix := execution.Name + Separator + task.Name + Separator
@@ -353,12 +364,26 @@ func (e *ExecutionJobController) getJobResult(job *batch.Job) (string, error) {
 		return result, err
 	}
 
-	res, err := e.kubeClient.CoreV1().Pods(job.Namespace).GetLogs(podList.Items[0].Name, nil).Param("limitBytes", "1024").DoRaw()
+	//size limit 1k bytes extra 100 bytes added
+	var sizeLimit int64
+	sizeLimit = 1024 + 100
+
+	opt := v1.PodLogOptions{LimitBytes: &sizeLimit, SinceTime: &metav1.Time{}}
+
+	res, err := e.kubeClient.CoreV1().Pods(job.Namespace).GetLogs(podList.Items[0].Name,
+		&opt).Stream()
 	if err != nil {
-		glog.V(2).Infof("In getJobResult func get logs failed: %v", err)
+		glog.V(2).Infof("In getJobResult with opt func get logs failed: %v", err)
 		return result, err
 	}
-	result = string(res)
+	bytes, err := ioutil.ReadAll(res)
+	if err != nil {
+		glog.V(2).Infof("In getJobResult func ioutil.ReadAll failed: %v", err)
+		return result, err
+	}
+	result = string(bytes)
+	result = strings.TrimSuffix(result, "\n")
+	glog.V(2).Infof("the succful getJobResult is: %s", result)
 	return result, err
 }
 
