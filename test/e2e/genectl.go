@@ -18,6 +18,7 @@ package e2e
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -102,28 +103,15 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 		output := cmd.ExecOrDie()
 		glog.Infof("output: %v", output)
 		// sleep to complete the execution
+		glog.Infof("waiting to complete the execution")
 		time.Sleep(100 * time.Second)
 
 		By("Check the result")
-		path := filepath.Join("/kubegene-getresult", "get-result.txt")
-		file, err := os.Open(path)
-		Expect(err).NotTo(HaveOccurred())
-		defer file.Close()
 
-		result := ""
-		br := bufio.NewReader(file)
-		for {
-			bytes, _, err := br.ReadLine()
-			if err == io.EOF {
-				break
-			}
-			output := string(bytes)
-			result += output
-		}
-
-		result = strings.TrimSpace(result)
+		result, err := ReadResultFrom("/kubegene-getresult/get-result.txt")
 
 		Expect(err).NotTo(HaveOccurred())
+
 		// The order of execution is variable, but it must be one of the following.
 		expectResult := []string{
 			"JOBMOD1JOBMOD2JOBMOD3JOBFINISH",
@@ -132,6 +120,31 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 			"JOBMOD1JOBMOD3JOBMOD2JOBFINISH",
 			"JOBMOD2JOBMOD1JOBMOD3JOBFINISH",
 			"JOBMOD3JOBMOD2JOBMOD1JOBFINISH",
+		}
+		Expect(expectResult).Should(ContainElement(result))
+	})
+
+	It("sub workflow with check_result", func() {
+		createVolumeAndClaim("example/simple-sample-chkresult/sample-pv.yaml", "example/simple-sample-chkresult/sample-pvc.yaml", "default", kubeClient)
+
+		By("Execute sub workflow command")
+		cmd := NewGenectlCommand("sub", "workflow", "example/simple-sample-chkresult/simple-sample-chkresult.yaml", "--tool-repo="+ToolRepo)
+		output := cmd.ExecOrDie()
+		glog.Infof("output: %v", output)
+		// sleep to complete the execution
+		glog.Infof("waiting to complete the execution")
+		time.Sleep(100 * time.Second)
+
+		By("Check the result")
+		result, err := ReadResultFrom("/kubegene-chkresult/check-result.txt")
+
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(err).NotTo(HaveOccurred())
+		// The order of execution is variable, but it must be one of the following.
+		expectResult := []string{
+			"CHK21CHK20JOBFINISH",
+			"CHK20CHK21JOBFINISH",
 		}
 		Expect(expectResult).Should(ContainElement(result))
 	})
@@ -163,4 +176,25 @@ func execCommand(name string, args []string) error {
 	output, err := cmd.CombinedOutput()
 	glog.Infof("command: %v, output: %v", name, string(output))
 	return err
+}
+
+func ReadResultFrom(fullpath string) (string, error) {
+
+	file, err := os.Open(fullpath)
+	if err != nil {
+		return "", fmt.Errorf("open file %s failed %v", fullpath, err)
+	}
+	defer file.Close()
+
+	result := ""
+	br := bufio.NewReader(file)
+	for {
+		bytes, _, err := br.ReadLine()
+		if err == io.EOF {
+			break
+		}
+		output := string(bytes)
+		result += output
+	}
+	return strings.TrimSpace(result), nil
 }

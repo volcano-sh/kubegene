@@ -230,3 +230,11 @@ func TransCommandIter2ExecCommandIter(commandsIter CommandsIter) *execv1alpha1.C
 	}
 	return &execCommandIter
 }
+
+func TransCond2ExecCond(condition interface{}) *execv1alpha1.Condition {
+	execCond := execv1alpha1.Condition{}
+
+	execCond.Condition = condition
+
+	return &execCond
+}

@@ -56,7 +56,7 @@ func IsGetResultFunc(str string) bool {
 	return getResultRegExp.MatchString(str)
 }
 
-// getResultFuncParam extract parameter from range function.
+// getResultFuncParam extract parameter from get_result function.
 // for example:
 //
 // 		Str ---> get_result(job-a,"\n")
@@ -84,7 +84,7 @@ func isJobExists(jobName string, workflow *Workflow) bool {
 	return ok
 }
 
-func validateDependecy(prefix string, jobName string, dependJobName string, workflow *Workflow) error {
+func validateDependency(prefix string, jobName string, dependJobName string, workflow *Workflow) error {
 
 	dependJob, ok := workflow.Jobs[dependJobName]
 	if !ok {
@@ -140,7 +140,7 @@ func validateGetResultFunc(prefix, str string, inputs map[string]Input, jobName 
 		}
 	}
 	// validate the dependency
-	err := validateDependecy(prefix, jobName, dependJobName, workflow)
+	err := validateDependency(prefix, jobName, dependJobName, workflow)
 	if err != nil {
 		allErr = append(allErr, err)
 	}

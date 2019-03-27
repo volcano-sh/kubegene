@@ -18,4 +18,4 @@ $ genectl sub workflow simple-sample-getresult.yaml
 ```
 
 
-MoreInfo](https://kubegene.io/docs/design/dynamic-concurrency/dynamic-concurrency.md)
+[MoreInfo](https://kubegene.io/docs/design/dynamic-concurrency/dynamic-concurrency.md)
