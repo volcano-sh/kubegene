@@ -487,7 +487,7 @@ func TestValidateCommandsIter(t *testing.T) {
 	for i, testCase := range testCases {
 		var commandsIter CommandsIter
 		yaml.Unmarshal([]byte(testCase.CommandsIter), &commandsIter)
-		err := ValidateCommandsIter("test", commandsIter, testCase.Inputs)
+		err := ValidateCommandsIter("test", commandsIter, testCase.Inputs, nil)
 		if testCase.ExpectErr == true && len(err) == 0 {
 			t.Errorf("%d: Expect error, but got nil", i)
 		}

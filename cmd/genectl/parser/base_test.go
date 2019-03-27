@@ -20,6 +20,8 @@ import (
 	"reflect"
 	"strconv"
 	"testing"
+
+	"kubegene.io/kubegene/pkg/common"
 )
 
 func TestIsVariant(t *testing.T) {
@@ -202,7 +204,7 @@ func TestReplaceVariant(t *testing.T) {
 	}
 
 	for i, testCase := range testCases {
-		result := ReplaceVariant(testCase.str, testCase.data)
+		result := common.ReplaceVariant(testCase.str, testCase.data)
 		if result != testCase.expect {
 			t.Errorf("%d: unexpected result; got %s, expected %s", i, result, testCase.expect)
 		}
@@ -210,19 +212,19 @@ func TestReplaceVariant(t *testing.T) {
 }
 
 func TestVarIter2Vars(t *testing.T) {
-	varIter := []Var{
+	varIter := []common.Var{
 		{1, 2},
 		{3, 4},
 		{5},
 	}
-	expect := []Var{
+	expect := []common.Var{
 		{1, 3, 5},
 		{1, 4, 5},
 		{2, 3, 5},
 		{2, 4, 5},
 	}
 
-	result := VarIter2Vars(varIter)
+	result := common.VarIter2Vars(varIter)
 	if !reflect.DeepEqual(result, expect) {
 		t.Errorf("unexpected result: got %v, expected %v", result, expect)
 	}
@@ -232,17 +234,17 @@ func TestInstantiateRangeFunc(t *testing.T) {
 	testCases := []struct {
 		str          string
 		Data         map[string]string
-		ExpectResult Var
+		ExpectResult common.Var
 		ExpectErr    bool
 	}{
 		{
 			str:          "range(1, 10, 2)",
-			ExpectResult: Var{1, 3, 5, 7, 9},
+			ExpectResult: common.Var{1, 3, 5, 7, 9},
 			ExpectErr:    false,
 		},
 		{
 			str:          "range(1, 10)",
-			ExpectResult: Var{1, 2, 3, 4, 5, 6, 7, 8, 9},
+			ExpectResult: common.Var{1, 2, 3, 4, 5, 6, 7, 8, 9},
 			ExpectErr:    false,
 		},
 		{
@@ -253,13 +255,13 @@ func TestInstantiateRangeFunc(t *testing.T) {
 		{
 			str:          "range(1, ${end}, 2)",
 			Data:         map[string]string{"end": "10"},
-			ExpectResult: Var{1, 3, 5, 7, 9},
+			ExpectResult: common.Var{1, 3, 5, 7, 9},
 			ExpectErr:    false,
 		},
 		{
 			str:          "range(${start}, ${end}, 2)",
 			Data:         map[string]string{"start": "1", "end": "10"},
-			ExpectResult: Var{1, 3, 5, 7, 9},
+			ExpectResult: common.Var{1, 3, 5, 7, 9},
 			ExpectErr:    false,
 		},
 		{
@@ -290,7 +292,7 @@ func TestInstantiateRangeFunc(t *testing.T) {
 	}
 }
 
-func compareVar(a Var, b Var) bool {
+func compareVar(a common.Var, b common.Var) bool {
 	if a == nil && b == nil {
 		return true
 	}

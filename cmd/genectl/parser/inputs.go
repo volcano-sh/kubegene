@@ -16,7 +16,11 @@ limitations under the License.
 
 package parser
 
-import "fmt"
+import (
+	"fmt"
+
+	"kubegene.io/kubegene/pkg/common"
+)
 
 func SetDefaultInputs(workflow *Workflow) {
 	inputs := make(map[string]Input)
@@ -90,14 +94,14 @@ func MergeInputs(inputsDefult map[string]Input, inputs map[string]interface{}) (
 func Inputs2ReplaceData(inputs map[string]Input) map[string]string {
 	data := make(map[string]string)
 	for key, val := range inputs {
-		data[key] = ToString(val.Value)
+		data[key] = common.ToString(val.Value)
 	}
 	return data
 }
 
 func GetStringValue(key string, inputs map[string]Input) string {
 	if value, ok := inputs[key]; ok {
-		return ToString(value.Value)
+		return common.ToString(value.Value)
 	}
 	return ""
 }

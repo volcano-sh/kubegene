@@ -19,56 +19,92 @@ package graph
 import (
 	"container/list"
 	"fmt"
-	batch "k8s.io/api/batch/v1"
-	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
+	"strings"
 	"sync"
+
+	batch "k8s.io/api/batch/v1"
+
+	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
 )
 
 // JobInfo stores job information for running
 type JobInfo struct {
-	Finished bool
-	Job      *batch.Job
-	TaskType genev1alpha1.TaskType
+	Finished   bool
+	Job        *batch.Job
+	TaskType   genev1alpha1.TaskType
+	DynamicJob *genev1alpha1.Task
 }
 
-func NewJobInfo(job *batch.Job, finished bool, taskType genev1alpha1.TaskType) *JobInfo {
+func NewJobInfo(job *batch.Job, finished bool, taskType genev1alpha1.TaskType, dynamicJob *genev1alpha1.Task) *JobInfo {
 	return &JobInfo{
-		Job:      job,
-		Finished: finished,
-		TaskType: taskType,
+		Job:        job,
+		Finished:   finished,
+		TaskType:   taskType,
+		DynamicJob: dynamicJob,
 	}
 }
 
 type Vertex struct {
-	Data     *JobInfo
-	Children []*Vertex
+	Data          *JobInfo
+	Children      []*Vertex
+	dynamic       bool
+	dynamicJobCnt int
+	successCnt    int
 }
 
 type Graph struct {
 	sync.RWMutex
-	NumOfSuccess int
-	VertexCount  int
-	Size         int
-	VertexArray  []*Vertex
-	AdjMatrix    []int
+	NumOfSuccess  int
+	VertexCount   int
+	Size          int
+	VertexArray   []*Vertex
+	AdjMatrix     []int
+	DynamicJobCnt int
 }
 
 func NewGraph(size int) *Graph {
 	return &Graph{
-		Size:        size,
-		VertexArray: make([]*Vertex, size),
-		AdjMatrix:   make([]int, size*size),
+		Size:          size,
+		VertexArray:   make([]*Vertex, size),
+		AdjMatrix:     make([]int, size*size),
+		DynamicJobCnt: 0,
 	}
 }
 
-func NewVertex(data *JobInfo, children ...*Vertex) *Vertex {
+func NewVertex(data *JobInfo, flag bool, children ...*Vertex) *Vertex {
 	vertex := &Vertex{
-		Data:     data,
-		Children: make([]*Vertex, 0),
+		Data:          data,
+		Children:      make([]*Vertex, 0),
+		dynamic:       flag,
+		dynamicJobCnt: 0,
+		successCnt:    0,
 	}
 	vertex.Children = append(vertex.Children, children...)
 
 	return vertex
+}
+func (n *Vertex) IsDynamic() bool {
+	return n.dynamic
+}
+
+func (n *Vertex) SetDynamicJobCnt(cnt int) {
+	if cnt < 0 {
+		return
+	}
+	n.dynamicJobCnt = cnt
+}
+
+func (n *Vertex) GetDynamicJobCnt() int {
+	return n.dynamicJobCnt
+}
+
+func (n *Vertex) IncDynamicJobSuccCnt() {
+
+	n.successCnt++
+}
+
+func (n *Vertex) GetDynamicSuccJobCnt() int {
+	return n.successCnt
 }
 
 func (n *Vertex) AddChild(vertex *Vertex) {
@@ -219,6 +255,12 @@ func (g *Graph) FindChildrenByName(jobName string) []*Vertex {
 		if jobInfo := vertex.Data; jobInfo.Job.Name == jobName {
 			return vertex.Children
 		}
+		//jobNamePrefix := execution.Name + Separator + task.Name + Separator
+		if vertex.IsDynamic() {
+			if jobInfo := vertex.Data; strings.HasPrefix(jobName, jobInfo.Job.Name) {
+				return vertex.Children
+			}
+		}
 	}
 
 	return nil
@@ -228,6 +270,12 @@ func (g *Graph) FindDependentsByName(jobName string) []int {
 	for i, vertex := range g.VertexArray {
 		if jobInfo := vertex.Data; jobInfo.Job.Name == jobName {
 			return g.FindDependents(i)
+		}
+		//jobNamePrefix := execution.Name + Separator + task.Name + Separator
+		if vertex.IsDynamic() {
+			if jobInfo := vertex.Data; strings.HasPrefix(jobName, jobInfo.Job.Name) {
+				return g.FindDependents(i)
+			}
 		}
 	}
 
@@ -249,6 +297,12 @@ func (g *Graph) FindVertexByName(jobName string) *Vertex {
 		if jobInfo := vertex.Data; jobInfo.Job.Name == jobName {
 			return vertex
 		}
+		//jobNamePrefix := execution.Name + Separator + task.Name + Separator
+		if vertex.IsDynamic() {
+			if jobInfo := vertex.Data; strings.HasPrefix(jobName, jobInfo.Job.Name) {
+				return vertex
+			}
+		}
 	}
 
 	return nil
@@ -266,4 +320,19 @@ func (g *Graph) PlusNumOfSuccess() {
 	g.Lock()
 	defer g.Unlock()
 	g.NumOfSuccess++
+}
+
+func (g *Graph) GetNumOfSuccess() int {
+	g.Lock()
+	defer g.Unlock()
+	return g.NumOfSuccess
+}
+
+func (g *Graph) AddDynamicJobCnt(cnt int) {
+	g.Lock()
+	defer g.Unlock()
+	if cnt < 0 {
+		return
+	}
+	g.DynamicJobCnt += cnt
 }

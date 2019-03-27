@@ -80,7 +80,7 @@ type ExecutionController struct {
 
 	execJobController *ExecutionJobController
 
-	execStatusUpdater ExecutionStatusUpdater
+	execStatusUpdater ExecutionUpdater
 }
 
 func NewExecutionController(p *ControllerParameters) *ExecutionController {
@@ -115,8 +115,9 @@ func NewExecutionController(p *ControllerParameters) *ExecutionController {
 	controller.syncJobHandler = controller.syncJob
 	controller.syncExecHandler = controller.syncExecution
 	controller.execGraphBuilder = NewGraphBuilder()
-	controller.execJobController = NewExecutionJobController(p.KubeClient, controller.jobLister, controller.execLister, controller.eventQueue, controller.execGraphBuilder)
 	controller.execStatusUpdater = NewExecutionStatusUpdater(p.ExecutionClient)
+	controller.execJobController = NewExecutionJobController(p.KubeClient, controller.jobLister, controller.execLister,
+		controller.eventQueue, controller.execGraphBuilder, controller.execStatusUpdater)
 
 	return controller
 }
@@ -276,7 +277,7 @@ func (c *ExecutionController) syncJob(key string) (bool, error) {
 
 	// in case missing the running event, following status set will cause panic
 	if util.GetVertexStatus(exec, job.Name) == nil {
-		vertexStatus := util.InitializeVertexStatus(vertex.Data.Job.Name, genev1alpha1.VertexRunning, vertexRunningMessage, vertex.Children)
+		vertexStatus := util.InitializeVertexStatus(job.Name, genev1alpha1.VertexRunning, vertexRunningMessage, vertex.Children)
 		if exec.Status.Vertices == nil {
 			exec.Status.Vertices = make(map[string]genev1alpha1.VertexStatus)
 		}
@@ -300,8 +301,19 @@ func (c *ExecutionController) syncJob(key string) (bool, error) {
 		return true, nil
 
 	case batch.JobComplete:
-		// the vertex has been finished.
-		vertex.Data.Finished = true
+		// if vertex is dynamic just increment the succ count
+		// if success count == to dynamic job count then made the
+		// vertex finished flag tru so that then only other depend jobs can start
+		if vertex.IsDynamic() {
+			vertex.IncDynamicJobSuccCnt()
+			if vertex.GetDynamicJobCnt() == vertex.GetDynamicSuccJobCnt() {
+				// the vertex has been finished.
+				vertex.Data.Finished = true
+			}
+		} else {
+			// the vertex has been finished.
+			vertex.Data.Finished = true
+		}
 		// Mark the vertex as success.
 		if len(message) == 0 {
 			message = "success"
@@ -309,7 +321,7 @@ func (c *ExecutionController) syncJob(key string) (bool, error) {
 		util.MarkVertexSuccess(exec, job.Name, message)
 		// The number of successful vertex plus 1.
 		graph.PlusNumOfSuccess()
-		if graph.NumOfSuccess == graph.VertexCount {
+		if graph.GetNumOfSuccess() == (graph.VertexCount + graph.DynamicJobCnt) {
 			// All of the vertex has been successful, then mark the execution as successful.
 			util.MarkExecutionSuccess(exec, executionSuccessMessage)
 		}
@@ -320,10 +332,24 @@ func (c *ExecutionController) syncJob(key string) (bool, error) {
 			return false, err
 		}
 
-		if graph.NumOfSuccess != graph.VertexCount {
-			// add execution to event queue to trigger running.
-			event := Event{Type: JobsAfter, Name: job.Name, Key: util.KeyOf(exec)}
-			c.eventQueue.Add(event)
+		if graph.GetNumOfSuccess() != (graph.VertexCount + graph.DynamicJobCnt) {
+			// if vertex is dynamic we can add JobAfterEvent once completing all the
+			// k8s jobs related to the dynamic job
+			if vertex.IsDynamic() {
+				glog.V(3).Infof("dyanmic job vertex.GetDynamicJobCnt(): %v", vertex.GetDynamicJobCnt())
+				glog.V(3).Infof("dyanmic job vertex.GetDynamicSuccJobCnt(): %v", vertex.GetDynamicSuccJobCnt())
+
+				if vertex.GetDynamicJobCnt() == vertex.GetDynamicSuccJobCnt() {
+					// add execution to event queue to trigger running.
+					event := Event{Type: JobsAfter, Name: vertex.Data.Job.Name, Key: util.KeyOf(exec)}
+					c.eventQueue.Add(event)
+				}
+
+			} else {
+				// add execution to event queue to trigger running.
+				event := Event{Type: JobsAfter, Name: job.Name, Key: util.KeyOf(exec)}
+				c.eventQueue.Add(event)
+			}
 		}
 
 		return true, nil
@@ -333,7 +359,7 @@ func (c *ExecutionController) syncJob(key string) (bool, error) {
 
 		// usually a add event can approach here and mark the vertex as running.
 		if util.GetVertexStatus(exec, job.Name) == nil {
-			vertexStatus := util.InitializeVertexStatus(vertex.Data.Job.Name, genev1alpha1.VertexRunning, vertexRunningMessage, vertex.Children)
+			vertexStatus := util.InitializeVertexStatus(job.Name, genev1alpha1.VertexRunning, vertexRunningMessage, vertex.Children)
 			if exec.Status.Vertices == nil {
 				exec.Status.Vertices = make(map[string]genev1alpha1.VertexStatus)
 			}

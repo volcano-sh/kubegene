@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"encoding/json"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -138,6 +139,9 @@ type Task struct {
 
 	// CommandSet is a list of commands run by this task.
 	CommandSet []string `json:"commandSet,omitempty"`
+
+	// CommandsIter defines batch command for workflows job.
+	CommandsIter *CommandsIter `json:"commands_iter,omitempty"`
 	// Docker image name.
 	// More info: https://kubernetes.io/docs/concepts/containers/images
 	Image string `json:"image,omitempty"`
@@ -185,6 +189,42 @@ type ExecutionStatus struct {
 
 	// Vertices is a mapping between a vertex ID and the vertex's status.
 	Vertices map[string]VertexStatus `json:"vertices,omitempty"`
+}
+
+// CommandsIter defines command for workflows job. If both Vars and Vars_iter are specified,
+// the generate command will be merged. This is used for the dynamically generating task
+// based on the get_result
+type CommandsIter struct {
+	// Command is the base command that contains variables.
+	Command string `json:"command"`
+
+	// VarsIter list all the possible parameters for every position in the command line.
+	// And we will use algorithm Of Full Permutation to generate all the permutation and
+	// combinations for these parameter that will be used to replace the ${number} variable.
+	//
+	// commandsIter example
+	//
+	//    commands_iter:
+	//      command: sh /tmp/scripts/step1.splitfq.sh ${1} ${2} /tmp/data ${3}
+	//      vars_iter:
+	//        - ["sample1", "sample2"]
+	//	  - [0,1]
+	// 	  - get_result( job-1, " ")
+	// if  stdout of job-1 is “1 2 3 4” then var_iter will become like
+	// 		vars_iter:
+	//		 - ["sample1", "sample2"]
+	//		 - [0,1]
+	//		 - ["1", "2"]
+	//
+	// sh /tmp/scripts/step1.splitfq.sh sample1 0 /tmp/data 1
+	// sh /tmp/scripts/step1.splitfq.sh sample2 0 /tmp/data 1
+	// sh /tmp/scripts/step1.splitfq.sh sample1 1 /tmp/data 1
+	// sh /tmp/scripts/step1.splitfq.sh sample2 1 /tmp/data 1
+	// sh /tmp/scripts/step1.splitfq.sh sample1 0 /tmp/data 2
+	// sh /tmp/scripts/step1.splitfq.sh sample2 0 /tmp/data 2
+	// sh /tmp/scripts/step1.splitfq.sh sample1 1 /tmp/data 2
+	// sh /tmp/scripts/step1.splitfq.sh sample2 1 /tmp/data 2
+	VarsIter []interface{} `json:"vars_iter,omitempty"`
 }
 
 type VertexStatus struct {
@@ -239,4 +279,17 @@ type Dependent struct {
 	//  "iterate" - A[1,2,3]-->B[1,2,3]: jobs of B depends on jobs of A one by one.
 	//   That is to say: A[1]->B[1], A[2]->B[2], A[3]->B[3]
 	Type DependType `json:"type,omitempty"`
+}
+
+// DeepCopyInto is an custom deepcopy function to deal with our use of the interface{} type
+func (i *CommandsIter) DeepCopyInto(out *CommandsIter) {
+
+	inBytes, err := json.Marshal(i)
+	if err != nil {
+		panic(err)
+	}
+	err = json.Unmarshal(inBytes, out)
+	if err != nil {
+		panic(err)
+	}
 }

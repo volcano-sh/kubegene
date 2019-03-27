@@ -84,13 +84,25 @@ func newGraph(execution *genev1alpha1.Execution) *graph.Graph {
 
 		jobNamePrefix := execution.Name + Separator + task.Name + Separator
 
-		for index, command := range task.CommandSet {
-			jobName := jobNamePrefix + strconv.Itoa(index)
+		if task.CommandsIter != nil {
+			localtask := task
+			jobName := jobNamePrefix
 			// make up k8s job resource
-			job := newJob(jobName, command, execution, &task)
-			jobInfo := graph.NewJobInfo(job, false, task.Type)
+			job := newJob(jobName, "", execution, &task)
+			jobInfo := graph.NewJobInfo(job, false, task.Type, &localtask)
 			jobInfos = append(jobInfos, jobInfo)
-			vertices = append(vertices, graph.NewVertex(jobInfo))
+			vertices = append(vertices, graph.NewVertex(jobInfo, true))
+
+		} else {
+
+			for index, command := range task.CommandSet {
+				jobName := jobNamePrefix + strconv.Itoa(index)
+				// make up k8s job resource
+				job := newJob(jobName, command, execution, &task)
+				jobInfo := graph.NewJobInfo(job, false, task.Type, nil)
+				jobInfos = append(jobInfos, jobInfo)
+				vertices = append(vertices, graph.NewVertex(jobInfo, false))
+			}
 		}
 	}
 

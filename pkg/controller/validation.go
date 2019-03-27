@@ -70,7 +70,7 @@ func validateTask(task genev1alpha1.Task, tasks []genev1alpha1.Task) error {
 	if len(task.Image) == 0 {
 		return fmt.Errorf("task image must not be empty")
 	}
-	if len(task.CommandSet) == 0 {
+	if len(task.CommandSet) == 0 && task.CommandsIter == nil {
 		return fmt.Errorf("task commandSet must not be empty")
 	}
 	if task.Parallelism != nil && *task.Parallelism < 0 {

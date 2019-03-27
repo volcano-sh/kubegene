@@ -102,7 +102,7 @@ func newTestGraph(size int) (*Graph, []*Vertex) {
 	jobInfo := &JobInfo{}
 
 	for i := 0; i < size; i++ {
-		vertex := NewVertex(jobInfo)
+		vertex := NewVertex(jobInfo, false)
 		vertices[i] = vertex
 
 		graph.AddVertex(vertex)

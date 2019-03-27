@@ -107,7 +107,7 @@ func ValidateCommands(jobName string, commands []string, inputs map[string]Input
 	return allErr
 }
 
-func ValidateCommandsIter(jobName string, commandsIter CommandsIter, inputs map[string]Input) ErrorList {
+func ValidateCommandsIter(jobName string, commandsIter CommandsIter, inputs map[string]Input, workflow *Workflow) ErrorList {
 	allError := ErrorList{}
 	if len(commandsIter.Command) == 0 && IsCommandIterEmpty(commandsIter) {
 		return allError
@@ -134,7 +134,7 @@ func ValidateCommandsIter(jobName string, commandsIter CommandsIter, inputs map[
 	allError = append(allError, ValidateVarsArray(prefix, commandsIter.Vars, inputs)...)
 
 	prefix = fmt.Sprintf("workflow.%s.commands_iter.vars_iter", jobName)
-	allError = append(allError, ValidateVarsArray(prefix, commandsIter.VarsIter, inputs)...)
+	allError = append(allError, ValidateVarsIterArray(prefix, commandsIter.VarsIter, inputs, jobName, workflow)...)
 
 	return allError
 }
@@ -218,4 +218,15 @@ func TransDepend2ExecDepend(depends []Depend) []execv1alpha1.Dependent {
 		execDepends = append(execDepends, tmpDependent)
 	}
 	return execDepends
+}
+
+func TransCommandIter2ExecCommandIter(commandsIter CommandsIter) *execv1alpha1.CommandsIter {
+	var execCommandIter execv1alpha1.CommandsIter
+	execCommandIter.Command = commandsIter.Command
+	execCommandIter.VarsIter = make([]interface{}, 0)
+
+	for _, var1 := range commandsIter.VarsIter {
+		execCommandIter.VarsIter = append(execCommandIter.VarsIter, var1)
+	}
+	return &execCommandIter
 }
