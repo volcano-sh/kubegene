@@ -91,6 +91,15 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 		output := cmd.ExecOrDie()
 		glog.Infof("output: %v", output)
 	})
+
+	It("sub workflow with get_result", func() {
+		createVolumeAndClaim("example/simple-sample-getresult/sample-pv.yaml", "example/simple-sample-getresult/sample-pvc.yaml", ns, kubeClient)
+
+		By("Execute sub workflow command")
+		cmd := NewGenectlCommand("sub", "workflow", "example/simple-sample-getresult/simple-sample-getresult.yaml", "--tool-repo="+ToolRepo)
+		output := cmd.ExecOrDie()
+		glog.Infof("output: %v", output)
+	})
 })
 
 func createVolumeAndClaim(volumeFile, claimFile, ns string, kubeClient kubernetes.Interface) {

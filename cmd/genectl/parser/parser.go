@@ -71,6 +71,15 @@ func ValidateWorkflow(workflow *Workflow) ErrorList {
 
 		// validate depends
 		allErr = append(allErr, ValidateDepends(jobName, job.Depends, workflow.Jobs)...)
+
+		if (len(job.Commands) == 0) &&
+			((len(job.CommandsIter.Vars) == 0) && (len(job.CommandsIter.VarsIter) == 0)) {
+
+			err := fmt.Errorf("workflow.job.Commands or  (job.CommandsIter.Vars and job.CommandsIter.VarsIter)"+
+				" not be empty in the job %s", jobName)
+			allErr = append(allErr, err)
+
+		}
 	}
 
 	// detect cycle depends.
