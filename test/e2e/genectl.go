@@ -17,9 +17,13 @@ limitations under the License.
 package e2e
 
 import (
+	"bufio"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -34,11 +38,9 @@ var GOPATH = os.Getenv("GOPATH")
 var ToolRepo = filepath.Join(GOPATH, "src/kubegene.io/kubegene/example/tools")
 
 var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
-	var ns string
 	var kubeClient kubernetes.Interface
 
 	BeforeEach(func() {
-		ns = gtc.Config.Namespace
 		kubeClient = gtc.KubeClient
 	})
 
@@ -54,7 +56,7 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 		err = execCommand("cp", []string{"example/single-job/print.sh", "/tmp/subjob/"})
 		Expect(err).NotTo(HaveOccurred())
 
-		createVolumeAndClaim("example/single-job/subjob-pv.yaml", "example/single-job/subjob-pvc.yaml", ns, kubeClient)
+		createVolumeAndClaim("example/single-job/subjob-pv.yaml", "example/single-job/subjob-pvc.yaml", "default", kubeClient)
 
 		By("Execute sub job command")
 		cmd := NewGenectlCommand("sub", "job", "/tmp/subjob/print.sh", "--tool=nginx:latest", "--pvc=subjob-pvc", "--tool-repo="+ToolRepo)
@@ -75,7 +77,7 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 		err = execCommand("cp", []string{"example/group-job/repjob.sh", "/tmp/subrepjob/"})
 		Expect(err).NotTo(HaveOccurred())
 
-		createVolumeAndClaim("example/group-job/subrepjob-pv.yaml", "example/group-job/subrepjob-pvc.yaml", ns, kubeClient)
+		createVolumeAndClaim("example/group-job/subrepjob-pv.yaml", "example/group-job/subrepjob-pvc.yaml", "default", kubeClient)
 
 		By("Execute sub repjob command")
 		cmd := NewGenectlCommand("sub", "repjob", "/tmp/subrepjob/repjob.sh", "--tool=nginx:latest", "--pvc=subrepjob-pvc", "--tool-repo="+ToolRepo)
@@ -84,7 +86,7 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 	})
 
 	It("sub workflow", func() {
-		createVolumeAndClaim("example/simple-sample/sample-pv.yaml", "example/simple-sample/sample-pvc.yaml", ns, kubeClient)
+		createVolumeAndClaim("example/simple-sample/sample-pv.yaml", "example/simple-sample/sample-pvc.yaml", "default", kubeClient)
 
 		By("Execute sub workflow command")
 		cmd := NewGenectlCommand("sub", "workflow", "example/simple-sample/simple-sample.yaml", "--tool-repo="+ToolRepo)
@@ -93,12 +95,45 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 	})
 
 	It("sub workflow with get_result", func() {
-		createVolumeAndClaim("example/simple-sample-getresult/sample-pv.yaml", "example/simple-sample-getresult/sample-pvc.yaml", ns, kubeClient)
+		createVolumeAndClaim("example/simple-sample-getresult/sample-pv.yaml", "example/simple-sample-getresult/sample-pvc.yaml", "default", kubeClient)
 
 		By("Execute sub workflow command")
 		cmd := NewGenectlCommand("sub", "workflow", "example/simple-sample-getresult/simple-sample-getresult.yaml", "--tool-repo="+ToolRepo)
 		output := cmd.ExecOrDie()
 		glog.Infof("output: %v", output)
+		// sleep to complete the execution
+		time.Sleep(100 * time.Second)
+
+		By("Check the result")
+		path := filepath.Join("/kubegene-getresult", "get-result.txt")
+		file, err := os.Open(path)
+		Expect(err).NotTo(HaveOccurred())
+		defer file.Close()
+
+		result := ""
+		br := bufio.NewReader(file)
+		for {
+			bytes, _, err := br.ReadLine()
+			if err == io.EOF {
+				break
+			}
+			output := string(bytes)
+			result += output
+		}
+
+		result = strings.TrimSpace(result)
+
+		Expect(err).NotTo(HaveOccurred())
+		// The order of execution is variable, but it must be one of the following.
+		expectResult := []string{
+			"JOBMOD1JOBMOD2JOBMOD3JOBFINISH",
+			"JOBMOD2JOBMOD3JOBMOD1JOBFINISH",
+			"JOBMOD3JOBMOD1JOBMOD2JOBFINISH",
+			"JOBMOD1JOBMOD3JOBMOD2JOBFINISH",
+			"JOBMOD2JOBMOD1JOBMOD3JOBFINISH",
+			"JOBMOD3JOBMOD2JOBMOD1JOBFINISH",
+		}
+		Expect(expectResult).Should(ContainElement(result))
 	})
 })
 

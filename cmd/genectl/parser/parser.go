@@ -75,7 +75,7 @@ func ValidateWorkflow(workflow *Workflow) ErrorList {
 		if (len(job.Commands) == 0) &&
 			((len(job.CommandsIter.Vars) == 0) && (len(job.CommandsIter.VarsIter) == 0)) {
 
-			err := fmt.Errorf("workflow.job.Commands or  (job.CommandsIter.Vars and job.CommandsIter.VarsIter)"+
+			err := fmt.Errorf("workflow.job.commands or  (job.commandsiter.vars and job.commandsiter.varsiter)"+
 				" not be empty in the job %s", jobName)
 			allErr = append(allErr, err)
 

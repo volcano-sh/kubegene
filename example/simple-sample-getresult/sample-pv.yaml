@@ -1,7 +1,7 @@
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: sample-pv
+  name: getresult-pv
   labels:
     type: local
 spec:
@@ -11,5 +11,5 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: /tmp/getresultsample
+    path: /kubegene-getresult
     type: DirectoryOrCreate

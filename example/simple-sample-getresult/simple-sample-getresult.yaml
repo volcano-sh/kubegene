@@ -1,15 +1,15 @@
 version: genecontainer_0_1
 inputs:
   result:
-    default: test-result.txt
+    default: get-result.txt
     description: Output file name
     type: string
   samplemountpath:
-    default: /getresultsample
+    default: /kubegene-getresult
     description: hostpath mount path
     type: string
   output-prefix:
-    default: '$(date "+%F %r"): '
+    default: JOBMOD
     description: Prefix when outputting to the result file
     type: string
   wait-base:
@@ -17,11 +17,11 @@ inputs:
     description: Base of waiting time
     type: number
   prepare-command:
-    default: "echo 1 2 3 4 5"
+    default: "echo 1 2 3 "
     description: Execute commands before all commands
     type: string
   sample-pvc:
-    default: sample-pvc
+    default: getresult-pvc
     description: name of pvc used
     type: string
 
@@ -33,9 +33,8 @@ workflow:
   jobmod:
       tool: nginx:latest
       commands_iter:
-        command: sleep `expr ${1} ${2} \* ${wait-base}`; echo ${output-prefix}${1} ${2} | tee -a ${samplemountpath}/${result};
+        command: echo ${output-prefix}${1} | tee -a ${samplemountpath}/${result};
         vars_iter:
-            - [20, 21]
             - get_result(jobpreparemod, " ")
       depends:
         - target: jobpreparemod
@@ -43,7 +42,7 @@ workflow:
   jobfinish:
       tool: nginx:latest
       commands:
-        - cat ${samplemountpath}/${result} | tee -a ${samplemountpath}/${result};
+        - echo JOBFINISH | tee -a ${samplemountpath}/${result};
       depends:
         - target: jobmod
           type: whole
