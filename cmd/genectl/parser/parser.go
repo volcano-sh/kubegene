@@ -71,6 +71,15 @@ func ValidateWorkflow(workflow *Workflow) ErrorList {
 
 		// validate depends
 		allErr = append(allErr, ValidateDepends(jobName, job.Depends, workflow.Jobs)...)
+
+		if (len(job.Commands) == 0) &&
+			((len(job.CommandsIter.Vars) == 0) && (len(job.CommandsIter.VarsIter) == 0)) {
+
+			err := fmt.Errorf("one of workflow.job.commands or  (job.commandsiter.vars and job.commandsiter.varsiter)"+
+				" must be specified in the job %s", jobName)
+			allErr = append(allErr, err)
+
+		}
 	}
 
 	// detect cycle depends.
