@@ -371,6 +371,33 @@ func TestValidateCommandsIter(t *testing.T) {
 			ExpectErr: false,
 		},
 
+		{
+			Name: "valid commandsIter with range func",
+			CommandsIter: `
+      command: sh ${obs-path}/scripts/step3.gatkspark.sh I ${obs-path}/${1}.bam
+        -O ${obs-path}/${1}_output.g.vcf  --spark-runner SPARK --spark-master yarn-client
+      vars:
+      - - hello
+      vars_iter:
+      - - aaa
+      - - range(0,10,2)`,
+			Inputs:    makeInputs(),
+			ExpectErr: false,
+		},
+		{
+			Name: "valid commandsIter with get_result func",
+			CommandsIter: `
+      command: sh ${obs-path}/scripts/step3.gatkspark.sh I ${obs-path}/${1}.bam
+        -O ${obs-path}/${1}_output.g.vcf  --spark-runner SPARK --spark-master yarn-client
+      vars:
+      - - hello
+      vars_iter:
+      - - aaa
+      - - get_result(jontarget," ")`,
+			Inputs:    makeInputs(),
+			ExpectErr: false,
+		},
+
 		// #########################################################################################################
 
 		{

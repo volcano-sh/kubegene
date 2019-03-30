@@ -111,28 +111,28 @@ func (esu *executionUpdater) UpdateExecution(modified *genev1alpha1.Execution, o
 	var current *genev1alpha1.Execution
 	current, err = esu.execClient.Executions(modified.Namespace).Get(modified.Name, metav1.GetOptions{})
 	if err != nil {
-		glog.Error("getting the execution is failed %#v", err)
+		glog.V(2).Infof("getting the execution is failed %v", err)
 		return err
 	}
 
 	var curBytes []byte
 	curBytes, err = json.Marshal(current)
 	if err != nil {
-		glog.Error("after getting the execution json.Marshal failed %#v", err)
+		glog.V(2).Infof("after getting the execution json.Marshal failed %v", err)
 		return err
 	}
 
 	var bytes []byte
 	bytes, err = jsonpatch.MergePatch(curBytes, patchBytes)
 	if err != nil {
-		glog.Error("after getting the execution jsonpatch.MergePatch failed. Error: %#v", err)
+		glog.V(2).Infof("after getting the execution jsonpatch.MergePatch failed. Error: %v", err)
 		return err
 	}
 
 	var updated genev1alpha1.Execution
 	err = json.Unmarshal(bytes, &updated)
 	if err != nil {
-		glog.Error("after getting the execution json.Unmarshal failed. Error: %#v", err)
+		glog.V(2).Infof("after getting the execution json.Unmarshal failed. Error: %v", err)
 		return err
 	}
 
