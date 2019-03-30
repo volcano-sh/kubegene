@@ -27,6 +27,7 @@ import (
 
 	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
 	. "github.com/onsi/ginkgo"
@@ -45,6 +46,17 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 	})
 
 	AfterEach(func() {
+
+		By("Delete execution")
+
+		list, err := gtc.GeneClient.ExecutionV1alpha1().Executions("default").List(metav1.ListOptions{})
+		Expect(err).NotTo(HaveOccurred())
+
+		for i := 0; i < len(list.Items); i++ {
+			err = gtc.GeneClient.ExecutionV1alpha1().Executions("default").Delete(list.Items[i].Name, &metav1.DeleteOptions{})
+			Expect(err).NotTo(HaveOccurred())
+
+		}
 	})
 
 	It("sub single job", func() {
