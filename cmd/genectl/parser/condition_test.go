@@ -42,7 +42,7 @@ func TestIsCheckResultFunc(t *testing.T) {
 			expect: true,
 		},
 		{
-			str:    "check_result(1:,10)",
+			str:    "check_result(job,10)",
 			expect: false,
 		},
 		{

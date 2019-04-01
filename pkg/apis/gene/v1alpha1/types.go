@@ -114,7 +114,7 @@ type ExecutionSpec struct {
 	Parallelism *int64 `json:"parallelism,omitempty"`
 }
 
-// Condition  conditional branch handling  in Task
+// Condition in Task
 type Condition struct {
 	Condition interface{} `json:"condition,omitempty"`
 }
@@ -178,6 +178,7 @@ type Task struct {
 	Dependents []Dependent `json:"dependents"`
 
 	// Specifies the condition for this task
+	// The task will be executed only when condition satisfied
 	// +optional
 	Condition *Condition `json:"condition,omitempty"`
 }

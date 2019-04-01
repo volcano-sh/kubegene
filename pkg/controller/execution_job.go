@@ -203,21 +203,21 @@ func (e *ExecutionJobController) syncHandler(event Event) error {
 							// so that other jobs will continue or execution will complete
 							glog.V(2).Infof(" The final condition is false")
 							child.Data.Finished = true
-							return nil
+							continue
 						}
 					}
 
-					if flag && len(child.Data.DynamicJob.CommandSet) > 0 && child.Data.DynamicJob.CommandsIter == nil {
+					if len(child.Data.DynamicJob.CommandSet) > 0 && child.Data.DynamicJob.CommandsIter == nil {
 
 						// construct the dynamic jobs based on conditional branch result
 						err := e.createDynamicJobsBasedOnConditionalChk(child, graph, event.Key)
 						if err != nil {
 							return fmt.Errorf("createDynamicJobsBasedOnConditionalChk failed : %v", err)
 						}
-						return nil
+						continue
 					}
 
-					if flag && child.Data.DynamicJob.CommandsIter != nil {
+					if child.Data.DynamicJob.CommandsIter != nil {
 
 						// get the result of the dependent job
 						result, err := e.getJobResult(vertex.Data.Job)
@@ -229,7 +229,7 @@ func (e *ExecutionJobController) syncHandler(event Event) error {
 						if err != nil {
 							return fmt.Errorf("createDynamicJob failed : %v", err)
 						}
-						return nil
+						continue
 					}
 
 				}
@@ -261,7 +261,7 @@ func (e *ExecutionJobController) evalConditionResult(dependJob *batch.Job, verte
 
 			parentJobName := v[1].(string)
 			exp := v[2].(string)
-			glog.Infof("In evalConditionResult jobName: %s sep:%s", parentJobName, exp)
+			glog.Infof("In evalConditionResult jobName: %s exp:%s", parentJobName, exp)
 			// get the result of the dependent job
 			result, err := e.getJobResult(dependJob)
 			if err != nil {
