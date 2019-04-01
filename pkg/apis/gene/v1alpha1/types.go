@@ -114,6 +114,11 @@ type ExecutionSpec struct {
 	Parallelism *int64 `json:"parallelism,omitempty"`
 }
 
+// Condition in Task
+type Condition struct {
+	Condition interface{} `json:"condition,omitempty"`
+}
+
 // Task is a unit of execution in an Execution
 type Task struct {
 	// Name is the name of the task
@@ -171,6 +176,11 @@ type Task struct {
 	// Specifies the dependency by this task
 	// +optional
 	Dependents []Dependent `json:"dependents"`
+
+	// Specifies the condition for this task
+	// The task will be executed only when condition satisfied
+	// +optional
+	Condition *Condition `json:"condition,omitempty"`
 }
 
 // +k8s:openapi-gen=false
@@ -283,6 +293,19 @@ type Dependent struct {
 
 // DeepCopyInto is an custom deepcopy function to deal with our use of the interface{} type
 func (i *CommandsIter) DeepCopyInto(out *CommandsIter) {
+
+	inBytes, err := json.Marshal(i)
+	if err != nil {
+		panic(err)
+	}
+	err = json.Unmarshal(inBytes, out)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// DeepCopyInto is an custom deepcopy function to deal with our use of the interface{} type
+func (i *Condition) DeepCopyInto(out *Condition) {
 
 	inBytes, err := json.Marshal(i)
 	if err != nil {

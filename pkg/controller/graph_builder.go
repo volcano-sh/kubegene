@@ -84,7 +84,7 @@ func newGraph(execution *genev1alpha1.Execution) *graph.Graph {
 
 		jobNamePrefix := execution.Name + Separator + task.Name + Separator
 
-		if task.CommandsIter != nil {
+		if task.CommandsIter != nil || task.Condition != nil {
 			localtask := task
 			jobName := jobNamePrefix
 			// make up k8s job resource

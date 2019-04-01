@@ -196,6 +196,8 @@ type JobInfo struct {
 	CommandsIter CommandsIter `json:"commands_iter,omitempty" yaml:"commands_iter,omitempty"`
 	// Depends is the Name of task this depends on.
 	Depends []Depend `json:"depends,omitempty" yaml:"depends,omitempty"`
+	// conditional branch handling
+	Condition interface{} `json:"condition,omitempty" yaml:"condition,omitempty"`
 }
 
 // PathsIter similar to CommandsIter.

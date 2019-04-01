@@ -188,18 +188,49 @@ func (e *ExecutionJobController) syncHandler(event Event) error {
 				glog.V(2).Infof("all dependent of job %v has run successfully, start running.", child.Data.Job.Name)
 
 				if child.Data.DynamicJob != nil {
-					// get the result of the dependent job
-					result, err := e.getJobResult(vertex.Data.Job)
-					if err != nil {
-						return fmt.Errorf("getJobResult failed : %v", err)
+					// flag setting true to handle if Condition is nil
+					flag := true
+					var err error
+					if child.Data.DynamicJob.Condition != nil {
+						glog.V(2).Infof(" conditional based job condition:%v", child.Data.DynamicJob.Condition)
+						flag, err = e.evalConditionResult(vertex.Data.Job, child, graph, event.Key)
+						if err != nil {
+							return fmt.Errorf("evalConditionResult failed : %v", err)
+						}
+						if !flag {
+							// if the condition or check_result validation is false
+							// then we don't create the k8s job and make the job is Finished true
+							// so that other jobs will continue or execution will complete
+							glog.V(2).Infof(" The final condition is false")
+							child.Data.Finished = true
+							continue
+						}
 					}
 
-					// construct the dynamic job based on result
-					err = e.createDynamicJob(child, result, graph, event.Key)
-					if err != nil {
-						return fmt.Errorf("createDynamicJob failed : %v", err)
+					if len(child.Data.DynamicJob.CommandSet) > 0 && child.Data.DynamicJob.CommandsIter == nil {
+
+						// construct the dynamic jobs based on conditional branch result
+						err := e.createDynamicJobsBasedOnConditionalChk(child, graph, event.Key)
+						if err != nil {
+							return fmt.Errorf("createDynamicJobsBasedOnConditionalChk failed : %v", err)
+						}
+						continue
 					}
-					return nil
+
+					if child.Data.DynamicJob.CommandsIter != nil {
+
+						// get the result of the dependent job
+						result, err := e.getJobResult(vertex.Data.Job)
+						if err != nil {
+							return fmt.Errorf("getJobResult failed : %v", err)
+						}
+						// construct the dynamic job based on get_result
+						err = e.createDynamicJob(child, result, graph, event.Key)
+						if err != nil {
+							return fmt.Errorf("createDynamicJob failed : %v", err)
+						}
+						continue
+					}
 
 				}
 				if e.shouldStartJob(event.Key, child.Data.Job) {
@@ -215,7 +246,40 @@ func (e *ExecutionJobController) syncHandler(event Event) error {
 	}
 	return nil
 }
+func (e *ExecutionJobController) evalConditionResult(dependJob *batch.Job, vertex *graph.Vertex, graph *graph.Graph, key string) (bool, error) {
 
+	glog.Infof("In evalConditionResult condition:%v", vertex.Data.DynamicJob.Condition.Condition)
+
+	v := vertex.Data.DynamicJob.Condition.Condition.([]interface{})
+
+	switch v[0].(type) {
+
+	case bool:
+		return v[0].(bool), nil
+	case string:
+		if item, ok := v[0].(string); ok && item == "check_result" {
+
+			parentJobName := v[1].(string)
+			exp := v[2].(string)
+			glog.Infof("In evalConditionResult jobName: %s exp:%s", parentJobName, exp)
+			// get the result of the dependent job
+			result, err := e.getJobResult(dependJob)
+			if err != nil {
+				return false, fmt.Errorf("getJobResult failed in evalConditionResult: %v", err)
+			}
+
+			if exp == result {
+				return true, nil
+			} else {
+				return false, fmt.Errorf("In evalConditionResult job result is %v but expected value is  %v", result, exp)
+			}
+		} else {
+			return false, fmt.Errorf("In evalConditionResult Invalid condition %v", vertex.Data.DynamicJob.Condition.Condition)
+		}
+	}
+
+	return false, fmt.Errorf("In evalConditionResult Invalid condition %v", vertex.Data.DynamicJob.Condition.Condition)
+}
 func evalJobResult(jobResult string, vars []interface{}) ([]common.Var, error) {
 	result := make([]common.Var, 0, len(vars))
 	glog.Infof("In evalJobResult vars:%v", vars)
@@ -260,6 +324,40 @@ func ConvertVars(vars []interface{}) []common.Var {
 		result = append(result, res)
 	}
 	return result
+}
+
+func (e *ExecutionJobController) createDynamicJobsBasedOnConditionalChk(vertex *graph.Vertex, graph *graph.Graph, key string) error {
+	glog.V(2).Infof(" The condition based job which has normal commands")
+	task := vertex.Data.DynamicJob
+
+	// update this task in the execution struct then call the Update()
+	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
+	execution, err := e.executionLister.Executions(namespace).Get(name)
+	if err != nil {
+		glog.Errorf("Get execution %s error: %v", key, err)
+		return err
+	}
+	//set the dynamic job Count of this vertex
+	vertex.SetDynamicJobCnt(len(task.CommandSet))
+
+	// create all the jobs here
+	jobNamePrefix := execution.Name + Separator + task.Name + Separator
+	for index, command := range task.CommandSet {
+		jobName := jobNamePrefix + strconv.Itoa(index)
+		// make up k8s job resource
+		job := newJob(jobName, command, execution, task)
+
+		if err := e.createJob(job); err != nil {
+			glog.Errorf("createJob failed error: %v", err)
+			key := util.KeyOf(job)
+			return fmt.Errorf("create job %s error: %v", key, err)
+		}
+	}
+	//set the dynamic job Count of this vertex
+	// -1 because already one vertex  related to dynamic job is considered as one job
+	graph.AddDynamicJobCnt(len(task.CommandSet) - 1)
+
+	return nil
 }
 
 func (e *ExecutionJobController) createDynamicJob(vertex *graph.Vertex, jobResult string, graph *graph.Graph, key string) error {

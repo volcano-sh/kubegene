@@ -80,6 +80,9 @@ func ValidateWorkflow(workflow *Workflow) ErrorList {
 			allErr = append(allErr, err)
 
 		}
+		// validate condition
+		allErr = append(allErr, validateCondition(jobName, job.Condition, workflow.Inputs, workflow)...)
+
 	}
 
 	// detect cycle depends.
@@ -153,6 +156,17 @@ func InstantiateWorkflow(workflow *Workflow, inputs map[string]interface{}, tool
 			tmpJob.Commands = append(tmpJob.Commands, tool.Command)
 		}
 
+		if jobInfo.Condition != nil {
+			// populate data for condition
+			prefix := fmt.Sprintf("workflows.%s.condition", jobName)
+
+			cond, err := InstantiateCondition(prefix, jobInfo.Condition, inputsReplaceData)
+			if err != nil {
+				return err
+			}
+			jobInfo.Condition = cond
+		}
+
 		// populate data for commands
 		newCommands := ReplaceArray(jobInfo.Commands, inputsReplaceData)
 
@@ -200,6 +214,7 @@ func InstantiateWorkflow(workflow *Workflow, inputs map[string]interface{}, tool
 
 			tmpJob.Commands = newCommands
 			tmpJob.Depends = jobInfo.Depends
+			tmpJob.Condition = jobInfo.Condition
 			jobs[jobName] = tmpJob
 
 		} else {
@@ -211,6 +226,7 @@ func InstantiateWorkflow(workflow *Workflow, inputs map[string]interface{}, tool
 			tmpJob.CommandsIter.Command = command
 			tmpJob.CommandsIter.VarsIter = convert2ArrayOfIfs(varsIter)
 			tmpJob.Depends = jobInfo.Depends
+			tmpJob.Condition = jobInfo.Condition
 			jobs[jobName] = tmpJob
 
 		}
@@ -319,6 +335,10 @@ func TransWorkflow2Execution(workflow *Workflow) (*execv1alpha1.Execution, error
 		task.Resources = execv1alpha1.ResourceRequirements{
 			Cpu:    cpuQuantity,
 			Memory: memoryQuantity,
+		}
+
+		if jobInfo.Condition != nil {
+			task.Condition = TransCond2ExecCond(jobInfo.Condition)
 		}
 
 		task.Dependents = TransDepend2ExecDepend(jobInfo.Depends)
