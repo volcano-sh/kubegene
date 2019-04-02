@@ -1,0 +1,82 @@
+version: genecontainer_0_1
+inputs:
+  cond:
+    default: "true"
+    description: condition parameter value
+    type: string
+  result:
+    default: get-check-result.txt
+    description: Output file name
+    type: string
+  samplemountpath:
+    default: /kubegene-getchkresult
+    description: hostpath mount path
+    type: string
+  output-prefix-cond:
+    default: CHKRESULT 
+    description: Prefix when outputting to the result file
+    type: string
+  output-prefix-get:
+    default: GETRESULT
+    description: Prefix when outputting to the result file
+    type: string
+  wait-base:
+    default: 1
+    description: Base of waiting time
+    type: number
+  prepare-command:
+    default: "echo 1 3"
+    description: Execute commands before all commands
+    type: string
+  sample-pvc:
+    default: getchkresult-pvc
+    description: name of pvc used
+    type: string
+
+workflow:
+  jobpreparemod:
+      tool: nginx:latest
+      commands:
+        - ${prepare-command}
+  jobmodcond:
+      tool: nginx:latest
+      commands_iter:
+        command: echo ${output-prefix-cond}${1}| tee -a ${samplemountpath}/${result};
+        vars_iter:
+            - [55, 66]
+      condition: check_result(jobpreparemod, "1 3")
+      depends:
+        - target: jobpreparemod
+          type: whole
+  jobmodgetresult:
+        tool: nginx:latest
+        commands_iter:
+          command: echo ${output-prefix-get}${1}| tee -a ${samplemountpath}/${result};
+          vars_iter:
+              - get_result(jobpreparemod, " ")
+        depends:
+          - target: jobpreparemod
+            type: whole
+
+  jobbeforefinish:
+      tool: nginx:latest
+      commands:  
+        - echo "JOBBEFOREFINISH" | tee -a ${samplemountpath}/${result};
+      depends:
+        - target: jobmodgetresult
+          type: whole
+        - target: jobmodcond
+          type: whole
+  jobfinish:
+      tool: nginx:latest
+      commands:
+        - echo JOBFINISH | tee -a ${samplemountpath}/${result};
+      depends:
+        - target: jobbeforefinish
+          type: whole
+volumes:
+  samplepv:
+    mount_path: ${samplemountpath}
+    mount_from:
+      pvc: ${sample-pvc}
+

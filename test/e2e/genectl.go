@@ -24,7 +24,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -116,7 +115,12 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 		glog.Infof("output: %v", output)
 		// sleep to complete the execution
 		glog.Infof("waiting to complete the execution")
-		time.Sleep(100 * time.Second)
+		list, err := gtc.GeneClient.ExecutionV1alpha1().Executions("default").List(metav1.ListOptions{})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(1).To(Equal(len(list.Items)))
+
+		err = WaitForExecutionSuccess(gtc.GeneClient, list.Items[0].Name, "default")
+		Expect(err).NotTo(HaveOccurred())
 
 		By("Check the result")
 
@@ -137,15 +141,20 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 	})
 
 	It("sub workflow with check_result", func() {
-		createVolumeAndClaim("example/simple-sample-chkresult/sample-pv.yaml", "example/simple-sample-chkresult/sample-pvc.yaml", "default", kubeClient)
+		createVolumeAndClaim("example/conditional-sample/sample-pv.yaml", "example/conditional-sample/sample-pvc.yaml", "default", kubeClient)
 
 		By("Execute sub workflow command")
-		cmd := NewGenectlCommand("sub", "workflow", "example/simple-sample-chkresult/simple-sample-chkresult.yaml", "--tool-repo="+ToolRepo)
+		cmd := NewGenectlCommand("sub", "workflow", "example/conditional-sample/simple-sample-chkresult.yaml", "--tool-repo="+ToolRepo)
 		output := cmd.ExecOrDie()
 		glog.Infof("output: %v", output)
 		// sleep to complete the execution
 		glog.Infof("waiting to complete the execution")
-		time.Sleep(100 * time.Second)
+		list, err := gtc.GeneClient.ExecutionV1alpha1().Executions("default").List(metav1.ListOptions{})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(1).To(Equal(len(list.Items)))
+
+		err = WaitForExecutionSuccess(gtc.GeneClient, list.Items[0].Name, "default")
+		Expect(err).NotTo(HaveOccurred())
 
 		By("Check the result")
 		result, err := ReadResultFrom("/kubegene-chkresult/check-result.txt")
@@ -157,6 +166,86 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 		expectResult := []string{
 			"CHK21CHK20JOBFINISH",
 			"CHK20CHK21JOBFINISH",
+		}
+		Expect(expectResult).Should(ContainElement(result))
+	})
+
+	It("sub workflow with get_result and check_result", func() {
+		createVolumeAndClaim("example/conditional-getresult-combination/sample-pv.yaml", "example/conditional-getresult-combination/sample-pvc.yaml", "default", kubeClient)
+
+		By("Execute sub workflow command")
+		cmd := NewGenectlCommand("sub", "workflow", "example/conditional-getresult-combination/simple-sample-get-chkresult.yaml", "--tool-repo="+ToolRepo)
+		output := cmd.ExecOrDie()
+		glog.Infof("output: %v", output)
+		// sleep to complete the execution
+		glog.Infof("waiting to complete the execution")
+
+		list, err := gtc.GeneClient.ExecutionV1alpha1().Executions("default").List(metav1.ListOptions{})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(1).To(Equal(len(list.Items)))
+
+		err = WaitForExecutionSuccess(gtc.GeneClient, list.Items[0].Name, "default")
+		Expect(err).NotTo(HaveOccurred())
+
+		By("Check the result")
+		result, err := ReadResultFrom("/kubegene-getchkresult/get-check-result.txt")
+
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(err).NotTo(HaveOccurred())
+		// The order of execution is variable, but it must be one of the following.
+		expectResult := []string{
+			// 55 66  1  3
+			"CHKRESULT55CHKRESULT66GETRESULT1GETRESULT3JOBBEFOREFINISHJOBFINISH",
+			// 55 66  3  1
+			"CHKRESULT55CHKRESULT66GETRESULT3GETRESULT1JOBBEFOREFINISHJOBFINISH",
+			// 55  1  66   3
+			"CHKRESULT55GETRESULT1CHKRESULT66GETRESULT3JOBBEFOREFINISHJOBFINISH",
+			// 55  1  3   66
+			"CHKRESULT55GETRESULT1GETRESULT3CHKRESULT66JOBBEFOREFINISHJOBFINISH",
+			// 55  3  1   66
+			"CHKRESULT55GETRESULT3GETRESULT1CHKRESULT66JOBBEFOREFINISHJOBFINISH",
+			// 55  3  66   1
+			"CHKRESULT55GETRESULT3CHKRESULT66GETRESULT1JOBBEFOREFINISHJOBFINISH",
+
+			// 66  55   1    3
+			"CHKRESULT66CHKRESULT55GETRESULT1GETRESULT3JOBBEFOREFINISHJOBFINISH",
+			// 66  55   3    1
+			"CHKRESULT66CHKRESULT55GETRESULT3GETRESULT1JOBBEFOREFINISHJOBFINISH",
+			// 66  1    55   3
+			"CHKRESULT66GETRESULT1CHKRESULT55GETRESULT3JOBBEFOREFINISHJOBFINISH",
+			// 66  1    3    55
+			"CHKRESULT66GETRESULT1GETRESULT3CHKRESULT55JOBBEFOREFINISHJOBFINISH",
+			// 66  3    1    55
+			"CHKRESULT66GETRESULT3GETRESULT1CHKRESULT55JOBBEFOREFINISHJOBFINISH",
+			// 66  3    55   1
+			"CHKRESULT66GETRESULT3CHKRESULT55GETRESULT1JOBBEFOREFINISHJOBFINISH",
+
+			// 1 3  55  66
+			"GETRESULT1GETRESULT3CHKRESULT55CHKRESULT66JOBBEFOREFINISHJOBFINISH",
+			// 1 3  66  55
+			"GETRESULT1GETRESULT3CHKRESULT66CHKRESULT55JOBBEFOREFINISHJOBFINISH",
+			// 1 55  3  66
+			"GETRESULT1CHKRESULT55GETRESULT3CHKRESULT66JOBBEFOREFINISHJOBFINISH",
+			// 1 55  66  3
+			"GETRESULT1CHKRESULT55CHKRESULT66GETRESULT3JOBBEFOREFINISHJOBFINISH",
+			// 1 66  3   55
+			"GETRESULT1CHKRESULT66GETRESULT3CHKRESULT55JOBBEFOREFINISHJOBFINISH",
+			// 1 66  55  3
+			"GETRESULT1CHKRESULT66CHKRESULT55GETRESULT3JOBBEFOREFINISHJOBFINISH",
+
+			// 3  1   55  66
+			"GETRESULT3GETRESULT1CHKRESULT55CHKRESULT66JOBBEFOREFINISHJOBFINISH",
+			// 3  1   66  55
+			"GETRESULT3GETRESULT1CHKRESULT66CHKRESULT55JOBBEFOREFINISHJOBFINISH",
+			// 3  55  1   66
+			"GETRESULT3CHKRESULT55GETRESULT1CHKRESULT66JOBBEFOREFINISHJOBFINISH",
+			// 3  55  66   1
+			"GETRESULT3CHKRESULT55CHKRESULT66GETRESULT1JOBBEFOREFINISHJOBFINISH",
+			// 3  66  1   55
+			"GETRESULT3CHKRESULT66GETRESULT1CHKRESULT55JOBBEFOREFINISHJOBFINISH",
+			// 3  66  55   1
+			"GETRESULT3CHKRESULT66CHKRESULT55GETRESULT1JOBBEFOREFINISHJOBFINISH",
 		}
 		Expect(expectResult).Should(ContainElement(result))
 	})
