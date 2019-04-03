@@ -501,3 +501,83 @@ workflow:
 		}
 	}
 }
+
+func TestValidateWorkflowSucc(t *testing.T) {
+	testCases := []struct {
+		Name      string
+		path      string
+		ExpectErr bool
+	}{
+		{
+			Name:      "valid case 1",
+			path:      "../../../example/simple-sample/simple-sample.yaml",
+			ExpectErr: false,
+		},
+		{
+			Name:      "valid case 1",
+			path:      "../../../example/simple-sample-getresult/simple-sample-getresult.yaml",
+			ExpectErr: false,
+		},
+		{
+			Name:      "valid case 1",
+			path:      "../../../example/conditional-sample/simple-sample-chkresult.yaml",
+			ExpectErr: false,
+		},
+		{
+			Name:      "valid case 1",
+			path:      "../../../example/conditional-getresult-combination/simple-sample-get-chkresult.yaml",
+			ExpectErr: false,
+		},
+	}
+
+	nginx := Tool{
+		Name:    "nginx",
+		Version: "latest",
+		Image:   "nginx",
+		Type:    "basic",
+	}
+
+	tools := make(map[string]Tool)
+	tools[nginx.Name+":"+nginx.Version] = nginx
+
+	for _, testCase := range testCases {
+		data, err := ioutil.ReadFile(testCase.path)
+		if err != nil {
+			continue
+		}
+
+		workflow, err := UnmarshalWorkflow(data)
+		if err != nil {
+			continue
+		}
+		// set default for workflow
+		SetDefaultWorkflow(workflow)
+		errList := ValidateWorkflow(workflow)
+		if testCase.ExpectErr == true && len(errList) > 0 {
+			t.Errorf("%s: Expect error, but got nil", testCase.Name)
+		}
+		if testCase.ExpectErr == false && len(errList) != 0 {
+			t.Errorf("%s: Expect no error, but got error %v", testCase.Name, errList)
+		}
+
+		err = InstantiateWorkflow(workflow, nil, tools)
+		if testCase.ExpectErr == true && err == nil {
+			t.Errorf("%s: Expect error, but got nil", testCase.Name)
+		}
+		if testCase.ExpectErr == false && err != nil {
+			t.Errorf("%s: Expect no error, but got error %v", testCase.Name, err)
+		}
+		if err != nil {
+			continue
+		}
+		_, err = TransWorkflow2Execution(workflow)
+		if testCase.ExpectErr == true && err == nil {
+			t.Errorf("%s: Expect error, but got nil", testCase.Name)
+		}
+		if testCase.ExpectErr == false && err != nil {
+			t.Errorf("%s: Expect no error, but got error %v", testCase.Name, err)
+		}
+
+	}
+
+}
