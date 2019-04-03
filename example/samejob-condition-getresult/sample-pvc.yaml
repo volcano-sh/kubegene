@@ -1,0 +1,12 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+    name: result-pvc
+spec:
+  storageClassName: standard
+  accessModes:
+    - ReadWriteOnce
+  volumeName: result-pv
+  resources:
+    requests:
+      storage: 1Gi

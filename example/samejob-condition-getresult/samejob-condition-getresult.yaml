@@ -1,0 +1,67 @@
+version: genecontainer_0_1
+inputs:
+  cond:
+    default: "true"
+    description: condition parameter value
+    type: string
+  result:
+    default: result.txt
+    description: Output file name
+    type: string
+  samplemountpath:
+    default: /kubegene-result
+    description: hostpath mount path
+    type: string
+  output-prefix:
+    default: ABC 
+    description: Prefix when outputting to the result file
+    type: string
+  wait-base:
+    default: 1
+    description: Base of waiting time
+    type: number
+  prepare-command:
+    default: "echo 1 3"
+    description: Execute commands before all commands
+    type: string
+  sample-pvc:
+    default: result-pvc
+    description: name of pvc used
+    type: string
+
+workflow:
+  jobpreparemod:
+      tool: nginx:latest
+      commands:
+        - ${prepare-command}
+  jobmodcondgetres:
+      tool: nginx:latest
+      commands_iter:
+        command: echo ${output-prefix}${1} | tee -a ${samplemountpath}/${result};
+        vars_iter:
+            - get_result(jobpreparemod, " ")
+      condition: check_result(jobpreparemod, "1 3")
+      depends:
+          - target: jobpreparemod
+            type: whole
+
+  jobbeforefinish:
+      tool: nginx:latest
+      commands:  
+        - echo "JOBBEFOREFINISH" | tee -a ${samplemountpath}/${result};
+      depends:
+        - target: jobmodcondgetres
+          type: whole
+  jobfinish:
+      tool: nginx:latest
+      commands:
+        - echo JOBFINISH | tee -a ${samplemountpath}/${result};
+      depends:
+        - target: jobbeforefinish
+          type: whole
+volumes:
+  samplepv:
+    mount_path: ${samplemountpath}
+    mount_from:
+      pvc: ${sample-pvc}
+

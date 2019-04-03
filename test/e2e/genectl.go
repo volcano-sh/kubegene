@@ -113,7 +113,7 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 		cmd := NewGenectlCommand("sub", "workflow", "example/simple-sample-getresult/simple-sample-getresult.yaml", "--tool-repo="+ToolRepo)
 		output := cmd.ExecOrDie()
 		glog.Infof("output: %v", output)
-		// sleep to complete the execution
+		// wait to complete the execution
 		glog.Infof("waiting to complete the execution")
 		list, err := gtc.GeneClient.ExecutionV1alpha1().Executions("default").List(metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred())
@@ -147,7 +147,7 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 		cmd := NewGenectlCommand("sub", "workflow", "example/conditional-sample/simple-sample-chkresult.yaml", "--tool-repo="+ToolRepo)
 		output := cmd.ExecOrDie()
 		glog.Infof("output: %v", output)
-		// sleep to complete the execution
+		// wait to complete the execution
 		glog.Infof("waiting to complete the execution")
 		list, err := gtc.GeneClient.ExecutionV1alpha1().Executions("default").List(metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred())
@@ -177,7 +177,7 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 		cmd := NewGenectlCommand("sub", "workflow", "example/conditional-getresult-combination/simple-sample-get-chkresult.yaml", "--tool-repo="+ToolRepo)
 		output := cmd.ExecOrDie()
 		glog.Infof("output: %v", output)
-		// sleep to complete the execution
+		// wait to complete the execution
 		glog.Infof("waiting to complete the execution")
 
 		list, err := gtc.GeneClient.ExecutionV1alpha1().Executions("default").List(metav1.ListOptions{})
@@ -246,6 +246,37 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 			"GETRESULT3CHKRESULT66GETRESULT1CHKRESULT55JOBBEFOREFINISHJOBFINISH",
 			// 3  66  55   1
 			"GETRESULT3CHKRESULT66CHKRESULT55GETRESULT1JOBBEFOREFINISHJOBFINISH",
+		}
+		Expect(expectResult).Should(ContainElement(result))
+	})
+
+	It("sub workflow with get_result and check_result in the same job", func() {
+		createVolumeAndClaim("example/samejob-condition-getresult/sample-pv.yaml", "example/samejob-condition-getresult/sample-pvc.yaml", "default", kubeClient)
+
+		By("Execute sub workflow command")
+		cmd := NewGenectlCommand("sub", "workflow", "example/samejob-condition-getresult/samejob-condition-getresult.yaml", "--tool-repo="+ToolRepo)
+		output := cmd.ExecOrDie()
+		glog.Infof("output: %v", output)
+		// wait to complete the execution
+		glog.Infof("waiting to complete the execution")
+
+		list, err := gtc.GeneClient.ExecutionV1alpha1().Executions("default").List(metav1.ListOptions{})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(1).To(Equal(len(list.Items)))
+
+		err = WaitForExecutionSuccess(gtc.GeneClient, list.Items[0].Name, "default")
+		Expect(err).NotTo(HaveOccurred())
+
+		By("Check the result")
+		result, err := ReadResultFrom("/kubegene-result/result.txt")
+
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(err).NotTo(HaveOccurred())
+		// The order of execution is variable, but it must be one of the following.
+		expectResult := []string{
+			"ABC3ABC1JOBBEFOREFINISHJOBFINISH",
+			"ABC1ABC3JOBBEFOREFINISHJOBFINISH",
 		}
 		Expect(expectResult).Should(ContainElement(result))
 	})
