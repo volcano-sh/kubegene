@@ -81,6 +81,82 @@ func ValidateDepends(jobName string, depends []Depend, jobs map[string]JobInfo) 
 	}
 	return errors
 }
+func validateGenericDependency(prefix string, jobName string, dependJobName string, workflow *Workflow) error {
+
+	dependJob, ok := workflow.Jobs[dependJobName]
+	if !ok {
+		err := fmt.Errorf("%s: the dependecy job is missing, but the real one is %s", prefix, dependJobName)
+		return err
+	}
+
+	// depend job should have single command only because it should be single k8s- job related to that job
+
+	if (len(dependJob.Commands) > 1) || (len(dependJob.CommandsIter.Vars) > 1) || (len(dependJob.CommandsIter.VarsIter) > 1) {
+		err := fmt.Errorf("the dependecy job has more than one command %s dependjobName :%s", prefix, dependJobName)
+		return err
+	}
+
+	currentJob, ok := workflow.Jobs[jobName]
+	if !ok {
+		err := fmt.Errorf("%s: the job is missing, but the real one is %s", prefix, dependJobName)
+		return err
+	}
+
+	if len(currentJob.Depends) != 1 {
+		err := fmt.Errorf("%s: the job has more dependecies %v", prefix, currentJob.Depends)
+		return err
+	}
+
+	for i := 0; i < len(currentJob.Depends); i++ {
+		if (currentJob.Depends[i].Target == dependJobName) &&
+			(currentJob.Depends[i].Type) == "whole" {
+			return nil
+		}
+	}
+
+	err := fmt.Errorf("%s: the dependecy job type is wrong %s", prefix, dependJobName)
+
+	return err
+}
+
+func ValidateGenericCondition(jobName string, gCondition *GenericCondition, inputs map[string]Input, workflow *Workflow) ErrorList {
+	allErrs := ErrorList{}
+
+	if gCondition == nil {
+		return allErrs
+	}
+	prefix := fmt.Sprintf("workflow.%s.genericcondition.dependjobname", jobName)
+	err := validateGenericDependency(prefix, jobName, gCondition.DependJobName, workflow)
+	if err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	for i := range gCondition.MatchRules {
+		prefix := fmt.Sprintf("workflow.%s.genericcondition.matchrules[%d]", jobName, i)
+		switch gCondition.MatchRules[i].Operator {
+		case MatchOperatorOpIn, MatchOperatorOpNotIn, MatchOperatorOpEqual,
+			MatchOperatorOpDoubleEqual, MatchOperatorOpNotEqual:
+			if len(gCondition.MatchRules[i].Values) == 0 {
+				allErrs = append(allErrs, fmt.Errorf("%s.values must be specified when `operator` is 'In' or 'NotIn'", prefix))
+			}
+		case MatchOperatorOpExists, MatchOperatorOpDoesNotExist:
+			if len(gCondition.MatchRules[i].Values) > 0 {
+				allErrs = append(allErrs, fmt.Errorf("%s.values must not be specified when `operator` is 'Exists' or 'DoesNotExist' ", prefix))
+			}
+		case MatchOperatorOpGt, MatchOperatorOpLt:
+			if len(gCondition.MatchRules[i].Values) != 1 {
+				allErrs = append(allErrs, fmt.Errorf("%s.values must be specified single value when `operator` is 'Lt' or 'Gt' ", prefix))
+			}
+		default:
+			allErrs = append(allErrs, fmt.Errorf("%s.values not a valid Match operator ", prefix))
+
+		}
+		if len(gCondition.MatchRules[i].Key) == 0 || IsVariant(gCondition.MatchRules[i].Key) {
+			allErrs = append(allErrs, fmt.Errorf("%s.key should not be empty or shoud not be variant ", prefix))
+		}
+	}
+	return allErrs
+}
 
 func ValidateTool(jobName string, toolName string) ErrorList {
 	errors := ErrorList{}
@@ -235,6 +311,49 @@ func TransCond2ExecCond(condition interface{}) *execv1alpha1.Condition {
 	execCond := execv1alpha1.Condition{}
 
 	execCond.Condition = condition
+
+	return &execCond
+}
+
+func TransGenericCond2ExecGenericCond(condition *GenericCondition) *execv1alpha1.GenericCondition {
+	execCond := execv1alpha1.GenericCondition{}
+
+	execCond.DependJobName = condition.DependJobName
+	//execCond.MatchRules = make([]execv1alpha1.MatchRule, len(condition.MatchRules))
+
+	for i := range condition.MatchRules {
+		var req execv1alpha1.MatchRule
+		req.Key = condition.MatchRules[i].Key
+
+		switch condition.MatchRules[i].Operator {
+
+		case MatchOperatorOpIn:
+			req.Operator = execv1alpha1.MatchOperatorOpIn
+		case MatchOperatorOpNotIn:
+			req.Operator = execv1alpha1.MatchOperatorOpNotIn
+		case MatchOperatorOpExists:
+			req.Operator = execv1alpha1.MatchOperatorOpExists
+		case MatchOperatorOpDoesNotExist:
+			req.Operator = execv1alpha1.MatchOperatorOpDoesNotExist
+		case MatchOperatorOpGt:
+			req.Operator = execv1alpha1.MatchOperatorOpGt
+		case MatchOperatorOpLt:
+			req.Operator = execv1alpha1.MatchOperatorOpLt
+		case MatchOperatorOpEqual:
+			req.Operator = execv1alpha1.MatchOperatorOpEqual
+		case MatchOperatorOpNotEqual:
+			req.Operator = execv1alpha1.MatchOperatorOpNotEqual
+		case MatchOperatorOpDoubleEqual:
+			req.Operator = execv1alpha1.MatchOperatorOpDoubleEqual
+		}
+
+		//req.Values = make([]string, len(condition.MatchRules[i].Values))
+
+		for j := range condition.MatchRules[i].Values {
+			req.Values = append(req.Values, condition.MatchRules[i].Values[j])
+		}
+		execCond.MatchRules = append(execCond.MatchRules, req)
+	}
 
 	return &execCond
 }

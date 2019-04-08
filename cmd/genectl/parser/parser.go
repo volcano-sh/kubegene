@@ -80,6 +80,10 @@ func ValidateWorkflow(workflow *Workflow) ErrorList {
 			allErr = append(allErr, err)
 
 		}
+
+		// validate generic condition
+		allErr = append(allErr, ValidateGenericCondition(jobName, job.GenericCondition, workflow.Inputs, workflow)...)
+
 		// validate condition
 		allErr = append(allErr, validateCondition(jobName, job.Condition, workflow.Inputs, workflow)...)
 
@@ -215,6 +219,7 @@ func InstantiateWorkflow(workflow *Workflow, inputs map[string]interface{}, tool
 			tmpJob.Commands = newCommands
 			tmpJob.Depends = jobInfo.Depends
 			tmpJob.Condition = jobInfo.Condition
+			tmpJob.GenericCondition = jobInfo.GenericCondition
 			jobs[jobName] = tmpJob
 
 		} else {
@@ -227,6 +232,7 @@ func InstantiateWorkflow(workflow *Workflow, inputs map[string]interface{}, tool
 			tmpJob.CommandsIter.VarsIter = convert2ArrayOfIfs(varsIter)
 			tmpJob.Depends = jobInfo.Depends
 			tmpJob.Condition = jobInfo.Condition
+			tmpJob.GenericCondition = jobInfo.GenericCondition
 			jobs[jobName] = tmpJob
 
 		}
@@ -339,6 +345,10 @@ func TransWorkflow2Execution(workflow *Workflow) (*execv1alpha1.Execution, error
 
 		if jobInfo.Condition != nil {
 			task.Condition = TransCond2ExecCond(jobInfo.Condition)
+		}
+
+		if jobInfo.GenericCondition != nil {
+			task.GenericCondition = TransGenericCond2ExecGenericCond(jobInfo.GenericCondition)
 		}
 
 		task.Dependents = TransDepend2ExecDepend(jobInfo.Depends)

@@ -27,6 +27,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
 	"kubegene.io/kubegene/pkg/graph"
+	"strconv"
 )
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -187,4 +188,77 @@ func MarkVertexPhase(exec *genev1alpha1.Execution, vertexName string, phase gene
 	}
 
 	exec.Status.Vertices[vertexStatus.ID] = *vertexStatus
+}
+
+// RuleSatisfied returns true if the MatchRule matches the input kv.
+// There is a match in the following cases:
+// (1) The operator is Exists and Labels has the MatchRule's key.
+// (2) The operator is In, Labels has the MatchRule's key and map'
+//     value for that key is in MatchRule's value set.
+// (3) The operator is NotIn, map has the MatchRule's key and
+//     map kv' value for that key is not in MatchRule's value set.
+// (4) The operator is DoesNotExist or NotIn and map kv does not have the
+//     MatchRule's key.
+// (5) The operator is GreaterThanOperator or LessThanOperator, and map kv has
+//     the MatchRule's key and the corresponding value satisfies mathematical inequality.
+
+func RuleSatisfied(r genev1alpha1.MatchRule, kv map[string]string) bool {
+
+	switch r.Operator {
+	case genev1alpha1.MatchOperatorOpIn, genev1alpha1.MatchOperatorOpEqual, genev1alpha1.MatchOperatorOpDoubleEqual:
+		val, ok := kv[r.Key]
+		if !ok {
+			return false
+		}
+		return hasValue(r, val)
+	case genev1alpha1.MatchOperatorOpNotIn, genev1alpha1.MatchOperatorOpNotEqual:
+		val, ok := kv[r.Key]
+		if !ok {
+			return true
+		}
+		return !hasValue(r, val)
+	case genev1alpha1.MatchOperatorOpExists:
+		_, ok := kv[r.Key]
+		return ok
+	case genev1alpha1.MatchOperatorOpDoesNotExist:
+		_, ok := kv[r.Key]
+		return !ok
+	case genev1alpha1.MatchOperatorOpGt, genev1alpha1.MatchOperatorOpLt:
+		val, ok := kv[r.Key]
+		if !ok {
+			return false
+		}
+		lsValue, err := strconv.ParseInt(val, 10, 64)
+		if err != nil {
+			glog.V(2).Infof("ParseInt failed for value %+v in key &val %+v, %+v", val, kv, err)
+			return false
+		}
+
+		// There should be only one strValue in r.Values, and can be converted to a integer.
+		if len(r.Values) != 1 {
+			glog.V(2).Infof("Invalid values count %+v of match rule %#v, for 'Gt', 'Lt' operators, exactly one value is required", len(r.Values), r)
+			return false
+		}
+
+		var rValue int64
+		for i := range r.Values {
+			rValue, err = strconv.ParseInt(r.Values[i], 10, 64)
+			if err != nil {
+				glog.V(2).Infof("ParseInt failed for value %+v in matchrule %#v, for 'Gt', 'Lt' operators, the value must be an integer", r.Values[i], r)
+				return false
+			}
+		}
+		return (r.Operator == genev1alpha1.MatchOperatorOpGt && lsValue > rValue) || (r.Operator == genev1alpha1.MatchOperatorOpLt && lsValue < rValue)
+	default:
+		return false
+	}
+}
+
+func hasValue(r genev1alpha1.MatchRule, value string) bool {
+	for i := range r.Values {
+		if r.Values[i] == value {
+			return true
+		}
+	}
+	return false
 }

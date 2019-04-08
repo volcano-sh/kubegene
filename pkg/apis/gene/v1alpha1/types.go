@@ -114,6 +114,44 @@ type ExecutionSpec struct {
 	Parallelism *int64 `json:"parallelism,omitempty"`
 }
 
+// A match  operator is the set of operators that can be used in
+// a MatchRule.
+type MatchOperator string
+
+const (
+	MatchOperatorOpIn           MatchOperator = "In"
+	MatchOperatorOpNotIn        MatchOperator = "NotIn"
+	MatchOperatorOpExists       MatchOperator = "Exists"
+	MatchOperatorOpDoesNotExist MatchOperator = "DoesNotExist"
+	MatchOperatorOpGt           MatchOperator = "Gt"
+	MatchOperatorOpLt           MatchOperator = "Lt"
+	MatchOperatorOpEqual        MatchOperator = "="
+	MatchOperatorOpNotEqual     MatchOperator = "!="
+	MatchOperatorOpDoubleEqual  MatchOperator = "=="
+)
+
+// A matching rules is a requirement that contains values, a key, and an operator
+// that relates the key and values.
+type MatchRule struct {
+	// The key that the requirement applies to.
+	Key string `json:"key"`
+	// Represents a key's relationship to a set of values.
+	// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+	Operator MatchOperator `json:"operator"`
+	// An array of string values. If the operator is In or NotIn,
+	// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+	// the values array must be empty. If the operator is Gt or Lt, the values
+	// array must have a single element, which will be interpreted as an integer.
+	// +optional
+	Values []string `json:"values,omitempty"`
+}
+
+// generic Conditional dynamic handling match rules are ORed.
+type GenericCondition struct {
+	DependJobName string      `json:"dependjobname"`
+	MatchRules    []MatchRule `json:"matchrules"`
+}
+
 // Condition in Task
 type Condition struct {
 	Condition interface{} `json:"condition,omitempty"`
@@ -181,6 +219,10 @@ type Task struct {
 	// The task will be executed only when condition satisfied
 	// +optional
 	Condition *Condition `json:"condition,omitempty"`
+	// Specifies the generic condition for this task
+	// The task will be executed only when any one of the rule of condition is  satisfied
+	// +optional
+	GenericCondition *GenericCondition `json:"genericcondition,omitempty"`
 }
 
 // +k8s:openapi-gen=false

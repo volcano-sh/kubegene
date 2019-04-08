@@ -124,6 +124,27 @@ var _ = DescribeGene("kube dag", func(gtc *GeneTestContext) {
 		err = geneClient.ExecutionV1alpha1().Executions(ns).Delete(execution.Name, &metav1.DeleteOptions{})
 		Expect(err).NotTo(HaveOccurred())
 	})
+
+	It("generic condition", func() {
+		By("Create generic-condition execution")
+		execution := makeGenericConditionExecution(ns, "execution-generic-condition", claimName)
+		_, err := geneClient.ExecutionV1alpha1().Executions(ns).Create(execution)
+		Expect(err).NotTo(HaveOccurred())
+
+		err = WaitForExecutionSuccess(geneClient, execution.Name, ns)
+		Expect(err).NotTo(HaveOccurred())
+
+		By("Check execution result")
+		result, err := ReadResult("genericcond.txt")
+		Expect(err).NotTo(HaveOccurred())
+		// The order of execution is variable, but it must be one of the following.
+		expectResult := []string{"BCD", "CBD"}
+		Expect(expectResult).Should(ContainElement(result))
+
+		By("Delete execution")
+		err = geneClient.ExecutionV1alpha1().Executions(ns).Delete(execution.Name, &metav1.DeleteOptions{})
+		Expect(err).NotTo(HaveOccurred())
+	})
 })
 
 func makeWholeExecution(ns, prefix, pvc string) *genev1alpha1.Execution {
@@ -192,6 +213,114 @@ func makeWholeExecution(ns, prefix, pvc string) *genev1alpha1.Execution {
 					Name:       "d",
 					Type:       genev1alpha1.JobTaskType,
 					CommandSet: []string{"echo D >> /tmp/kubegene/whole.txt"},
+					Image:      "busybox",
+					Dependents: []genev1alpha1.Dependent{
+						{
+							Target: "b",
+							Type:   genev1alpha1.DependTypeWhole,
+						},
+					},
+					Volumes: map[string]genev1alpha1.Volume{
+						"volumed": {
+							MountPath: "/tmp/kubegene",
+							MountFrom: genev1alpha1.VolumeSource{
+								Pvc: pvc,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	return exec
+}
+
+func makeGenericConditionExecution(ns, prefix, pvc string) *genev1alpha1.Execution {
+	exec := &genev1alpha1.Execution{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-%s", prefix, ns),
+			Namespace: ns,
+		},
+		Spec: genev1alpha1.ExecutionSpec{
+			Tasks: []genev1alpha1.Task{
+				{
+					Name:       "a",
+					Type:       genev1alpha1.JobTaskType,
+					CommandSet: []string{"echo testscenario:testwithInOp"},
+					Image:      "busybox",
+					Volumes: map[string]genev1alpha1.Volume{
+						"volumea": {
+							MountPath: "/tmp/kubegene",
+							MountFrom: genev1alpha1.VolumeSource{
+								Pvc: pvc,
+							},
+						},
+					},
+				},
+				{
+					Name:       "b",
+					Type:       genev1alpha1.JobTaskType,
+					CommandSet: []string{"echo B >> /tmp/kubegene/genericcond.txt"},
+					Image:      "busybox",
+					Dependents: []genev1alpha1.Dependent{
+						{
+							Target: "a",
+							Type:   genev1alpha1.DependTypeWhole,
+						},
+					},
+					GenericCondition: &genev1alpha1.GenericCondition{
+						DependJobName: "a",
+						MatchRules: []genev1alpha1.MatchRule{
+							{
+								Key:      "testscenario",
+								Operator: genev1alpha1.MatchOperatorOpIn,
+								Values:   []string{"testwithInOp"},
+							},
+						},
+					},
+					Volumes: map[string]genev1alpha1.Volume{
+						"volumeb": {
+							MountPath: "/tmp/kubegene",
+							MountFrom: genev1alpha1.VolumeSource{
+								Pvc: pvc,
+							},
+						},
+					},
+				},
+				{
+					Name:       "c",
+					Type:       genev1alpha1.JobTaskType,
+					CommandSet: []string{"echo C >> /tmp/kubegene/genericcond.txt"},
+					Image:      "busybox",
+					Dependents: []genev1alpha1.Dependent{
+						{
+							Target: "a",
+							Type:   genev1alpha1.DependTypeWhole,
+						},
+					},
+					GenericCondition: &genev1alpha1.GenericCondition{
+						DependJobName: "a",
+						MatchRules: []genev1alpha1.MatchRule{
+							{
+								Key:      "testscenario",
+								Operator: genev1alpha1.MatchOperatorOpExists,
+							},
+						},
+					},
+					Volumes: map[string]genev1alpha1.Volume{
+						"volumec": {
+							MountPath: "/tmp/kubegene",
+							MountFrom: genev1alpha1.VolumeSource{
+								Pvc: pvc,
+							},
+						},
+					},
+				},
+				{
+					Name:       "d",
+					Type:       genev1alpha1.JobTaskType,
+					CommandSet: []string{"echo D >> /tmp/kubegene/genericcond.txt"},
 					Image:      "busybox",
 					Dependents: []genev1alpha1.Dependent{
 						{

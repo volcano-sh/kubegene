@@ -36,6 +36,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
+	//"encoding/json"
 	genelisters "kubegene.io/kubegene/pkg/client/listers/gene/v1alpha1"
 	"kubegene.io/kubegene/pkg/common"
 	"kubegene.io/kubegene/pkg/graph"
@@ -191,6 +192,23 @@ func (e *ExecutionJobController) syncHandler(event Event) error {
 					// flag setting true to handle if Condition is nil
 					flag := true
 					var err error
+
+					if child.Data.DynamicJob.GenericCondition != nil {
+						glog.V(2).Infof(" conditional based job GenericCondition:%v", child.Data.DynamicJob.GenericCondition)
+						flag, err = e.evalGenericConditionResult(vertex.Data.Job, child, graph, event.Key)
+						if err != nil {
+							return fmt.Errorf("evalGenericConditionResult failed : %v", err)
+						}
+						if !flag {
+							// if the condition or check_result validation is false
+							// then we don't create the k8s job and make the job is Finished true
+							// so that other jobs will continue or execution will complete
+							glog.V(2).Infof(" The final condition is false")
+							child.Data.Finished = true
+							continue
+						}
+					}
+
 					if child.Data.DynamicJob.Condition != nil {
 						glog.V(2).Infof(" conditional based job condition:%v", child.Data.DynamicJob.Condition)
 						flag, err = e.evalConditionResult(vertex.Data.Job, child, graph, event.Key)
@@ -246,9 +264,48 @@ func (e *ExecutionJobController) syncHandler(event Event) error {
 	}
 	return nil
 }
+
+func (e *ExecutionJobController) evalGenericConditionResult(dependJob *batch.Job, vertex *graph.Vertex, graph *graph.Graph, key string) (bool, error) {
+
+	glog.V(6).Infof("In evalGenericConditionResult GenericCondition:%v", vertex.Data.DynamicJob.GenericCondition)
+
+	genericCond := vertex.Data.DynamicJob.GenericCondition
+
+	// get the result of the dependent job
+	result, err := e.getJobResult(dependJob)
+	if err != nil {
+		return false, fmt.Errorf("getJobResult failed in evalGenericConditionResult: %v", err)
+	}
+
+	var keyvalues map[string]string
+
+	keyvalues = make(map[string]string, 0)
+	strs := strings.Split(result, ",")
+
+	glog.V(6).Infof("In evalGenericConditionResult strs %v", strs)
+
+	for i := range strs {
+
+		kv := strings.Split(strs[i], ":")
+		glog.V(2).Infof("In evalGenericConditionResult kv %v", kv)
+		keyvalues[kv[0]] = kv[1]
+	}
+	glog.V(2).Infof("In evalGenericConditionResult keyvalues %v", keyvalues)
+
+	// check for the matching key values from the result to generic condition
+	for i := range genericCond.MatchRules {
+		if util.RuleSatisfied(genericCond.MatchRules[i], keyvalues) {
+			glog.V(2).Infof("successfully matched for keyvalues: %v for rules:%v", keyvalues, genericCond.MatchRules)
+			return true, nil
+		}
+	}
+	glog.V(2).Infof("In evalGenericConditionResult Rules are not matched")
+	return false, fmt.Errorf("Rules are not matched")
+}
+
 func (e *ExecutionJobController) evalConditionResult(dependJob *batch.Job, vertex *graph.Vertex, graph *graph.Graph, key string) (bool, error) {
 
-	glog.Infof("In evalConditionResult condition:%v", vertex.Data.DynamicJob.Condition.Condition)
+	glog.V(6).Infof("In evalConditionResult condition:%v", vertex.Data.DynamicJob.Condition.Condition)
 
 	v := vertex.Data.DynamicJob.Condition.Condition.([]interface{})
 
@@ -261,7 +318,7 @@ func (e *ExecutionJobController) evalConditionResult(dependJob *batch.Job, verte
 
 			parentJobName := v[1].(string)
 			exp := v[2].(string)
-			glog.Infof("In evalConditionResult jobName: %s exp:%s", parentJobName, exp)
+			glog.V(6).Infof("In evalConditionResult jobName: %s exp:%s", parentJobName, exp)
 			// get the result of the dependent job
 			result, err := e.getJobResult(dependJob)
 			if err != nil {
@@ -280,9 +337,10 @@ func (e *ExecutionJobController) evalConditionResult(dependJob *batch.Job, verte
 
 	return false, fmt.Errorf("In evalConditionResult Invalid condition %v", vertex.Data.DynamicJob.Condition.Condition)
 }
+
 func evalJobResult(jobResult string, vars []interface{}) ([]common.Var, error) {
 	result := make([]common.Var, 0, len(vars))
-	glog.Infof("In evalJobResult vars:%v", vars)
+	glog.V(6).Infof("In evalJobResult vars:%v", vars)
 
 	for _, vs := range vars {
 		v := vs.([]interface{})
@@ -306,15 +364,16 @@ func evalJobResult(jobResult string, vars []interface{}) ([]common.Var, error) {
 
 				result = append(result, strslice)
 			}
-			glog.Infof("In evalJobResult jobName: %s sep:%s", parentJobName, sep)
+			glog.V(6).Infof("In evalJobResult jobName: %s sep:%s", parentJobName, sep)
 		} else {
 			//except get_result other parameters need to be appended
 			result = append(result, v)
 		}
 	}
-	glog.Infof("In evalJobResult result: %v", result)
+	glog.V(6).Infof("In evalJobResult result: %v", result)
 	return result, nil
 }
+
 func ConvertVars(vars []interface{}) []common.Var {
 	result := make([]common.Var, 0, len(vars))
 

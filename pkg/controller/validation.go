@@ -90,6 +90,11 @@ func validateTask(task genev1alpha1.Task, tasks []genev1alpha1.Task) error {
 			return err
 		}
 	}
+	if task.GenericCondition != nil {
+		if err := validateGenericCondition(task.Name, task.GenericCondition, tasks); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -117,4 +122,86 @@ func taskExist(tasks []genev1alpha1.Task, name string) bool {
 		}
 	}
 	return false
+}
+
+func gettaskByName(tasks []genev1alpha1.Task, name string) (bool, genev1alpha1.Task) {
+	var tt genev1alpha1.Task
+	for _, task := range tasks {
+		if task.Name == name {
+			return true, task
+		}
+	}
+	return false, tt
+}
+
+func validateGenericDependency(taskName string, dependJobName string, tasks []genev1alpha1.Task) error {
+	var dependTask genev1alpha1.Task
+	var flag bool
+	flag, dependTask = gettaskByName(tasks, dependJobName)
+
+	if !flag {
+		return fmt.Errorf(" the dependecy job is missing, but the real one is %s", dependJobName)
+	} else {
+		// depend job should have single command only because it should be single k8s- job related to that job
+		if (len(dependTask.CommandSet) > 1) ||
+			((dependTask.CommandsIter != nil) && len(dependTask.CommandsIter.VarsIter) > 1) {
+
+			return fmt.Errorf("the dependecy job has more than one command  dependTask :%v", dependTask)
+		}
+	}
+
+	var currentTask genev1alpha1.Task
+	flag, currentTask = gettaskByName(tasks, taskName)
+
+	if !flag {
+		return fmt.Errorf("the current task is missing, but the real one is %s", taskName)
+	}
+
+	if len(currentTask.Dependents) != 1 {
+		return fmt.Errorf("the current task has more dependecies %v", currentTask.Dependents)
+	}
+
+	for i := 0; i < len(currentTask.Dependents); i++ {
+		if (currentTask.Dependents[i].Target == dependJobName) &&
+			(currentTask.Dependents[i].Type) == "whole" {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("the task dependency type is wrong ")
+}
+
+func validateGenericCondition(taskName string, gCondition *genev1alpha1.GenericCondition, tasks []genev1alpha1.Task) error {
+
+	err := validateGenericDependency(taskName, gCondition.DependJobName, tasks)
+	if err != nil {
+		return err
+	}
+
+	for i := range gCondition.MatchRules {
+		prefix := fmt.Sprintf("executionspec.%s.genericcondition.matchrules[%d]", taskName, i)
+		switch gCondition.MatchRules[i].Operator {
+		case genev1alpha1.MatchOperatorOpIn, genev1alpha1.MatchOperatorOpNotIn,
+			genev1alpha1.MatchOperatorOpEqual, genev1alpha1.MatchOperatorOpDoubleEqual,
+			genev1alpha1.MatchOperatorOpNotEqual:
+			if len(gCondition.MatchRules[i].Values) == 0 {
+				return fmt.Errorf("%s.values must be specified when `operator` is 'In' or 'NotIn'", prefix)
+			}
+		case genev1alpha1.MatchOperatorOpExists, genev1alpha1.MatchOperatorOpDoesNotExist:
+			if len(gCondition.MatchRules[i].Values) > 0 {
+				return fmt.Errorf("%s.values must not be specified when `operator` is 'Exists' or 'DoesNotExist' ", prefix)
+			}
+		case genev1alpha1.MatchOperatorOpGt, genev1alpha1.MatchOperatorOpLt:
+			if len(gCondition.MatchRules[i].Values) != 1 {
+				return fmt.Errorf("%s.values must be specified single value when `operator` is 'Lt' or 'Gt' ", prefix)
+			}
+		default:
+			return fmt.Errorf("%s.values not a valid Match operator ", prefix)
+
+		}
+		if len(gCondition.MatchRules[i].Key) == 0 {
+			return fmt.Errorf("%s.key should not be empty or shoud not be variant ", prefix)
+		}
+	}
+	return nil
 }
