@@ -439,6 +439,264 @@ func TestValidateExecution(t *testing.T) {
 			},
 			ExpectErr: true,
 		},
+		{
+			Name: "task with valid dynamic condition",
+			ModifyFunc: func(exec *genev1alpha1.Execution) {
+				exec.Spec.Tasks = []genev1alpha1.Task{
+					{
+						Name:       "a",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+					},
+					{
+						Name:       "b",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+						Dependents: []genev1alpha1.Dependent{
+							{
+								Target: "a",
+								Type:   genev1alpha1.DependTypeWhole,
+							},
+						},
+						GenericCondition: &genev1alpha1.GenericCondition{
+							DependJobName: "a",
+							MatchRules: []genev1alpha1.MatchRule{
+								{
+									Key:      "testscenario",
+									Operator: genev1alpha1.MatchOperatorOpIn,
+									Values:   []string{"testwithInOp"},
+								},
+							},
+						},
+					},
+				}
+			},
+			ExpectErr: false,
+		},
+		{
+			Name: "task with Invalid dynamic condition(dependency task is missing)",
+			ModifyFunc: func(exec *genev1alpha1.Execution) {
+				exec.Spec.Tasks = []genev1alpha1.Task{
+					{
+						Name:       "c",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+					},
+					{
+						Name:       "b",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+						Dependents: []genev1alpha1.Dependent{
+							{
+								Target: "a",
+								Type:   genev1alpha1.DependTypeWhole,
+							},
+						},
+						GenericCondition: &genev1alpha1.GenericCondition{
+							DependJobName: "a",
+							MatchRules: []genev1alpha1.MatchRule{
+								{
+									Key:      "testscenario",
+									Operator: genev1alpha1.MatchOperatorOpIn,
+									Values:   []string{"testwithInOp"},
+								},
+							},
+						},
+					},
+				}
+			},
+			ExpectErr: true,
+		},
+		{
+			Name: "task with Invalid dynamic condition(OpExsists with Values)",
+			ModifyFunc: func(exec *genev1alpha1.Execution) {
+				exec.Spec.Tasks = []genev1alpha1.Task{
+					{
+						Name:       "a",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+					},
+					{
+						Name:       "b",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+						Dependents: []genev1alpha1.Dependent{
+							{
+								Target: "a",
+								Type:   genev1alpha1.DependTypeWhole,
+							},
+						},
+						GenericCondition: &genev1alpha1.GenericCondition{
+							DependJobName: "a",
+							MatchRules: []genev1alpha1.MatchRule{
+								{
+									Key:      "testscenario",
+									Operator: genev1alpha1.MatchOperatorOpExists,
+									Values:   []string{"testwithInOp"},
+								},
+							},
+						},
+					},
+				}
+			},
+			ExpectErr: true,
+		},
+		{
+			Name: "task with Invalid dynamic condition(OpGt with No Values)",
+			ModifyFunc: func(exec *genev1alpha1.Execution) {
+				exec.Spec.Tasks = []genev1alpha1.Task{
+					{
+						Name:       "a",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+					},
+					{
+						Name:       "b",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+						Dependents: []genev1alpha1.Dependent{
+							{
+								Target: "a",
+								Type:   genev1alpha1.DependTypeWhole,
+							},
+						},
+						GenericCondition: &genev1alpha1.GenericCondition{
+							DependJobName: "a",
+							MatchRules: []genev1alpha1.MatchRule{
+								{
+									Key:      "testscenario",
+									Operator: genev1alpha1.MatchOperatorOpGt,
+								},
+							},
+						},
+					},
+				}
+			},
+			ExpectErr: true,
+		},
+		{
+			Name: "task with Invalid dynamic condition(OpIn with No Values)",
+			ModifyFunc: func(exec *genev1alpha1.Execution) {
+				exec.Spec.Tasks = []genev1alpha1.Task{
+					{
+						Name:       "a",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+					},
+					{
+						Name:       "b",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+						Dependents: []genev1alpha1.Dependent{
+							{
+								Target: "a",
+								Type:   genev1alpha1.DependTypeWhole,
+							},
+						},
+						GenericCondition: &genev1alpha1.GenericCondition{
+							DependJobName: "a",
+							MatchRules: []genev1alpha1.MatchRule{
+								{
+									Key:      "testscenario",
+									Operator: genev1alpha1.MatchOperatorOpIn,
+								},
+							},
+						},
+					},
+				}
+			},
+			ExpectErr: true,
+		},
 	}
 
 	for _, testCase := range testCases {
