@@ -1,0 +1,94 @@
+#       A(jobpreparemod)
+#         /    \
+#        /      \
+#       /        \
+#      /          \
+#(jobmodcond)B    C(jobmodgetresult)
+#     \           /
+#      \         /
+#       \       /
+#        D(jobbeforefinish)
+#          |
+#          |
+#        E(jobfinish)
+#
+  apiVersion: execution.kubegene.io/v1alpha1
+  kind: Execution
+  metadata:
+    name: execution-5chkresult-getresult
+  spec:
+    tasks:
+    - commandSet:
+      - echo "JOBBEFOREFINISH" | tee -a /tmp/execution/exec-5-result.txt;
+      dependents:
+      - target: jobmodgetresult
+        type: whole
+      - target: jobmodcond
+        type: whole
+      image: ubuntu
+      name: jobbeforefinish
+      type: Job
+      volumes:
+        volumea:
+          mountFrom:
+            pvc: execution-pvc
+          mountPath: /tmp/execution
+    - commandSet:
+      - echo JOBFINISH | tee -a /tmp/execution/exec-5-result.txt;
+      dependents:
+      - target: jobbeforefinish
+        type: whole
+      image: ubuntu
+      name: jobfinish
+      type: Job
+      volumes:
+        volumeb:
+          mountFrom:
+            pvc: execution-pvc
+          mountPath: /tmp/execution
+    - commandSet:
+      - echo CHKRESULT | tee -a /tmp/execution/exec-5-result.txt;
+      condition:
+        condition:
+        - check_result
+        - jobpreparemod
+        - 1 3
+      dependents:
+      - target: jobpreparemod
+        type: whole
+      image: ubuntu
+      name: jobmodcond
+      type: Job
+      volumes:
+        volumec:
+          mountFrom:
+            pvc: execution-pvc
+          mountPath: /tmp/execution
+    - commands_iter:
+        command: echo GETRESULT${1} | tee -a /tmp/execution/exec-5-result.txt;
+        vars_iter:
+        - - get_result
+          - jobpreparemod
+          - ' '
+      dependents:
+      - target: jobpreparemod
+        type: whole
+      image: ubuntu
+      name: jobmodgetresult
+      type: Job
+      volumes:
+        volumed:
+          mountFrom:
+            pvc: execution-pvc
+          mountPath: /tmp/execution
+    - commandSet:
+      - echo 1 3
+      dependents: []
+      image: ubuntu
+      name: jobpreparemod
+      type: Job
+      volumes:
+        volumee:
+          mountFrom:
+            pvc: execution-pvc
+          mountPath: /tmp/execution

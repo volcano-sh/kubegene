@@ -31,6 +31,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"path/filepath"
+
+	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
 )
 
 func CreateServiceAccount(kubeClient kubernetes.Interface, namespace string, relativePath string) error {
@@ -298,4 +300,19 @@ func claimFromManifest(fileName string) (*v1.PersistentVolumeClaim, error) {
 	}
 
 	return &claim, nil
+}
+
+func executionFromYamlfile(fileName string) (*genev1alpha1.Execution, error) {
+	data, err := readFile(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	var exec genev1alpha1.Execution
+	err = yaml.Unmarshal(data, &exec)
+	if err != nil {
+		return nil, err
+	}
+
+	return &exec, nil
 }

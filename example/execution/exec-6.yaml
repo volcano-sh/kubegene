@@ -1,0 +1,74 @@
+#     A(jobpreparemod)
+#          |
+#          |
+#     (jobgenericcond)B
+#          |
+#          |
+#      D(jobbeforefinish)
+#          |
+#          |
+#     E(jobfinish)
+#
+  apiVersion: execution.kubegene.io/v1alpha1
+  kind: Execution
+  metadata:
+    name: execution-6generic-condition-getresult
+  spec:
+    tasks:
+    - commandSet:
+      - echo "JOBBEFOREFINISH" | tee -a /tmp/execution/exec-6-result.txt;
+      dependents:
+      - target: jobgenericcond
+        type: whole
+      image: ubuntu
+      name: jobbeforefinish
+      type: Job
+      volumes:
+        volumea:
+          mountFrom:
+            pvc: execution-pvc
+          mountPath: /tmp/execution
+    - commandSet:
+      - echo JOBFINISH | tee -a /tmp/execution/exec-6-result.txt;
+      dependents:
+      - target: jobbeforefinish
+        type: whole
+      image: ubuntu
+      name: jobfinish
+      type: Job
+      volumes:
+        volumeb:
+          mountFrom:
+            pvc: execution-pvc
+          mountPath: /tmp/execution
+    - commandSet:
+      - echo GENERICCONDITION | tee -a /tmp/execution/exec-6-result.txt;
+      genericCondition:
+        dependJobName: jobpreparemod
+        matchRules:
+         - key: testkey
+           operator: In
+           values:
+             - testvalue
+      dependents:
+      - target: jobpreparemod
+        type: whole
+      image: ubuntu
+      name: jobgenericcond
+      type: Job
+      volumes:
+        volumec:
+          mountFrom:
+            pvc: execution-pvc
+          mountPath: /tmp/execution
+    - commandSet:
+      - echo testkey:testvalue
+      dependents: []
+      image: ubuntu
+      name: jobpreparemod
+      type: Job
+      volumes:
+        volumee:
+          mountFrom:
+            pvc: execution-pvc
+          mountPath: /tmp/execution
