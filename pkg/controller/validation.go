@@ -18,6 +18,8 @@ package controller
 
 import (
 	"fmt"
+
+	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/util/validation"
 
 	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
@@ -92,6 +94,16 @@ func validateTask(task genev1alpha1.Task, tasks []genev1alpha1.Task) error {
 	}
 	if task.GenericCondition != nil {
 		if err := validateGenericCondition(task.Name, task.GenericCondition, tasks); err != nil {
+			return err
+		}
+	}
+	if task.Condition != nil {
+		if err := validateCondition(task.Name, task.Condition, tasks); err != nil {
+			return err
+		}
+	}
+	if task.CommandsIter != nil {
+		if err := validateCommandsIter(task.Name, task.CommandsIter, tasks); err != nil {
 			return err
 		}
 	}
@@ -202,6 +214,79 @@ func validateGenericCondition(taskName string, gCondition *genev1alpha1.GenericC
 		if len(gCondition.MatchRules[i].Key) == 0 {
 			return fmt.Errorf("%s.key should not be empty or shoud not be variant ", prefix)
 		}
+	}
+	return nil
+}
+
+func validateCommandsIter(taskName string, commandsIter *genev1alpha1.CommandsIter, tasks []genev1alpha1.Task) error {
+	glog.V(2).Infof("In validateCommandsIter commandsIter %v", commandsIter)
+	var v []interface{}
+	if commandsIter.Command == "" {
+		return fmt.Errorf("%s task command must not be empty in commands_iter if commands_iter is not nil", taskName)
+	}
+	for _, vs := range commandsIter.VarsIter {
+
+		switch vs.(type) {
+		case []interface{}:
+			v = vs.([]interface{})
+
+		default:
+			return fmt.Errorf("The commandsIter  format is wrong in task :%s", taskName)
+		}
+
+		if func_name, ok := v[0].(string); ok && func_name == "get_result" {
+			if len(v) != 3 {
+				return fmt.Errorf("In commands_iter  get_result format is wrong in task :%s", taskName)
+			}
+			var dependJobName string
+			if dependJobName, ok = v[1].(string); !ok {
+				return fmt.Errorf("In commands_iter  get_result doesn't have the depend job parameter in task :%s", taskName)
+			}
+			if err := validateGenericDependency(taskName, dependJobName, tasks); err != nil {
+				return err
+			}
+			if _, ok := v[2].(string); !ok {
+				return fmt.Errorf("In commands_iter  get_result doesn't have the exp parameter in task :%s", taskName)
+			}
+		}
+	}
+	return nil
+
+}
+
+func validateCondition(taskName string, condition *genev1alpha1.Condition, tasks []genev1alpha1.Task) error {
+
+	var v []interface{}
+	glog.V(2).Infof("In validateCondition condition %v", condition)
+	switch condition.Condition.(type) {
+	case []interface{}:
+		v = condition.Condition.([]interface{})
+
+	default:
+		return fmt.Errorf("The condition  format is wrong in task :%s", taskName)
+	}
+
+	if _, ok := v[0].(bool); ok {
+		return nil
+	}
+
+	if func_name, ok := v[0].(string); ok && func_name == "check_result" {
+
+		if len(v) != 3 {
+			return fmt.Errorf("In condition  check_result format is wrong in task :%s", taskName)
+		}
+		var dependJobName string
+		if dependJobName, ok = v[1].(string); !ok {
+			return fmt.Errorf("In condition  check_result doesn't have the depend job parameter in task :%s", taskName)
+		}
+		if err := validateGenericDependency(taskName, dependJobName, tasks); err != nil {
+			return err
+		}
+		if _, ok := v[2].(string); !ok {
+			return fmt.Errorf("In condition  check_result doesn't have the exp parameter in task :%s", taskName)
+		}
+	} else {
+		return fmt.Errorf("%s task has other than check_result in condition ", taskName)
 	}
 	return nil
 }
