@@ -125,14 +125,14 @@ func ValidateGenericCondition(jobName string, gCondition *GenericCondition, inpu
 	if gCondition == nil {
 		return allErrs
 	}
-	prefix := fmt.Sprintf("workflow.%s.genericcondition.dependjobname", jobName)
+	prefix := fmt.Sprintf("workflow.%s.generic_condition.depend_job_name", jobName)
 	err := validateGenericDependency(prefix, jobName, gCondition.DependJobName, workflow)
 	if err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	for i := range gCondition.MatchRules {
-		prefix := fmt.Sprintf("workflow.%s.genericcondition.matchrules[%d]", jobName, i)
+		prefix := fmt.Sprintf("workflow.%s.generic_condition.match_rules[%d]", jobName, i)
 		switch gCondition.MatchRules[i].Operator {
 		case MatchOperatorOpIn, MatchOperatorOpNotIn, MatchOperatorOpEqual,
 			MatchOperatorOpDoubleEqual, MatchOperatorOpNotEqual:

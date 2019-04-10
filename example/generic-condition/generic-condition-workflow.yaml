@@ -40,9 +40,9 @@ workflow:
         command: echo ${output-prefix}${1}| tee -a ${samplemountpath}/${result};
         vars_iter:
             - [20, 21]
-      genericcondition:
-        dependjobname: jobpreparemod
-        matchrules:
+      generic_condition:
+        depend_job_name: jobpreparemod
+        match_rules:
            - key: testscenario
              operator: In
              values:

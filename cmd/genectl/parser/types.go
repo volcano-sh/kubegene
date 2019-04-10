@@ -216,8 +216,8 @@ type MatchRule struct {
 type GenericCondition struct {
 	// when we use generic condition this DependJobName should be same as jobName in Depends
 	// and Depends should have only one JobName
-	DependJobName string      `json:"dependJobName" yaml:"dependJobName"`
-	MatchRules    []MatchRule `json:"matchRules" yaml:"matchRules"`
+	DependJobName string      `json:"depend_job_name" yaml:"depend_job_name"`
+	MatchRules    []MatchRule `json:"match_rules" yaml:"match_rules"`
 }
 
 // job information.
@@ -240,7 +240,7 @@ type JobInfo struct {
 	Condition interface{} `json:"condition,omitempty" yaml:"condition,omitempty"`
 
 	// generic conditional handling using the match rules are ORed.
-	GenericCondition *GenericCondition `json:"genericCondition,omitempty" yaml:"genericCondition,omitempty"`
+	GenericCondition *GenericCondition `json:"generic_condition,omitempty" yaml:"generic_condition,omitempty"`
 }
 
 // PathsIter similar to CommandsIter.
