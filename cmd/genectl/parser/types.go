@@ -180,6 +180,46 @@ type Depend struct {
 	Type string `json:"type,omitempty" yaml:"type,omitempty"`
 }
 
+// A match  operator is the set of operators that can be used in
+// a MatchRequirement.
+type MatchOperator string
+
+const (
+	MatchOperatorOpIn           MatchOperator = "In"
+	MatchOperatorOpNotIn        MatchOperator = "NotIn"
+	MatchOperatorOpExists       MatchOperator = "Exists"
+	MatchOperatorOpDoesNotExist MatchOperator = "DoesNotExist"
+	MatchOperatorOpGt           MatchOperator = "Gt"
+	MatchOperatorOpLt           MatchOperator = "Lt"
+	MatchOperatorOpEqual        MatchOperator = "="
+	MatchOperatorOpNotEqual     MatchOperator = "!="
+	MatchOperatorOpDoubleEqual  MatchOperator = "=="
+)
+
+// A matching rule is a requirement that contains values, a key, and an operator
+// that relates the key and values.
+type MatchRule struct {
+	// The key that the requirement applies to.
+	Key string `json:"key" yaml:"key"`
+	// Represents a key's relationship to a set of values.
+	// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+	Operator MatchOperator `json:"operator" yaml:"operator"`
+	// An array of string values. If the operator is In or NotIn,
+	// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+	// the values array must be empty. If the operator is Gt or Lt, the values
+	// array must have a single element, which will be interpreted as an integer.
+	// +optional
+	Values []string `json:"values,omitempty" yaml:"values,omitempty"`
+}
+
+// generic Conditional dynamic handling match rules are ORed.
+type GenericCondition struct {
+	// when we use generic condition this DependJobName should be same as jobName in Depends
+	// and Depends should have only one JobName
+	DependJobName string      `json:"depend_job_name" yaml:"depend_job_name"`
+	MatchRules    []MatchRule `json:"match_rules" yaml:"match_rules"`
+}
+
 // job information.
 type JobInfo struct {
 	// Description describes what this job is to do.
@@ -198,6 +238,9 @@ type JobInfo struct {
 	Depends []Depend `json:"depends,omitempty" yaml:"depends,omitempty"`
 	// conditional branch handling
 	Condition interface{} `json:"condition,omitempty" yaml:"condition,omitempty"`
+
+	// generic conditional handling using the match rules are ORed.
+	GenericCondition *GenericCondition `json:"generic_condition,omitempty" yaml:"generic_condition,omitempty"`
 }
 
 // PathsIter similar to CommandsIter.

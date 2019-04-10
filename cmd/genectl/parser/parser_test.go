@@ -514,18 +514,23 @@ func TestValidateWorkflowSucc(t *testing.T) {
 			ExpectErr: false,
 		},
 		{
-			Name:      "valid case 1",
+			Name:      "valid case 2",
 			path:      "../../../example/simple-sample-getresult/simple-sample-getresult.yaml",
 			ExpectErr: false,
 		},
 		{
-			Name:      "valid case 1",
+			Name:      "valid case 3",
 			path:      "../../../example/conditional-sample/simple-sample-chkresult.yaml",
 			ExpectErr: false,
 		},
 		{
-			Name:      "valid case 1",
+			Name:      "valid case 4",
 			path:      "../../../example/conditional-getresult-combination/simple-sample-get-chkresult.yaml",
+			ExpectErr: false,
+		},
+		{
+			Name:      "valid case 5",
+			path:      "../../../example/generic-condition/generic-condition-workflow.yaml",
 			ExpectErr: false,
 		},
 	}

@@ -280,6 +280,37 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 		}
 		Expect(expectResult).Should(ContainElement(result))
 	})
+
+	It("sub workflow with generic condition", func() {
+		createVolumeAndClaim("example/generic-condition/sample-pv.yaml", "example/generic-condition/sample-pvc.yaml", "default", kubeClient)
+
+		By("Execute sub workflow command")
+		cmd := NewGenectlCommand("sub", "workflow", "example/generic-condition/generic-condition-workflow.yaml", "--tool-repo="+ToolRepo)
+		output := cmd.ExecOrDie()
+		glog.Infof("output: %v", output)
+		// wait to complete the execution
+		glog.Infof("waiting to complete the execution")
+
+		list, err := gtc.GeneClient.ExecutionV1alpha1().Executions("default").List(metav1.ListOptions{})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(1).To(Equal(len(list.Items)))
+
+		err = WaitForExecutionSuccess(gtc.GeneClient, list.Items[0].Name, "default")
+		Expect(err).NotTo(HaveOccurred())
+
+		By("Check the result")
+		result, err := ReadResultFrom("/kubegene-generic/generic-condition.txt")
+
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(err).NotTo(HaveOccurred())
+		// The order of execution is variable, but it must be one of the following.
+		expectResult := []string{
+			"ABC20ABC21JOBFINISH",
+			"ABC21ABC20JOBFINISH",
+		}
+		Expect(expectResult).Should(ContainElement(result))
+	})
 })
 
 func createVolumeAndClaim(volumeFile, claimFile, ns string, kubeClient kubernetes.Interface) {
