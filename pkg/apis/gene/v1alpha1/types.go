@@ -148,8 +148,10 @@ type MatchRule struct {
 
 // generic Conditional dynamic handling match rules are ORed.
 type GenericCondition struct {
-	DependJobName string      `json:"dependjobname"`
-	MatchRules    []MatchRule `json:"matchrules"`
+	// when we use generic condition this DependJobName should be same as jobName in Depends
+	// and Depends should have only one JobName
+	DependJobName string      `json:"dependJobName"`
+	MatchRules    []MatchRule `json:"matchRules"`
 }
 
 // Condition in Task
@@ -222,7 +224,7 @@ type Task struct {
 	// Specifies the generic condition for this task
 	// The task will be executed only when any one of the rule of condition is  satisfied
 	// +optional
-	GenericCondition *GenericCondition `json:"genericcondition,omitempty"`
+	GenericCondition *GenericCondition `json:"genericCondition,omitempty"`
 }
 
 // +k8s:openapi-gen=false

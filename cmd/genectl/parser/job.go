@@ -319,7 +319,6 @@ func TransGenericCond2ExecGenericCond(condition *GenericCondition) *execv1alpha1
 	execCond := execv1alpha1.GenericCondition{}
 
 	execCond.DependJobName = condition.DependJobName
-	//execCond.MatchRules = make([]execv1alpha1.MatchRule, len(condition.MatchRules))
 
 	for i := range condition.MatchRules {
 		var req execv1alpha1.MatchRule
@@ -346,8 +345,6 @@ func TransGenericCond2ExecGenericCond(condition *GenericCondition) *execv1alpha1
 		case MatchOperatorOpDoubleEqual:
 			req.Operator = execv1alpha1.MatchOperatorOpDoubleEqual
 		}
-
-		//req.Values = make([]string, len(condition.MatchRules[i].Values))
 
 		for j := range condition.MatchRules[i].Values {
 			req.Values = append(req.Values, condition.MatchRules[i].Values[j])

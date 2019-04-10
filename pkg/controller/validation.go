@@ -124,7 +124,7 @@ func taskExist(tasks []genev1alpha1.Task, name string) bool {
 	return false
 }
 
-func gettaskByName(tasks []genev1alpha1.Task, name string) (bool, genev1alpha1.Task) {
+func getTaskByName(tasks []genev1alpha1.Task, name string) (bool, genev1alpha1.Task) {
 	var tt genev1alpha1.Task
 	for _, task := range tasks {
 		if task.Name == name {
@@ -137,7 +137,7 @@ func gettaskByName(tasks []genev1alpha1.Task, name string) (bool, genev1alpha1.T
 func validateGenericDependency(taskName string, dependJobName string, tasks []genev1alpha1.Task) error {
 	var dependTask genev1alpha1.Task
 	var flag bool
-	flag, dependTask = gettaskByName(tasks, dependJobName)
+	flag, dependTask = getTaskByName(tasks, dependJobName)
 
 	if !flag {
 		return fmt.Errorf(" the dependecy job is missing, but the real one is %s", dependJobName)
@@ -151,7 +151,7 @@ func validateGenericDependency(taskName string, dependJobName string, tasks []ge
 	}
 
 	var currentTask genev1alpha1.Task
-	flag, currentTask = gettaskByName(tasks, taskName)
+	flag, currentTask = getTaskByName(tasks, taskName)
 
 	if !flag {
 		return fmt.Errorf("the current task is missing, but the real one is %s", taskName)
