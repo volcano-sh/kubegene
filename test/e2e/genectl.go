@@ -30,6 +30,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
+	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
+	execclientset "kubegene.io/kubegene/pkg/client/clientset/versioned"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -311,6 +314,131 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 		}
 		Expect(expectResult).Should(ContainElement(result))
 	})
+
+	// test cases related to execution
+
+	It("exec-1", func() {
+		createVolumeAndClaim("example/execution/exec-pv.yaml", "example/execution/exec-pvc.yaml", "default", kubeClient)
+
+		By("Execute exec-1")
+		var execObj *genev1alpha1.Execution
+		var err error
+		execObj, err = createExecution("example/execution/exec-1.yaml", gtc.GeneClient)
+
+		Expect(err).NotTo(HaveOccurred())
+		Expect(execObj).NotTo(Equal(nil))
+
+		err = WaitForExecutionSuccess(gtc.GeneClient, execObj.Name, "default")
+		Expect(err).NotTo(HaveOccurred())
+
+		By("Check the result")
+		result, err := ReadResultFrom("/tmp/execution/exec-1.txt")
+
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(err).NotTo(HaveOccurred())
+		// The order of execution is variable, but it must be one of the following.
+		expectResult := []string{
+			"ABCD",
+			"ACBD",
+		}
+		Expect(expectResult).Should(ContainElement(result))
+	})
+
+	It("exec-2", func() {
+		createVolumeAndClaim("example/execution/exec-pv.yaml", "example/execution/exec-pvc.yaml", "default", kubeClient)
+
+		By("Execute exec-1")
+		var execObj *genev1alpha1.Execution
+		var err error
+		execObj, err = createExecution("example/execution/exec-2.yaml", gtc.GeneClient)
+
+		Expect(err).NotTo(HaveOccurred())
+		Expect(execObj).NotTo(Equal(nil))
+
+		err = WaitForExecutionSuccess(gtc.GeneClient, execObj.Name, "default")
+		Expect(err).NotTo(HaveOccurred())
+
+		By("Check the result")
+		result, err := ReadResultFrom("/tmp/execution/exec-2.txt")
+
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(err).NotTo(HaveOccurred())
+		// The order of execution is variable, but it must be one of the following.
+		expectResult := []string{
+			"AEBCDF",
+			"AEBCFD",
+			"AECBDF",
+			"AECBFD",
+			"EABCDF",
+			"EABCFD",
+			"EACBDF",
+			"EACBFD",
+			"AEBDCF",
+		}
+		Expect(expectResult).Should(ContainElement(result))
+	})
+
+	It("exec-5", func() {
+		createVolumeAndClaim("example/execution/exec-pv.yaml", "example/execution/exec-pvc.yaml", "default", kubeClient)
+
+		By("Execute exec-1")
+		var execObj *genev1alpha1.Execution
+		var err error
+		execObj, err = createExecution("example/execution/exec-5.yaml", gtc.GeneClient)
+
+		Expect(err).NotTo(HaveOccurred())
+		Expect(execObj).NotTo(Equal(nil))
+
+		err = WaitForExecutionSuccess(gtc.GeneClient, execObj.Name, "default")
+		Expect(err).NotTo(HaveOccurred())
+
+		By("Check the result")
+		result, err := ReadResultFrom("/tmp/execution/exec-5-result.txt")
+
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(err).NotTo(HaveOccurred())
+		// The order of execution is variable, but it must be one of the following.
+		expectResult := []string{
+			"CHKRESULTGETRESULT1GETRESULT3JOBBEFOREFINISHJOBFINISH",
+			"CHKRESULTGETRESULT3GETRESULT1JOBBEFOREFINISHJOBFINISH",
+			"GETRESULT1GETRESULT3CHKRESULTJOBBEFOREFINISHJOBFINISH",
+			"GETRESULT3GETRESULT1CHKRESULTJOBBEFOREFINISHJOBFINISH",
+			"GETRESULT1CHKRESULTGETRESULT3JOBBEFOREFINISHJOBFINISH",
+			"GETRESULT3CHKRESULTGETRESULT1JOBBEFOREFINISHJOBFINISH",
+		}
+		Expect(expectResult).Should(ContainElement(result))
+	})
+
+	It("exec-6", func() {
+		createVolumeAndClaim("example/execution/exec-pv.yaml", "example/execution/exec-pvc.yaml", "default", kubeClient)
+
+		By("Execute exec-1")
+		var execObj *genev1alpha1.Execution
+		var err error
+		execObj, err = createExecution("example/execution/exec-6.yaml", gtc.GeneClient)
+
+		Expect(err).NotTo(HaveOccurred())
+		Expect(execObj).NotTo(Equal(nil))
+
+		err = WaitForExecutionSuccess(gtc.GeneClient, execObj.Name, "default")
+		Expect(err).NotTo(HaveOccurred())
+
+		By("Check the result")
+		result, err := ReadResultFrom("/tmp/execution/exec-6-result.txt")
+
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(err).NotTo(HaveOccurred())
+		// The order of execution is variable, but it must be one of the following.
+		expectResult := []string{
+			"GENERICCONDITIONJOBBEFOREFINISHJOBFINISH",
+		}
+		Expect(expectResult).Should(ContainElement(result))
+	})
+
 })
 
 func createVolumeAndClaim(volumeFile, claimFile, ns string, kubeClient kubernetes.Interface) {
@@ -332,6 +460,19 @@ func createVolumeAndClaim(volumeFile, claimFile, ns string, kubeClient kubernete
 
 	err = WaitForPersistentVolumeClaimBound(kubeClient, ns, claim.Name)
 	Expect(err).NotTo(HaveOccurred())
+}
+
+func createExecution(execfile string, client execclientset.Interface) (*genev1alpha1.Execution, error) {
+	By("Create a Execution")
+	var execObj *genev1alpha1.Execution
+	var exec *genev1alpha1.Execution
+	var err error
+	exec, err = executionFromYamlfile(execfile)
+	Expect(err).NotTo(HaveOccurred())
+	execObj, err = client.ExecutionV1alpha1().Executions("default").Create(exec)
+	Expect(err).NotTo(HaveOccurred())
+	return execObj, err
+
 }
 
 func execCommand(name string, args []string) error {

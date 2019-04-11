@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
 )
 
@@ -691,6 +692,280 @@ func TestValidateExecution(t *testing.T) {
 									Operator: genev1alpha1.MatchOperatorOpIn,
 								},
 							},
+						},
+					},
+				}
+			},
+			ExpectErr: true,
+		},
+		// condition related test cases
+		{
+			Name: "task with valid condition",
+			ModifyFunc: func(exec *genev1alpha1.Execution) {
+				exec.Spec.Tasks = []genev1alpha1.Task{
+					{
+						Name:       "a",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+					},
+					{
+						Name:       "b",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+						Dependents: []genev1alpha1.Dependent{
+							{
+								Target: "a",
+								Type:   genev1alpha1.DependTypeWhole,
+							},
+						},
+						Condition: &genev1alpha1.Condition{
+							Condition: interface{}([]interface{}{"check_result", "a", "exp"}),
+						},
+					},
+				}
+			},
+			ExpectErr: false,
+		},
+		{
+			Name: "task with Invalid condition( DependjobName is missing)",
+			ModifyFunc: func(exec *genev1alpha1.Execution) {
+				exec.Spec.Tasks = []genev1alpha1.Task{
+					{
+						Name:       "a",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+					},
+					{
+						Name:       "b",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+						Dependents: []genev1alpha1.Dependent{
+							{
+								Target: "a",
+								Type:   genev1alpha1.DependTypeWhole,
+							},
+						},
+						Condition: &genev1alpha1.Condition{
+							Condition: interface{}([]interface{}{"check_result", "c", "exp"}),
+						},
+					},
+				}
+			},
+			ExpectErr: true,
+		},
+		{
+			Name: "task with Invalid condition(Depend Job Type Iterate)",
+			ModifyFunc: func(exec *genev1alpha1.Execution) {
+				exec.Spec.Tasks = []genev1alpha1.Task{
+					{
+						Name:       "a",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+					},
+					{
+						Name:       "b",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+						Dependents: []genev1alpha1.Dependent{
+							{
+								Target: "a",
+								Type:   genev1alpha1.DependTypeIterate,
+							},
+						},
+						Condition: &genev1alpha1.Condition{
+							Condition: interface{}([]interface{}{"check_result", "a", "exp"}),
+						},
+					},
+				}
+			},
+			ExpectErr: true,
+		},
+		{
+			Name: "task with Invalid condition(No exp parameter)",
+			ModifyFunc: func(exec *genev1alpha1.Execution) {
+				exec.Spec.Tasks = []genev1alpha1.Task{
+					{
+						Name:       "a",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+					},
+					{
+						Name:       "b",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+						Dependents: []genev1alpha1.Dependent{
+							{
+								Target: "a",
+								Type:   genev1alpha1.DependTypeWhole,
+							},
+						},
+						Condition: &genev1alpha1.Condition{
+							Condition: interface{}([]interface{}{"check_result", "a"}),
+						},
+					},
+				}
+			},
+			ExpectErr: true,
+		},
+		// CommandsIter related test cases
+		{
+			Name: "task with valid CommandsIter",
+			ModifyFunc: func(exec *genev1alpha1.Execution) {
+				exec.Spec.Tasks = []genev1alpha1.Task{
+					{
+						Name:       "a",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+					},
+					{
+						Name:       "b",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+						Dependents: []genev1alpha1.Dependent{
+							{
+								Target: "a",
+								Type:   genev1alpha1.DependTypeWhole,
+							},
+						},
+						CommandsIter: &genev1alpha1.CommandsIter{
+							Command:  "echo A >> /tmp/hostvolume/",
+							VarsIter: []interface{}{([]interface{}{"get_result", "a", "sep"})},
+						},
+					},
+				}
+			},
+			ExpectErr: false,
+		},
+		{
+			Name: "task with Invalid CommandsIter(No Sep parameter)",
+			ModifyFunc: func(exec *genev1alpha1.Execution) {
+				exec.Spec.Tasks = []genev1alpha1.Task{
+					{
+						Name:       "a",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+					},
+					{
+						Name:       "b",
+						Type:       genev1alpha1.JobTaskType,
+						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
+						Image:      "hello-word",
+						Volumes: map[string]genev1alpha1.Volume{
+							"volumea": {
+								MountPath: "/tmp/hostvolume",
+								MountFrom: genev1alpha1.VolumeSource{
+									Pvc: "test-host-path",
+								},
+							},
+						},
+						Dependents: []genev1alpha1.Dependent{
+							{
+								Target: "a",
+								Type:   genev1alpha1.DependTypeWhole,
+							},
+						},
+						CommandsIter: &genev1alpha1.CommandsIter{
+							Command:  "echo A >> /tmp/hostvolume/",
+							VarsIter: []interface{}{([]interface{}{"get_result", "a"})},
 						},
 					},
 				}
