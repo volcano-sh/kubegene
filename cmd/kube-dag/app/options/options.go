@@ -35,6 +35,7 @@ type ExecutionOption struct {
 	// the namespace of the lock object
 	LockObjectNamespace string
 	ResyncPeriod        time.Duration
+	PrintVersion        bool
 }
 
 func NewExecutionOption() *ExecutionOption {
@@ -45,6 +46,7 @@ func NewExecutionOption() *ExecutionOption {
 		LeaderElect:         true,
 		LockObjectNamespace: "kube-system",
 		ResyncPeriod:        60 * time.Second,
+		PrintVersion:        false,
 	}
 }
 
@@ -59,4 +61,5 @@ func (o *ExecutionOption) AddFlags(fs *pflag.FlagSet) {
 	fs.DurationVar(&o.ResyncPeriod, "resyncPeriod", o.ResyncPeriod, "The period that should be used to re-sync the execution.")
 	fs.BoolVar(&o.LeaderElect, "leader-elect", o.LeaderElect, "Start a leader election client and gain leadership before executing the main loop.")
 	fs.StringVar(&o.LockObjectNamespace, "lock-object-namespace", o.LockObjectNamespace, "The namespace of the lock object.")
+	fs.BoolVar(&o.PrintVersion, "version", o.PrintVersion, "Show version and quit")
 }

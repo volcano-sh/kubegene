@@ -186,7 +186,7 @@ type Task struct {
 	CommandSet []string `json:"commandSet,omitempty"`
 
 	// CommandsIter defines batch command for workflows job.
-	CommandsIter *CommandsIter `json:"commands_iter,omitempty"`
+	CommandsIter *CommandsIter `json:"commandsIter,omitempty"`
 	// Docker image name.
 	// More info: https://kubernetes.io/docs/concepts/containers/images
 	Image string `json:"image,omitempty"`
@@ -258,13 +258,13 @@ type CommandsIter struct {
 	//
 	// commandsIter example
 	//
-	//    commands_iter:
+	//    commandsIter:
 	//      command: sh /tmp/scripts/step1.splitfq.sh ${1} ${2} /tmp/data ${3}
-	//      vars_iter:
+	//      varsIter:
 	//        - ["sample1", "sample2"]
 	//	  - [0,1]
 	// 	  - get_result( job-1, " ")
-	// if  stdout of job-1 is “1 2 3 4” then var_iter will become like
+	// if  stdout of job-1 is “1 2 3 4” then varsIter will become like
 	// 		vars_iter:
 	//		 - ["sample1", "sample2"]
 	//		 - [0,1]
@@ -278,7 +278,7 @@ type CommandsIter struct {
 	// sh /tmp/scripts/step1.splitfq.sh sample2 0 /tmp/data 2
 	// sh /tmp/scripts/step1.splitfq.sh sample1 1 /tmp/data 2
 	// sh /tmp/scripts/step1.splitfq.sh sample2 1 /tmp/data 2
-	VarsIter []interface{} `json:"vars_iter,omitempty"`
+	VarsIter []interface{} `json:"varsIter,omitempty"`
 }
 
 type VertexStatus struct {

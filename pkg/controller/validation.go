@@ -191,7 +191,7 @@ func validateGenericCondition(taskName string, gCondition *genev1alpha1.GenericC
 	}
 
 	for i := range gCondition.MatchRules {
-		prefix := fmt.Sprintf("executionspec.%s.genericcondition.matchrules[%d]", taskName, i)
+		prefix := fmt.Sprintf("executionspec.%s.genericCondition.matchRules[%d]", taskName, i)
 		switch gCondition.MatchRules[i].Operator {
 		case genev1alpha1.MatchOperatorOpIn, genev1alpha1.MatchOperatorOpNotIn,
 			genev1alpha1.MatchOperatorOpEqual, genev1alpha1.MatchOperatorOpDoubleEqual,
@@ -236,17 +236,17 @@ func validateCommandsIter(taskName string, commandsIter *genev1alpha1.CommandsIt
 
 		if func_name, ok := v[0].(string); ok && func_name == "get_result" {
 			if len(v) != 3 {
-				return fmt.Errorf("In commands_iter  get_result format is wrong in task :%s", taskName)
+				return fmt.Errorf("In commandsIter  get_result format is wrong in task :%s", taskName)
 			}
 			var dependJobName string
 			if dependJobName, ok = v[1].(string); !ok {
-				return fmt.Errorf("In commands_iter  get_result doesn't have the depend job parameter in task :%s", taskName)
+				return fmt.Errorf("In commandsIter  get_result doesn't have the depend job parameter in task :%s", taskName)
 			}
 			if err := validateGenericDependency(taskName, dependJobName, tasks); err != nil {
 				return err
 			}
 			if _, ok := v[2].(string); !ok {
-				return fmt.Errorf("In commands_iter  get_result doesn't have the exp parameter in task :%s", taskName)
+				return fmt.Errorf("In commandsIter  get_result doesn't have the exp parameter in task :%s", taskName)
 			}
 		}
 	}

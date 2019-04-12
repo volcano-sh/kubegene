@@ -64,9 +64,9 @@
           mountFrom:
             pvc: execution-pvc
           mountPath: /tmp/execution
-    - commands_iter:
+    - commandsIter:
         command: echo GETRESULT${1} | tee -a /tmp/execution/exec-5-result.txt;
-        vars_iter:
+        varsIter:
         - - get_result
           - jobpreparemod
           - ' '
