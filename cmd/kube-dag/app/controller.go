@@ -47,6 +47,7 @@ import (
 	execinformers "kubegene.io/kubegene/pkg/client/informers/externalversions"
 	"kubegene.io/kubegene/pkg/controller"
 	"kubegene.io/kubegene/pkg/util"
+	"kubegene.io/kubegene/pkg/version"
 )
 
 const (
@@ -121,6 +122,11 @@ func installExecutionCRD(apiextensionsclient apiextensionsclient.Interface) erro
 }
 
 func Run(o *options.ExecutionOption, stopCh <-chan struct{}) error {
+	if o.PrintVersion {
+		version := version.GetVersion()
+		fmt.Printf("  kube-dag Version: %s\n", version)
+		os.Exit(0)
+	}
 	kubeClient, leaderElectionClient, geneClient, apiextentionsClient, err := createClients(o)
 	if err != nil {
 		return err
