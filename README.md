@@ -103,7 +103,7 @@ persistentvolumeclaim "sample-pvc" created
 Then you can submit the workflow by the following command:
 
 ```bash
-$ genectl sub workflow example/simale-sample/simple-sample.yaml
+$ genectl sub workflow example/simple-sample/simple-sample.yaml
 The workflow has been submitted successfully! And the execution has been created.
 Your can use the follow command to query the status of workflow execution.
 
