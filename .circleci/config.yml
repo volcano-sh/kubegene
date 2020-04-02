@@ -7,19 +7,24 @@ version: 2
 jobs:
   build:
     machine:
-      image: circleci/classic:201808-01
+      image: ubuntu-1604:201903-01
     working_directory: ~/go/src/kubegene.io/kubegene
     environment:
       GOPATH: /home/circleci/go
-      K8S_VERSION: v1.10.0
+      K8S_VERSION: v1.15.6
       KUBECONFIG: /home/circleci/.kube/config
-      MINIKUBE_VERSION: v0.30.0
+      MINIKUBE_VERSION: v1.9.0
       MINIKUBE_WANTUPDATENOTIFICATION: false
       MINIKUBE_WANTREPORTERRORPROMPT: false
       MINIKUBE_HOME: /home/circleci
       CHANGE_MINIKUBE_NONE_USER: true
     steps:
-      - run: mkdir -p ~/go/{lib,pkg,src/kubegene.io/kubegene}
+      - run:
+          name: install go
+          command: |
+            curl -Lo go1.13.9.linux-amd64.tar.gz https://dl.google.com/go/go1.13.9.linux-amd64.tar.gz;
+            tar -zxf go1.13.9.linux-amd64.tar.gz;
+            sudo rm -rf /usr/local/go && sudo mv go /usr/local/; rm -rf go1.13.9.linux-amd64.tar.gz
       - checkout
       - run:
           name: setup kubectl
