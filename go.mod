@@ -5,7 +5,6 @@ go 1.13
 require (
 	github.com/evanphx/json-patch v4.2.0+incompatible
 	github.com/ghodss/yaml v1.0.0
-	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/groupcache v0.0.0-20181024230925-c65c006176ff // indirect
 	github.com/googleapis/gnostic v0.2.0 // indirect
 	github.com/imdario/mergo v0.3.6 // indirect
