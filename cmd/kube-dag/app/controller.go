@@ -172,6 +172,7 @@ func Run(o *options.ExecutionOption, stopCh <-chan struct{}) error {
 		o.LockObjectNamespace,
 		"kubegene-controller",
 		leaderElectionClient.CoreV1(),
+		leaderElectionClient.CoordinationV1(),
 		resourcelock.ResourceLockConfig{
 			Identity:      id,
 			EventRecorder: eventRecorder,

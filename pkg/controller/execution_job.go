@@ -17,6 +17,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -483,7 +484,7 @@ func (e *ExecutionJobController) createJob(job *batch.Job) error {
 		return nil
 	}
 
-	_, err = e.kubeClient.BatchV1().Jobs(job.Namespace).Create(job)
+	_, err = e.kubeClient.BatchV1().Jobs(job.Namespace).Create(context.TODO(), job, metav1.CreateOptions{})
 	if err != nil && errors.IsAlreadyExists(err) {
 		return nil
 	}
@@ -508,7 +509,7 @@ func (e *ExecutionJobController) getJobResult(job *batch.Job) (string, error) {
 	var opts metav1.ListOptions
 
 	opts.LabelSelector = sel.String()
-	podList, err := e.kubeClient.CoreV1().Pods(job.Namespace).List(opts)
+	podList, err := e.kubeClient.CoreV1().Pods(job.Namespace).List(context.TODO(), opts)
 	if err != nil {
 		glog.V(2).Infof("In getJobResult func get pods list failed: %v", err)
 		return result, err
@@ -527,7 +528,7 @@ func (e *ExecutionJobController) getJobResult(job *batch.Job) (string, error) {
 	opt := v1.PodLogOptions{LimitBytes: &sizeLimit, SinceTime: &metav1.Time{}}
 
 	res, err := e.kubeClient.CoreV1().Pods(job.Namespace).GetLogs(podList.Items[0].Name,
-		&opt).Stream()
+		&opt).Stream(context.TODO())
 	if err != nil {
 		glog.V(2).Infof("In getJobResult with opt func get logs failed: %v", err)
 		return result, err

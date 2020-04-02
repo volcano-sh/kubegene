@@ -17,6 +17,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -64,7 +65,7 @@ func (esu *executionUpdater) UpdateExecutionStatus(modified *genev1alpha1.Execut
 	}
 
 	var current *genev1alpha1.Execution
-	current, err = esu.execClient.Executions(modified.Namespace).Get(modified.Name, metav1.GetOptions{})
+	current, err = esu.execClient.Executions(modified.Namespace).Get(context.TODO(), modified.Name, metav1.GetOptions{})
 	if err != nil {
 		glog.V(2).Infof("getting the execution is failed. Error: %v", err)
 		return err
@@ -92,7 +93,7 @@ func (esu *executionUpdater) UpdateExecutionStatus(modified *genev1alpha1.Execut
 	}
 
 	err = wait.ExponentialBackoff(DefaultRetry, func() (bool, error) {
-		_, err = esu.execClient.Executions(modified.Namespace).UpdateStatus(&updated)
+		_, err = esu.execClient.Executions(modified.Namespace).UpdateStatus(context.TODO(), &updated, metav1.UpdateOptions{})
 		if err != nil {
 			glog.V(2).Infof("Failed to update execution status '%s': %v", current.Name, err)
 			return false, nil
@@ -109,7 +110,7 @@ func (esu *executionUpdater) UpdateExecution(modified *genev1alpha1.Execution, o
 	}
 
 	var current *genev1alpha1.Execution
-	current, err = esu.execClient.Executions(modified.Namespace).Get(modified.Name, metav1.GetOptions{})
+	current, err = esu.execClient.Executions(modified.Namespace).Get(context.TODO(), modified.Name, metav1.GetOptions{})
 	if err != nil {
 		glog.V(2).Infof("getting the execution is failed %v", err)
 		return err
@@ -137,7 +138,7 @@ func (esu *executionUpdater) UpdateExecution(modified *genev1alpha1.Execution, o
 	}
 
 	err = wait.ExponentialBackoff(DefaultRetry, func() (bool, error) {
-		_, err = esu.execClient.Executions(modified.Namespace).Update(&updated)
+		_, err = esu.execClient.Executions(modified.Namespace).Update(context.TODO(), &updated, metav1.UpdateOptions{})
 		if err != nil {
 			glog.V(2).Infof("Failed to update execution '%s': %v", current.Name, err)
 			return false, nil

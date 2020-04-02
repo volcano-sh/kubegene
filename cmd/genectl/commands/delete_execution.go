@@ -17,6 +17,7 @@ limitations under the License.
 package commands
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -65,7 +66,7 @@ func DeleteWorkflow(cmd *cobra.Command, args []string, delExecutionFlags *delExe
 	}
 
 	// delete exec
-	err = geneClient.ExecutionV1alpha1().Executions(namespace).Delete(executionName, &metav1.DeleteOptions{})
+	err = geneClient.ExecutionV1alpha1().Executions(namespace).Delete(context.TODO(), executionName, metav1.DeleteOptions{})
 	if err != nil {
 		ExitWithError(err)
 	}
