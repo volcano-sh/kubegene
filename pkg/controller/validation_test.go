@@ -325,10 +325,10 @@ func TestValidateExecution(t *testing.T) {
 			ModifyFunc: func(exec *genev1alpha1.Execution) {
 				exec.Spec.Tasks = []genev1alpha1.Task{
 					{
-						Name:       "a",
-						Type:       genev1alpha1.JobTaskType,
-						CommandSet: []string{"echo A >> /tmp/hostvolume/"},
-						Image:      "hello-word",
+						Name:                  "a",
+						Type:                  genev1alpha1.JobTaskType,
+						CommandSet:            []string{"echo A >> /tmp/hostvolume/"},
+						Image:                 "hello-word",
 						ActiveDeadlineSeconds: NewInt64(-5),
 						Volumes: map[string]genev1alpha1.Volume{
 							"volumea": {
