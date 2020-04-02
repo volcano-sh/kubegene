@@ -24,8 +24,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/golang/glog"
 	. "github.com/onsi/gomega"
+	"k8s.io/klog"
 )
 
 type genectlWrapper struct {
@@ -66,7 +66,7 @@ func (ctlWrapper genectlWrapper) Exec() (string, error) {
 	cmd := ctlWrapper.cmd
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 
-	glog.Infof("Running '%s %s'", cmd.Path, strings.Join(cmd.Args, " "))
+	klog.Infof("Running '%s %s'", cmd.Path, strings.Join(cmd.Args, " "))
 	if err := cmd.Start(); err != nil {
 		return "", fmt.Errorf("error starting %v:\nCommand stdout:\n%v\nstderr:\n%v\nerror:\n%v\n", cmd, cmd.Stdout, cmd.Stderr, err)
 	}
@@ -80,7 +80,7 @@ func (ctlWrapper genectlWrapper) Exec() (string, error) {
 			var rc int = 127
 			if ee, ok := err.(*exec.ExitError); ok {
 				rc = int(ee.Sys().(syscall.WaitStatus).ExitStatus())
-				glog.Infof("rc: %d", rc)
+				klog.Infof("rc: %d", rc)
 			}
 			return "", fmt.Errorf("error running %v:\nCommand stdout:\n%v\nstderr:\n%v\nerror:\n%v\n", cmd, cmd.Stdout, cmd.Stderr, err)
 		}
@@ -88,7 +88,7 @@ func (ctlWrapper genectlWrapper) Exec() (string, error) {
 		ctlWrapper.cmd.Process.Kill()
 		return "", fmt.Errorf("timed out waiting for command %v:\nCommand stdout:\n%v\nstderr:\n%v\n", cmd, cmd.Stdout, cmd.Stderr)
 	}
-	glog.Infof("stderr: %q", stderr.String())
-	glog.Infof("stdout: %q", stdout.String())
+	klog.Infof("stderr: %q", stderr.String())
+	klog.Infof("stdout: %q", stdout.String())
 	return stdout.String(), nil
 }

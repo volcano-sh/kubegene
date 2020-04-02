@@ -25,10 +25,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog"
 
 	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
 	execclientset "kubegene.io/kubegene/pkg/client/clientset/versioned"
@@ -76,7 +76,7 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 		By("Execute sub job command")
 		cmd := NewGenectlCommand("sub", "job", "/tmp/subjob/print.sh", "--tool=nginx:latest", "--pvc=subjob-pvc", "--tool-repo="+ToolRepo)
 		output := cmd.ExecOrDie()
-		glog.Infof("output: %v", output)
+		klog.Infof("output: %v", output)
 	})
 
 	It("sub group job", func() {
@@ -97,7 +97,7 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 		By("Execute sub repjob command")
 		cmd := NewGenectlCommand("sub", "repjob", "/tmp/subrepjob/repjob.sh", "--tool=nginx:latest", "--pvc=subrepjob-pvc", "--tool-repo="+ToolRepo)
 		output := cmd.ExecOrDie()
-		glog.Infof("output: %v", output)
+		klog.Infof("output: %v", output)
 	})
 
 	It("sub workflow", func() {
@@ -106,7 +106,7 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 		By("Execute sub workflow command")
 		cmd := NewGenectlCommand("sub", "workflow", "example/simple-sample/simple-sample.yaml", "--tool-repo="+ToolRepo)
 		output := cmd.ExecOrDie()
-		glog.Infof("output: %v", output)
+		klog.Infof("output: %v", output)
 	})
 
 	It("sub workflow with get_result", func() {
@@ -115,9 +115,9 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 		By("Execute sub workflow command")
 		cmd := NewGenectlCommand("sub", "workflow", "example/simple-sample-getresult/simple-sample-getresult.yaml", "--tool-repo="+ToolRepo)
 		output := cmd.ExecOrDie()
-		glog.Infof("output: %v", output)
+		klog.Infof("output: %v", output)
 		// wait to complete the execution
-		glog.Infof("waiting to complete the execution")
+		klog.Infof("waiting to complete the execution")
 		list, err := gtc.GeneClient.ExecutionV1alpha1().Executions("default").List(metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(1).To(Equal(len(list.Items)))
@@ -149,9 +149,9 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 		By("Execute sub workflow command")
 		cmd := NewGenectlCommand("sub", "workflow", "example/conditional-sample/simple-sample-chkresult.yaml", "--tool-repo="+ToolRepo)
 		output := cmd.ExecOrDie()
-		glog.Infof("output: %v", output)
+		klog.Infof("output: %v", output)
 		// wait to complete the execution
-		glog.Infof("waiting to complete the execution")
+		klog.Infof("waiting to complete the execution")
 		list, err := gtc.GeneClient.ExecutionV1alpha1().Executions("default").List(metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(1).To(Equal(len(list.Items)))
@@ -179,9 +179,9 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 		By("Execute sub workflow command")
 		cmd := NewGenectlCommand("sub", "workflow", "example/conditional-getresult-combination/simple-sample-get-chkresult.yaml", "--tool-repo="+ToolRepo)
 		output := cmd.ExecOrDie()
-		glog.Infof("output: %v", output)
+		klog.Infof("output: %v", output)
 		// wait to complete the execution
-		glog.Infof("waiting to complete the execution")
+		klog.Infof("waiting to complete the execution")
 
 		list, err := gtc.GeneClient.ExecutionV1alpha1().Executions("default").List(metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred())
@@ -259,9 +259,9 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 		By("Execute sub workflow command")
 		cmd := NewGenectlCommand("sub", "workflow", "example/samejob-condition-getresult/samejob-condition-getresult.yaml", "--tool-repo="+ToolRepo)
 		output := cmd.ExecOrDie()
-		glog.Infof("output: %v", output)
+		klog.Infof("output: %v", output)
 		// wait to complete the execution
-		glog.Infof("waiting to complete the execution")
+		klog.Infof("waiting to complete the execution")
 
 		list, err := gtc.GeneClient.ExecutionV1alpha1().Executions("default").List(metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred())
@@ -290,9 +290,9 @@ var _ = DescribeGene("genectl", func(gtc *GeneTestContext) {
 		By("Execute sub workflow command")
 		cmd := NewGenectlCommand("sub", "workflow", "example/generic-condition/generic-condition-workflow.yaml", "--tool-repo="+ToolRepo)
 		output := cmd.ExecOrDie()
-		glog.Infof("output: %v", output)
+		klog.Infof("output: %v", output)
 		// wait to complete the execution
-		glog.Infof("waiting to complete the execution")
+		klog.Infof("waiting to complete the execution")
 
 		list, err := gtc.GeneClient.ExecutionV1alpha1().Executions("default").List(metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred())
@@ -478,7 +478,7 @@ func createExecution(execfile string, client execclientset.Interface) (*genev1al
 func execCommand(name string, args []string) error {
 	cmd := exec.Command(name, args...)
 	output, err := cmd.CombinedOutput()
-	glog.Infof("command: %v, output: %v", name, string(output))
+	klog.Infof("command: %v, output: %v", name, string(output))
 	return err
 }
 

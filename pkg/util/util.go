@@ -20,11 +20,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/glog"
 	batch "k8s.io/api/batch/v1"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/klog"
 	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
 	"kubegene.io/kubegene/pkg/graph"
 	"strconv"
@@ -75,7 +75,7 @@ func InitializeVertexStatus(vertexName string,
 	message string,
 	children []*graph.Vertex) genev1alpha1.VertexStatus {
 
-	glog.V(2).Infof("initial %s status, phase: %s", vertexName, phase)
+	klog.V(2).Infof("initial %s status, phase: %s", vertexName, phase)
 
 	childStr := make([]string, 0)
 	for _, child := range children {
@@ -121,7 +121,7 @@ func MarkExecutionRunning(exec *genev1alpha1.Execution, message string) {
 
 func MarkExecutionPhase(exec *genev1alpha1.Execution, phase genev1alpha1.VertexPhase, message string) {
 	if exec.Status.Phase != phase {
-		glog.V(4).Infof("execution %s phase %s -> %s", KeyOf(exec), exec.Status.Phase, phase)
+		klog.V(4).Infof("execution %s phase %s -> %s", KeyOf(exec), exec.Status.Phase, phase)
 		exec.Status.Phase = phase
 	}
 
@@ -175,7 +175,7 @@ func MarkVertexPhase(exec *genev1alpha1.Execution, vertexName string, phase gene
 	}
 
 	if vertexStatus.Phase != phase {
-		glog.V(4).Infof("vertex %s phase %s -> %s", vertexStatus.Name, vertexStatus.Phase, phase)
+		klog.V(4).Infof("vertex %s phase %s -> %s", vertexStatus.Name, vertexStatus.Phase, phase)
 		vertexStatus.Phase = phase
 	}
 
@@ -230,13 +230,13 @@ func RuleSatisfied(r genev1alpha1.MatchRule, kv map[string]string) bool {
 		}
 		lsValue, err := strconv.ParseInt(val, 10, 64)
 		if err != nil {
-			glog.V(2).Infof("ParseInt failed for value %+v in key &val %+v, %+v", val, kv, err)
+			klog.V(2).Infof("ParseInt failed for value %+v in key &val %+v, %+v", val, kv, err)
 			return false
 		}
 
 		// There should be only one strValue in r.Values, and can be converted to a integer.
 		if len(r.Values) != 1 {
-			glog.V(2).Infof("Invalid values count %+v of match rule %#v, for 'Gt', 'Lt' operators, exactly one value is required", len(r.Values), r)
+			klog.V(2).Infof("Invalid values count %+v of match rule %#v, for 'Gt', 'Lt' operators, exactly one value is required", len(r.Values), r)
 			return false
 		}
 
@@ -244,7 +244,7 @@ func RuleSatisfied(r genev1alpha1.MatchRule, kv map[string]string) bool {
 		for i := range r.Values {
 			rValue, err = strconv.ParseInt(r.Values[i], 10, 64)
 			if err != nil {
-				glog.V(2).Infof("ParseInt failed for value %+v in matchrule %#v, for 'Gt', 'Lt' operators, the value must be an integer", r.Values[i], r)
+				klog.V(2).Infof("ParseInt failed for value %+v in matchrule %#v, for 'Gt', 'Lt' operators, the value must be an integer", r.Values[i], r)
 				return false
 			}
 		}

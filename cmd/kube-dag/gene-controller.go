@@ -24,8 +24,8 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/component-base/cli/flag"
-
 	"k8s.io/klog"
+
 	"kubegene.io/kubegene/cmd/kube-dag/app"
 	"kubegene.io/kubegene/cmd/kube-dag/app/options"
 	"kubegene.io/kubegene/pkg/signals"

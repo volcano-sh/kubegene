@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
-	"github.com/golang/glog"
 	"io/ioutil"
 	apps "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
@@ -30,6 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog"
 	"path/filepath"
 
 	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
@@ -258,7 +258,7 @@ func waitDeploymentReady(kubeClient kubernetes.Interface, d *apps.Deployment) er
 }
 
 func DeploymentComplete(deployment *apps.Deployment, newStatus *apps.DeploymentStatus) bool {
-	glog.Infof("Number of ready pod %v", newStatus.ReadyReplicas)
+	klog.Infof("Number of ready pod %v", newStatus.ReadyReplicas)
 	return newStatus.ReadyReplicas == *(deployment.Spec.Replicas)
 }
 

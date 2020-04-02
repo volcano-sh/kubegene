@@ -19,8 +19,8 @@ package controller
 import (
 	"fmt"
 
-	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/klog"
 
 	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
 )
@@ -219,7 +219,7 @@ func validateGenericCondition(taskName string, gCondition *genev1alpha1.GenericC
 }
 
 func validateCommandsIter(taskName string, commandsIter *genev1alpha1.CommandsIter, tasks []genev1alpha1.Task) error {
-	glog.V(2).Infof("In validateCommandsIter commandsIter %v", commandsIter)
+	klog.V(2).Infof("In validateCommandsIter commandsIter %v", commandsIter)
 	var v []interface{}
 	if commandsIter.Command == "" {
 		return fmt.Errorf("%s task command must not be empty in commands_iter if commands_iter is not nil", taskName)
@@ -257,7 +257,7 @@ func validateCommandsIter(taskName string, commandsIter *genev1alpha1.CommandsIt
 func validateCondition(taskName string, condition *genev1alpha1.Condition, tasks []genev1alpha1.Task) error {
 
 	var v []interface{}
-	glog.V(2).Infof("In validateCondition condition %v", condition)
+	klog.V(2).Infof("In validateCondition condition %v", condition)
 	switch condition.Condition.(type) {
 	case []interface{}:
 		v = condition.Condition.([]interface{})

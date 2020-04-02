@@ -24,7 +24,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/glog"
 	batch "k8s.io/api/batch/v1"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -36,6 +35,7 @@ import (
 	batchv1listers "k8s.io/client-go/listers/batch/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+	"k8s.io/klog"
 
 	genelisters "kubegene.io/kubegene/pkg/client/listers/gene/v1alpha1"
 	"kubegene.io/kubegene/pkg/common"
@@ -99,8 +99,8 @@ func (e *ExecutionJobController) Run(workers int, stopCh <-chan struct{}) {
 	defer utilruntime.HandleCrash()
 	defer e.queue.ShutDown()
 
-	glog.Infof("Starting execution job controller")
-	defer glog.Infof("Shutting down execution job controller")
+	klog.Infof("Starting execution job controller")
+	defer klog.Infof("Shutting down execution job controller")
 
 	for i := 0; i < workers; i++ {
 		go wait.Until(e.worker, time.Second, stopCh)
@@ -132,7 +132,7 @@ func (e *ExecutionJobController) processNextWorkItem() bool {
 	}
 
 	if err == ExceedParallelismError {
-		glog.V(2).Infof("Parallel running jobs exceeded the execution limit, retry after 10s")
+		klog.V(2).Infof("Parallel running jobs exceeded the execution limit, retry after 10s")
 		// TODO: make this configurable
 		e.queue.AddAfter(item, 10*time.Second)
 		return true
@@ -150,13 +150,13 @@ func (e *ExecutionJobController) processNextWorkItem() bool {
 func (e *ExecutionJobController) syncHandler(event Event) error {
 	graph := e.execGraphBuilder.GetGraph(event.Key)
 	if graph == nil {
-		glog.V(2).Infof("graph of execution %s does not exist", event.Key)
+		klog.V(2).Infof("graph of execution %s does not exist", event.Key)
 		return nil
 	}
 
 	switch event.Type {
 	case NewAdded:
-		glog.V(2).Infof("execution %v start running.", event.Key)
+		klog.V(2).Infof("execution %v start running.", event.Key)
 
 		rootVertexs := graph.GetRootVertex()
 		for _, rootVertex := range rootVertexs {
@@ -171,7 +171,7 @@ func (e *ExecutionJobController) syncHandler(event Event) error {
 			}
 		}
 	case JobsAfter:
-		glog.V(2).Infof("job %v has run successfully.", event.Name)
+		klog.V(2).Infof("job %v has run successfully.", event.Name)
 
 		vertex := graph.FindVertexByName(event.Name)
 		for _, child := range vertex.Children {
@@ -186,7 +186,7 @@ func (e *ExecutionJobController) syncHandler(event Event) error {
 				}
 			}
 			if allDependentsFinished {
-				glog.V(2).Infof("all dependent of job %v has run successfully, start running.", child.Data.Job.Name)
+				klog.V(2).Infof("all dependent of job %v has run successfully, start running.", child.Data.Job.Name)
 
 				if child.Data.DynamicJob != nil {
 					// flag setting true to handle if Condition is nil
@@ -194,7 +194,7 @@ func (e *ExecutionJobController) syncHandler(event Event) error {
 					var err error
 
 					if child.Data.DynamicJob.GenericCondition != nil {
-						glog.V(2).Infof(" conditional based job GenericCondition:%v", child.Data.DynamicJob.GenericCondition)
+						klog.V(2).Infof(" conditional based job GenericCondition:%v", child.Data.DynamicJob.GenericCondition)
 						flag, err = e.evalGenericConditionResult(vertex.Data.Job, child, graph, event.Key)
 						if err != nil {
 							return fmt.Errorf("evalGenericConditionResult failed : %v", err)
@@ -203,14 +203,14 @@ func (e *ExecutionJobController) syncHandler(event Event) error {
 							// if the condition or check_result validation is false
 							// then we don't create the k8s job and make the job is Finished true
 							// so that other jobs will continue or execution will complete
-							glog.V(2).Infof(" The final condition is false")
+							klog.V(2).Infof(" The final condition is false")
 							child.Data.Finished = true
 							continue
 						}
 					}
 
 					if child.Data.DynamicJob.Condition != nil {
-						glog.V(2).Infof(" conditional based job condition:%v", child.Data.DynamicJob.Condition)
+						klog.V(2).Infof(" conditional based job condition:%v", child.Data.DynamicJob.Condition)
 						flag, err = e.evalConditionResult(vertex.Data.Job, child, graph, event.Key)
 						if err != nil {
 							return fmt.Errorf("evalConditionResult failed : %v", err)
@@ -219,7 +219,7 @@ func (e *ExecutionJobController) syncHandler(event Event) error {
 							// if the condition or check_result validation is false
 							// then we don't create the k8s job and make the job is Finished true
 							// so that other jobs will continue or execution will complete
-							glog.V(2).Infof(" The final condition is false")
+							klog.V(2).Infof(" The final condition is false")
 							child.Data.Finished = true
 							continue
 						}
@@ -267,7 +267,7 @@ func (e *ExecutionJobController) syncHandler(event Event) error {
 
 func (e *ExecutionJobController) evalGenericConditionResult(dependJob *batch.Job, vertex *graph.Vertex, graph *graph.Graph, key string) (bool, error) {
 
-	glog.V(6).Infof("In evalGenericConditionResult GenericCondition:%v", vertex.Data.DynamicJob.GenericCondition)
+	klog.V(6).Infof("In evalGenericConditionResult GenericCondition:%v", vertex.Data.DynamicJob.GenericCondition)
 
 	genericCond := vertex.Data.DynamicJob.GenericCondition
 
@@ -282,30 +282,30 @@ func (e *ExecutionJobController) evalGenericConditionResult(dependJob *batch.Job
 	keyvalues = make(map[string]string, 0)
 	strs := strings.Split(result, ",")
 
-	glog.V(6).Infof("In evalGenericConditionResult strs %v", strs)
+	klog.V(6).Infof("In evalGenericConditionResult strs %v", strs)
 
 	for i := range strs {
 
 		kv := strings.Split(strs[i], ":")
-		glog.V(2).Infof("In evalGenericConditionResult kv %v", kv)
+		klog.V(2).Infof("In evalGenericConditionResult kv %v", kv)
 		keyvalues[kv[0]] = kv[1]
 	}
-	glog.V(2).Infof("In evalGenericConditionResult keyvalues %v", keyvalues)
+	klog.V(2).Infof("In evalGenericConditionResult keyvalues %v", keyvalues)
 
 	// check for the matching key values from the result to generic condition
 	for i := range genericCond.MatchRules {
 		if util.RuleSatisfied(genericCond.MatchRules[i], keyvalues) {
-			glog.V(2).Infof("successfully matched for keyvalues: %v for rules:%v", keyvalues, genericCond.MatchRules)
+			klog.V(2).Infof("successfully matched for keyvalues: %v for rules:%v", keyvalues, genericCond.MatchRules)
 			return true, nil
 		}
 	}
-	glog.V(2).Infof("In evalGenericConditionResult Rules are not matched")
+	klog.V(2).Infof("In evalGenericConditionResult Rules are not matched")
 	return false, fmt.Errorf("Rules are not matched")
 }
 
 func (e *ExecutionJobController) evalConditionResult(dependJob *batch.Job, vertex *graph.Vertex, graph *graph.Graph, key string) (bool, error) {
 
-	glog.V(6).Infof("In evalConditionResult condition:%v", vertex.Data.DynamicJob.Condition.Condition)
+	klog.V(6).Infof("In evalConditionResult condition:%v", vertex.Data.DynamicJob.Condition.Condition)
 
 	v := vertex.Data.DynamicJob.Condition.Condition.([]interface{})
 
@@ -318,7 +318,7 @@ func (e *ExecutionJobController) evalConditionResult(dependJob *batch.Job, verte
 
 			parentJobName := v[1].(string)
 			exp := v[2].(string)
-			glog.V(6).Infof("In evalConditionResult jobName: %s exp:%s", parentJobName, exp)
+			klog.V(6).Infof("In evalConditionResult jobName: %s exp:%s", parentJobName, exp)
 			// get the result of the dependent job
 			result, err := e.getJobResult(dependJob)
 			if err != nil {
@@ -340,7 +340,7 @@ func (e *ExecutionJobController) evalConditionResult(dependJob *batch.Job, verte
 
 func evalJobResult(jobResult string, vars []interface{}) ([]common.Var, error) {
 	result := make([]common.Var, 0, len(vars))
-	glog.V(6).Infof("In evalJobResult vars:%v", vars)
+	klog.V(6).Infof("In evalJobResult vars:%v", vars)
 
 	for _, vs := range vars {
 		v := vs.([]interface{})
@@ -360,17 +360,17 @@ func evalJobResult(jobResult string, vars []interface{}) ([]common.Var, error) {
 						strslice = append(strslice, str)
 					}
 				}
-				glog.Infof("In evalJobResult strslice:%v", strslice)
+				klog.Infof("In evalJobResult strslice:%v", strslice)
 
 				result = append(result, strslice)
 			}
-			glog.V(6).Infof("In evalJobResult jobName: %s sep:%s", parentJobName, sep)
+			klog.V(6).Infof("In evalJobResult jobName: %s sep:%s", parentJobName, sep)
 		} else {
 			//except get_result other parameters need to be appended
 			result = append(result, v)
 		}
 	}
-	glog.V(6).Infof("In evalJobResult result: %v", result)
+	klog.V(6).Infof("In evalJobResult result: %v", result)
 	return result, nil
 }
 
@@ -386,14 +386,14 @@ func ConvertVars(vars []interface{}) []common.Var {
 }
 
 func (e *ExecutionJobController) createDynamicJobsBasedOnConditionalChk(vertex *graph.Vertex, graph *graph.Graph, key string) error {
-	glog.V(2).Infof(" The condition based job which has normal commands")
+	klog.V(2).Infof(" The condition based job which has normal commands")
 	task := vertex.Data.DynamicJob
 
 	// update this task in the execution struct then call the Update()
 	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
 	execution, err := e.executionLister.Executions(namespace).Get(name)
 	if err != nil {
-		glog.Errorf("Get execution %s error: %v", key, err)
+		klog.Errorf("Get execution %s error: %v", key, err)
 		return err
 	}
 	//set the dynamic job Count of this vertex
@@ -407,7 +407,7 @@ func (e *ExecutionJobController) createDynamicJobsBasedOnConditionalChk(vertex *
 		job := newJob(jobName, command, execution, task)
 
 		if err := e.createJob(job); err != nil {
-			glog.Errorf("createJob failed error: %v", err)
+			klog.Errorf("createJob failed error: %v", err)
 			key := util.KeyOf(job)
 			return fmt.Errorf("create job %s error: %v", key, err)
 		}
@@ -423,35 +423,35 @@ func (e *ExecutionJobController) createDynamicJob(vertex *graph.Vertex, jobResul
 
 	task := vertex.Data.DynamicJob
 
-	glog.V(2).Infof("vertex.Data.DynamicJob.CommandsIter.VarsIter : %#v", vertex.Data.DynamicJob.CommandsIter.VarsIter)
+	klog.V(2).Infof("vertex.Data.DynamicJob.CommandsIter.VarsIter : %#v", vertex.Data.DynamicJob.CommandsIter.VarsIter)
 	varsIter, err := evalJobResult(jobResult, vertex.Data.DynamicJob.CommandsIter.VarsIter)
 	if err != nil {
-		glog.V(2).Infof("Error in evalJobResult execution job name %q , . Error: %v", task.Name, err)
+		klog.V(2).Infof("Error in evalJobResult execution job name %q , . Error: %v", task.Name, err)
 		return err
 	}
-	glog.V(2).Infof("evalJobResult output varsIter: %v", varsIter)
+	klog.V(2).Infof("evalJobResult output varsIter: %v", varsIter)
 
 	// convert varsIter to var
 	iterVars := common.VarIter2Vars(varsIter)
 
-	glog.V(2).Infof(" In createDynamicJob iterVars: %v", iterVars)
+	klog.V(2).Infof(" In createDynamicJob iterVars: %v", iterVars)
 
 	command := vertex.Data.DynamicJob.CommandsIter.Command
 
-	glog.V(2).Infof(" In createDynamicJob command: %v", command)
+	klog.V(2).Infof(" In createDynamicJob command: %v", command)
 
 	// generate all commands.
 	iterCommands := common.Iter2Array(command, iterVars)
 
 	task.CommandSet = iterCommands
 
-	glog.V(2).Infof("final commandset task.CommandSet %v ", task.CommandSet)
+	klog.V(2).Infof("final commandset task.CommandSet %v ", task.CommandSet)
 
 	// update this task in the execution struct then call the Update()
 	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
 	execution, err := e.executionLister.Executions(namespace).Get(name)
 	if err != nil {
-		glog.Errorf("Get execution %s error: %v", key, err)
+		klog.Errorf("Get execution %s error: %v", key, err)
 		return err
 	}
 	//set the dynamic job Count of this vertex
@@ -465,7 +465,7 @@ func (e *ExecutionJobController) createDynamicJob(vertex *graph.Vertex, jobResul
 		job := newJob(jobName, command, execution, task)
 
 		if err := e.createJob(job); err != nil {
-			glog.Errorf("createJob failed error: %v", err)
+			klog.Errorf("createJob failed error: %v", err)
 			key := util.KeyOf(job)
 			return fmt.Errorf("create job %s error: %v", key, err)
 		}
@@ -497,13 +497,13 @@ func (e *ExecutionJobController) getJobResult(job *batch.Job) (string, error) {
 	job, err := e.jobLister.Jobs(job.Namespace).Get(job.Name)
 
 	if err != nil {
-		glog.V(2).Infof("In getJobResult func get job failed: %v", err)
+		klog.V(2).Infof("In getJobResult func get job failed: %v", err)
 		return result, err
 	}
 
 	sel, err := metav1.LabelSelectorAsSelector(job.Spec.Selector)
 	if err != nil {
-		glog.V(2).Infof("In getJobResult func LabelSelectorAsSelector failed: %v", err)
+		klog.V(2).Infof("In getJobResult func LabelSelectorAsSelector failed: %v", err)
 		return result, err
 	}
 	var opts metav1.ListOptions
@@ -511,12 +511,12 @@ func (e *ExecutionJobController) getJobResult(job *batch.Job) (string, error) {
 	opts.LabelSelector = sel.String()
 	podList, err := e.kubeClient.CoreV1().Pods(job.Namespace).List(context.TODO(), opts)
 	if err != nil {
-		glog.V(2).Infof("In getJobResult func get pods list failed: %v", err)
+		klog.V(2).Infof("In getJobResult func get pods list failed: %v", err)
 		return result, err
 	}
 
 	if len(podList.Items) != 1 {
-		glog.V(2).Infof("In getJobResult func  pods list has more than one pod ")
+		klog.V(2).Infof("In getJobResult func  pods list has more than one pod ")
 		err := fmt.Errorf("Received  podList has more than one pod")
 		return result, err
 	}
@@ -530,17 +530,17 @@ func (e *ExecutionJobController) getJobResult(job *batch.Job) (string, error) {
 	res, err := e.kubeClient.CoreV1().Pods(job.Namespace).GetLogs(podList.Items[0].Name,
 		&opt).Stream(context.TODO())
 	if err != nil {
-		glog.V(2).Infof("In getJobResult with opt func get logs failed: %v", err)
+		klog.V(2).Infof("In getJobResult with opt func get logs failed: %v", err)
 		return result, err
 	}
 	bytes, err := ioutil.ReadAll(res)
 	if err != nil {
-		glog.V(2).Infof("In getJobResult func ioutil.ReadAll failed: %v", err)
+		klog.V(2).Infof("In getJobResult func ioutil.ReadAll failed: %v", err)
 		return result, err
 	}
 	result = string(bytes)
 	result = strings.TrimSuffix(result, "\n")
-	glog.V(2).Infof("the succful getJobResult is: %s", result)
+	klog.V(2).Infof("the succful getJobResult is: %s", result)
 	return result, err
 }
 
@@ -551,12 +551,12 @@ func (e *ExecutionJobController) handleErr(err error, event Event) {
 	}
 
 	if e.queue.NumRequeues(event) < maxRetries {
-		glog.V(2).Infof("Error syncing execution jobs %q , retrying. Error: %v", event.Key, err)
+		klog.V(2).Infof("Error syncing execution jobs %q , retrying. Error: %v", event.Key, err)
 		e.queue.AddRateLimited(event)
 		return
 	}
 
-	glog.Warningf("Dropping event %v out of the queue: %v", event, err)
+	klog.Warningf("Dropping event %v out of the queue: %v", event, err)
 	e.queue.Forget(event)
 	utilruntime.HandleError(err)
 }
@@ -584,17 +584,17 @@ func (e *ExecutionJobController) shouldStartJob(key string, job *batch.Job) bool
 	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
 	execution, err := e.executionLister.Executions(namespace).Get(name)
 	if errors.IsNotFound(err) {
-		glog.V(2).Infof("Execution %v has been deleted", key)
+		klog.V(2).Infof("Execution %v has been deleted", key)
 		return false
 	}
 	if err != nil {
-		glog.Errorf("Get execution %s error: %v", key, err)
+		klog.Errorf("Get execution %s error: %v", key, err)
 		return false
 	}
 	if execution.Spec.Parallelism != nil {
 		jobs, err := e.getActiveJobsForExecution(job.Namespace, labels.Set(job.Labels).AsSelector())
 		if err != nil {
-			glog.Errorf("Get active jobs for execution %s error: %v", key, err)
+			klog.Errorf("Get active jobs for execution %s error: %v", key, err)
 			return false
 		}
 
