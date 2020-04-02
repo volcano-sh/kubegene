@@ -291,7 +291,7 @@ func TransWorkflow2Execution(workflow *Workflow) (*execv1alpha1.Execution, error
 	execVolumes := TransVolume2ExecVolume(workflow.Volumes)
 
 	// TODO make parallelism configurable
-	parallelism := int64(5)
+	parallelism := int64(5000)
 
 	exec := &execv1alpha1.Execution{
 		ObjectMeta: metav1.ObjectMeta{
