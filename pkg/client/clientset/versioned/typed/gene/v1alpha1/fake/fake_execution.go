@@ -19,6 +19,8 @@ limitations under the License.
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -39,7 +41,7 @@ var executionsResource = schema.GroupVersionResource{Group: "execution.kubegene.
 var executionsKind = schema.GroupVersionKind{Group: "execution.kubegene.io", Version: "v1alpha1", Kind: "Execution"}
 
 // Get takes name of the execution, and returns the corresponding execution object, and an error if there is any.
-func (c *FakeExecutions) Get(name string, options v1.GetOptions) (result *v1alpha1.Execution, err error) {
+func (c *FakeExecutions) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.Execution, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(executionsResource, c.ns, name), &v1alpha1.Execution{})
 
@@ -50,7 +52,7 @@ func (c *FakeExecutions) Get(name string, options v1.GetOptions) (result *v1alph
 }
 
 // List takes label and field selectors, and returns the list of Executions that match those selectors.
-func (c *FakeExecutions) List(opts v1.ListOptions) (result *v1alpha1.ExecutionList, err error) {
+func (c *FakeExecutions) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.ExecutionList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(executionsResource, executionsKind, c.ns, opts), &v1alpha1.ExecutionList{})
 
@@ -72,14 +74,14 @@ func (c *FakeExecutions) List(opts v1.ListOptions) (result *v1alpha1.ExecutionLi
 }
 
 // Watch returns a watch.Interface that watches the requested executions.
-func (c *FakeExecutions) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeExecutions) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(executionsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a execution and creates it.  Returns the server's representation of the execution, and an error, if there is any.
-func (c *FakeExecutions) Create(execution *v1alpha1.Execution) (result *v1alpha1.Execution, err error) {
+func (c *FakeExecutions) Create(ctx context.Context, execution *v1alpha1.Execution, opts v1.CreateOptions) (result *v1alpha1.Execution, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(executionsResource, c.ns, execution), &v1alpha1.Execution{})
 
@@ -90,7 +92,7 @@ func (c *FakeExecutions) Create(execution *v1alpha1.Execution) (result *v1alpha1
 }
 
 // Update takes the representation of a execution and updates it. Returns the server's representation of the execution, and an error, if there is any.
-func (c *FakeExecutions) Update(execution *v1alpha1.Execution) (result *v1alpha1.Execution, err error) {
+func (c *FakeExecutions) Update(ctx context.Context, execution *v1alpha1.Execution, opts v1.UpdateOptions) (result *v1alpha1.Execution, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(executionsResource, c.ns, execution), &v1alpha1.Execution{})
 
@@ -102,7 +104,7 @@ func (c *FakeExecutions) Update(execution *v1alpha1.Execution) (result *v1alpha1
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeExecutions) UpdateStatus(execution *v1alpha1.Execution) (*v1alpha1.Execution, error) {
+func (c *FakeExecutions) UpdateStatus(ctx context.Context, execution *v1alpha1.Execution, opts v1.UpdateOptions) (*v1alpha1.Execution, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateSubresourceAction(executionsResource, "status", c.ns, execution), &v1alpha1.Execution{})
 
@@ -113,7 +115,7 @@ func (c *FakeExecutions) UpdateStatus(execution *v1alpha1.Execution) (*v1alpha1.
 }
 
 // Delete takes name of the execution and deletes it. Returns an error if one occurs.
-func (c *FakeExecutions) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeExecutions) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(executionsResource, c.ns, name), &v1alpha1.Execution{})
 
@@ -121,17 +123,17 @@ func (c *FakeExecutions) Delete(name string, options *v1.DeleteOptions) error {
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeExecutions) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(executionsResource, c.ns, listOptions)
+func (c *FakeExecutions) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(executionsResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.ExecutionList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched execution.
-func (c *FakeExecutions) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.Execution, err error) {
+func (c *FakeExecutions) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.Execution, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(executionsResource, c.ns, name, data, subresources...), &v1alpha1.Execution{})
+		Invokes(testing.NewPatchSubresourceAction(executionsResource, c.ns, name, pt, data, subresources...), &v1alpha1.Execution{})
 
 	if obj == nil {
 		return nil, err

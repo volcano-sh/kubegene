@@ -18,12 +18,11 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-SCRIPT_ROOT=$(dirname ${BASH_SOURCE})/..
-CODEGEN_PKG=${CODEGEN_PKG:-$(cd ${SCRIPT_ROOT}; ls -d -1 ./vendor/k8s.io/code-generator 2>/dev/null || echo ../code-generator)}
+KUBEGENE_ROOT=$(dirname ${BASH_SOURCE})/..
 
 # generate the code
-${CODEGEN_PKG}/generate-groups.sh "deepcopy,client,informer,lister" \
+${KUBEGENE_ROOT}/hack/generate-groups.sh "deepcopy,client,informer,lister" \
   kubegene.io/kubegene/pkg/client kubegene.io/kubegene/pkg/apis \
   gene:v1alpha1 \
   --output-base "$(dirname ${BASH_SOURCE})/../../.." \
-  --go-header-file ${SCRIPT_ROOT}/hack/boilerplate.go.txt
+  --go-header-file ${KUBEGENE_ROOT}/hack/boilerplate.go.txt
