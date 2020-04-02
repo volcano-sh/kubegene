@@ -17,6 +17,7 @@ limitations under the License.
 package util
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -29,7 +30,7 @@ import (
 
 // EnsureCreateCRD creates CustomResourceDefinition
 func EnsureCreateCRD(clientset apiextensionsclient.Interface, crd *apiextensionsv1beta1.CustomResourceDefinition) error {
-	_, err := clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Create(crd)
+	_, err := clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Create(context.TODO(), crd, metav1.CreateOptions{})
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return err
 	}
@@ -44,7 +45,7 @@ func EnsureCreateCRD(clientset apiextensionsclient.Interface, crd *apiextensions
 // waitForExecutionResource waits for the Execution resource
 func waitForEstablishedCRD(clientset apiextensionsclient.Interface, name string) error {
 	return wait.Poll(100*time.Millisecond, 60*time.Second, func() (bool, error) {
-		crd, err := clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Get(name, metav1.GetOptions{})
+		crd, err := clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Get(context.TODO(), name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}

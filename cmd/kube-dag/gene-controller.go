@@ -19,18 +19,22 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/pflag"
-	"k8s.io/apiserver/pkg/util/flag"
-	"k8s.io/apiserver/pkg/util/logs"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/component-base/cli/flag"
+	"k8s.io/klog"
 
 	"kubegene.io/kubegene/cmd/kube-dag/app"
 	"kubegene.io/kubegene/cmd/kube-dag/app/options"
 	"kubegene.io/kubegene/pkg/signals"
 )
 
-func main() {
+var logFlushFreq = pflag.Duration("log-flush-frequency", 5*time.Second, "Maximum number of seconds between log flushes")
 
+func main() {
+	klog.InitFlags(nil)
 	// set up signals so we handle the first shutdown signal gracefully
 	stopCh := signals.SetupSignalHandler()
 
@@ -39,8 +43,9 @@ func main() {
 
 	flag.InitFlags()
 
-	logs.InitLogs()
-	defer logs.FlushLogs()
+	// The default klog flush interval is 30 seconds, which is frighteningly long.
+	go wait.Forever(klog.Flush, *logFlushFreq)
+	defer klog.Flush()
 
 	if err := app.Run(s, stopCh); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)

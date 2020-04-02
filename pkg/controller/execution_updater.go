@@ -17,14 +17,15 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/evanphx/json-patch"
-	"github.com/golang/glog"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/klog"
 
 	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
 	geneclientset "kubegene.io/kubegene/pkg/client/clientset/versioned/typed/gene/v1alpha1"
@@ -64,37 +65,37 @@ func (esu *executionUpdater) UpdateExecutionStatus(modified *genev1alpha1.Execut
 	}
 
 	var current *genev1alpha1.Execution
-	current, err = esu.execClient.Executions(modified.Namespace).Get(modified.Name, metav1.GetOptions{})
+	current, err = esu.execClient.Executions(modified.Namespace).Get(context.TODO(), modified.Name, metav1.GetOptions{})
 	if err != nil {
-		glog.V(2).Infof("getting the execution is failed. Error: %v", err)
+		klog.V(2).Infof("getting the execution is failed. Error: %v", err)
 		return err
 	}
 
 	var curBytes []byte
 	curBytes, err = json.Marshal(current)
 	if err != nil {
-		glog.V(2).Infof("after getting the execution json.Marshal failed. Error: %v", err)
+		klog.V(2).Infof("after getting the execution json.Marshal failed. Error: %v", err)
 		return err
 	}
 
 	var bytes []byte
 	bytes, err = jsonpatch.MergePatch(curBytes, patchBytes)
 	if err != nil {
-		glog.V(2).Infof("after getting the execution jsonpatch.MergePatch failed. Error: %v", err)
+		klog.V(2).Infof("after getting the execution jsonpatch.MergePatch failed. Error: %v", err)
 		return err
 	}
 
 	var updated genev1alpha1.Execution
 	err = json.Unmarshal(bytes, &updated)
 	if err != nil {
-		glog.V(2).Infof("after getting the execution json.Unmarshal failed. Error: %v", err)
+		klog.V(2).Infof("after getting the execution json.Unmarshal failed. Error: %v", err)
 		return err
 	}
 
 	err = wait.ExponentialBackoff(DefaultRetry, func() (bool, error) {
-		_, err = esu.execClient.Executions(modified.Namespace).UpdateStatus(&updated)
+		_, err = esu.execClient.Executions(modified.Namespace).UpdateStatus(context.TODO(), &updated, metav1.UpdateOptions{})
 		if err != nil {
-			glog.V(2).Infof("Failed to update execution status '%s': %v", current.Name, err)
+			klog.V(2).Infof("Failed to update execution status '%s': %v", current.Name, err)
 			return false, nil
 		}
 		return true, nil
@@ -109,37 +110,37 @@ func (esu *executionUpdater) UpdateExecution(modified *genev1alpha1.Execution, o
 	}
 
 	var current *genev1alpha1.Execution
-	current, err = esu.execClient.Executions(modified.Namespace).Get(modified.Name, metav1.GetOptions{})
+	current, err = esu.execClient.Executions(modified.Namespace).Get(context.TODO(), modified.Name, metav1.GetOptions{})
 	if err != nil {
-		glog.V(2).Infof("getting the execution is failed %v", err)
+		klog.V(2).Infof("getting the execution is failed %v", err)
 		return err
 	}
 
 	var curBytes []byte
 	curBytes, err = json.Marshal(current)
 	if err != nil {
-		glog.V(2).Infof("after getting the execution json.Marshal failed %v", err)
+		klog.V(2).Infof("after getting the execution json.Marshal failed %v", err)
 		return err
 	}
 
 	var bytes []byte
 	bytes, err = jsonpatch.MergePatch(curBytes, patchBytes)
 	if err != nil {
-		glog.V(2).Infof("after getting the execution jsonpatch.MergePatch failed. Error: %v", err)
+		klog.V(2).Infof("after getting the execution jsonpatch.MergePatch failed. Error: %v", err)
 		return err
 	}
 
 	var updated genev1alpha1.Execution
 	err = json.Unmarshal(bytes, &updated)
 	if err != nil {
-		glog.V(2).Infof("after getting the execution json.Unmarshal failed. Error: %v", err)
+		klog.V(2).Infof("after getting the execution json.Unmarshal failed. Error: %v", err)
 		return err
 	}
 
 	err = wait.ExponentialBackoff(DefaultRetry, func() (bool, error) {
-		_, err = esu.execClient.Executions(modified.Namespace).Update(&updated)
+		_, err = esu.execClient.Executions(modified.Namespace).Update(context.TODO(), &updated, metav1.UpdateOptions{})
 		if err != nil {
-			glog.V(2).Infof("Failed to update execution '%s': %v", current.Name, err)
+			klog.V(2).Infof("Failed to update execution '%s': %v", current.Name, err)
 			return false, nil
 		}
 		return true, nil

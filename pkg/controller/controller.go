@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/glog"
 	batch "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,6 +31,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
+	"k8s.io/klog"
 
 	genev1alpha1 "kubegene.io/kubegene/pkg/apis/gene/v1alpha1"
 	geneclientset "kubegene.io/kubegene/pkg/client/clientset/versioned/typed/gene/v1alpha1"
@@ -128,11 +128,11 @@ func (c *ExecutionController) Run(workers int, stopCh <-chan struct{}) {
 	defer c.execQueue.ShutDown()
 	defer c.jobQueue.ShutDown()
 
-	glog.Infof("Starting execution controller with version %s", version.GetVersion())
-	defer glog.Infof("Shutting down execution controller")
+	klog.Infof("Starting execution controller with version %s", version.GetVersion())
+	defer klog.Infof("Shutting down execution controller")
 
 	if !cache.WaitForCacheSync(stopCh, c.execSynced, c.jobSynced) {
-		glog.Errorf("Cannot sync caches")
+		klog.Errorf("Cannot sync caches")
 		return
 	}
 
@@ -161,7 +161,7 @@ func (c *ExecutionController) processNextExecItem() bool {
 	}
 	defer c.execQueue.Done(key)
 
-	glog.Infof("execution %v enter sync", key)
+	klog.Infof("execution %v enter sync", key)
 	err := c.syncExecHandler(key.(string))
 	if err != nil {
 		utilruntime.HandleError(fmt.Errorf("error syncing execution: %v", err))
@@ -201,7 +201,7 @@ func (c *ExecutionController) processNextJobItem() bool {
 func (c *ExecutionController) syncJob(key string) (bool, error) {
 	startTime := time.Now()
 	defer func() {
-		glog.V(4).Infof("Finished syncing job %q (%v)", key, time.Since(startTime))
+		klog.V(4).Infof("Finished syncing job %q (%v)", key, time.Since(startTime))
 	}()
 
 	ns, name, err := cache.SplitMetaNamespaceKey(key)
@@ -215,7 +215,7 @@ func (c *ExecutionController) syncJob(key string) (bool, error) {
 	sharedJob, err := c.jobLister.Jobs(ns).Get(name)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			glog.V(4).Infof("Job has been deleted: %v", key)
+			klog.V(4).Infof("Job has been deleted: %v", key)
 			return true, nil
 		}
 		return false, err
@@ -226,14 +226,14 @@ func (c *ExecutionController) syncJob(key string) (bool, error) {
 	// This should never happen because we do the check when we queue the job.
 	// Unless someone remove the OwnerReference on the job.
 	if controllerRef == nil {
-		glog.Infof("can not find ownerReference for job %s", key)
+		klog.Infof("can not find ownerReference for job %s", key)
 		return true, nil
 	}
 
 	sharedExec := c.resolveControllerRef(job.Namespace, controllerRef)
 	if sharedExec == nil {
 		// Ignore jobs unrelated to execution.
-		glog.Infof("job %s does not belongs to execution", key)
+		klog.Infof("job %s does not belongs to execution", key)
 		return true, nil
 	}
 	exec := sharedExec.DeepCopy()
@@ -251,11 +251,11 @@ func (c *ExecutionController) syncJob(key string) (bool, error) {
 		// Ask api server to update etcd data.
 		// if update error, we will retry it next sync.
 		if err = c.execStatusUpdater.UpdateExecutionStatus(exec, sharedExec); err != nil {
-			glog.V(3).Infof("update execution %s status error: %#v", key, err)
+			klog.V(3).Infof("update execution %s status error: %#v", key, err)
 			return false, err
 		}
 
-		glog.Infof("graph of execution %s do not exist", util.KeyOf(exec))
+		klog.Infof("graph of execution %s do not exist", util.KeyOf(exec))
 		return true, nil
 	}
 
@@ -266,7 +266,7 @@ func (c *ExecutionController) syncJob(key string) (bool, error) {
 		// Ask api server to update etcd data.
 		// if update error, we will retry it next sync.
 		if err = c.execStatusUpdater.UpdateExecutionStatus(exec, sharedExec); err != nil {
-			glog.V(3).Infof("update execution %s status error: %#v", key, err)
+			klog.V(3).Infof("update execution %s status error: %#v", key, err)
 			return false, err
 		}
 		return true, nil
@@ -294,7 +294,7 @@ func (c *ExecutionController) syncJob(key string) (bool, error) {
 
 		// Ask api server to update etcd data.
 		if err = c.execStatusUpdater.UpdateExecutionStatus(exec, sharedExec); err != nil {
-			glog.V(3).Infof("update execution %s status error: %#v", key, err)
+			klog.V(3).Infof("update execution %s status error: %#v", key, err)
 			return false, err
 		}
 
@@ -328,7 +328,7 @@ func (c *ExecutionController) syncJob(key string) (bool, error) {
 
 		// Ask api server to update etcd data.
 		if err = c.execStatusUpdater.UpdateExecutionStatus(exec, sharedExec); err != nil {
-			glog.V(3).Infof("update execution %s status error: %#v", key, err)
+			klog.V(3).Infof("update execution %s status error: %#v", key, err)
 			return false, err
 		}
 
@@ -336,8 +336,8 @@ func (c *ExecutionController) syncJob(key string) (bool, error) {
 			// if vertex is dynamic we can add JobAfterEvent once completing all the
 			// k8s jobs related to the dynamic job
 			if vertex.IsDynamic() {
-				glog.V(3).Infof("dyanmic job vertex.GetDynamicJobCnt(): %v", vertex.GetDynamicJobCnt())
-				glog.V(3).Infof("dyanmic job vertex.GetDynamicSuccJobCnt(): %v", vertex.GetDynamicSuccJobCnt())
+				klog.V(3).Infof("dyanmic job vertex.GetDynamicJobCnt(): %v", vertex.GetDynamicJobCnt())
+				klog.V(3).Infof("dyanmic job vertex.GetDynamicSuccJobCnt(): %v", vertex.GetDynamicSuccJobCnt())
 
 				if vertex.GetDynamicJobCnt() == vertex.GetDynamicSuccJobCnt() {
 					// add execution to event queue to trigger running.
@@ -355,7 +355,7 @@ func (c *ExecutionController) syncJob(key string) (bool, error) {
 		return true, nil
 
 	default:
-		glog.V(4).Infof("Job is running and has not update its condition: %v", key)
+		klog.V(4).Infof("Job is running and has not update its condition: %v", key)
 
 		// usually a add event can approach here and mark the vertex as running.
 		if util.GetVertexStatus(exec, job.Name) == nil {
@@ -372,7 +372,7 @@ func (c *ExecutionController) syncJob(key string) (bool, error) {
 		}
 		// Ask api server to update etcd data.
 		if err = c.execStatusUpdater.UpdateExecutionStatus(exec, sharedExec); err != nil {
-			glog.V(3).Infof("update execution %s status error: %#v", util.KeyOf(exec), err)
+			klog.V(3).Infof("update execution %s status error: %#v", util.KeyOf(exec), err)
 			return false, err
 		}
 
@@ -384,9 +384,9 @@ func (c *ExecutionController) syncJob(key string) (bool, error) {
 // This function is not meant to be invoked concurrently with the same key.
 func (c *ExecutionController) syncExecution(key string) error {
 	startTime := time.Now()
-	glog.V(3).Infof("Started syncing execution %q (%v)", key, startTime)
+	klog.V(3).Infof("Started syncing execution %q (%v)", key, startTime)
 	defer func() {
-		glog.V(3).Infof("Finished syncing execution %q (%v)", key, time.Since(startTime))
+		klog.V(3).Infof("Finished syncing execution %q (%v)", key, time.Since(startTime))
 	}()
 
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
@@ -396,7 +396,7 @@ func (c *ExecutionController) syncExecution(key string) error {
 
 	execution, err := c.execLister.Executions(namespace).Get(name)
 	if errors.IsNotFound(err) {
-		glog.V(2).Infof("execution %v has been deleted", key)
+		klog.V(2).Infof("execution %v has been deleted", key)
 		c.execGraphBuilder.DeleteGraph(key)
 		return nil
 	}
@@ -415,7 +415,7 @@ func (c *ExecutionController) syncExecution(key string) error {
 
 	graph := c.execGraphBuilder.GetGraph(key)
 	if graph == nil {
-		glog.V(2).Infof("generate graph for execution %v", key)
+		klog.V(2).Infof("generate graph for execution %v", key)
 		c.execGraphBuilder.AddGraph(exec)
 	}
 
@@ -435,7 +435,7 @@ func (c *ExecutionController) enqueueObj(queue workqueue.Interface, obj interfac
 
 	objName := util.KeyOf(obj)
 
-	glog.V(5).Infof("enqueued %q for sync", objName)
+	klog.V(5).Infof("enqueued %q for sync", objName)
 	queue.Add(objName)
 }
 

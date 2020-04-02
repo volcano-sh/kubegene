@@ -18,6 +18,7 @@ package commands
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"sort"
@@ -103,7 +104,7 @@ func getExecution(cmd *cobra.Command, args []string, getExecutionFlags *getExecu
 		}
 
 		for _, name := range execNames {
-			execution, err := geneClient.ExecutionV1alpha1().Executions(namespace).Get(name, metav1.GetOptions{})
+			execution, err := geneClient.ExecutionV1alpha1().Executions(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 			if err != nil {
 				ExitWithError(err)
 			}
@@ -114,7 +115,7 @@ func getExecution(cmd *cobra.Command, args []string, getExecutionFlags *getExecu
 			namespace = metav1.NamespaceAll
 		}
 		// query exec list
-		execList, err := geneClient.ExecutionV1alpha1().Executions(namespace).List(metav1.ListOptions{})
+		execList, err := geneClient.ExecutionV1alpha1().Executions(namespace).List(context.TODO(), metav1.ListOptions{})
 		if err != nil {
 			ExitWithError(fmt.Errorf("list execution error: %v", err))
 		}

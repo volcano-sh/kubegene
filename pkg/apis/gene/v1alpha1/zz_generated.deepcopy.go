@@ -93,7 +93,7 @@ func (in *Execution) DeepCopyObject() runtime.Object {
 func (in *ExecutionList) DeepCopyInto(out *ExecutionList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]Execution, len(*in))
