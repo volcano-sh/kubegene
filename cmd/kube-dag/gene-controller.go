@@ -34,7 +34,7 @@ import (
 var logFlushFreq = pflag.Duration("log-flush-frequency", 5*time.Second, "Maximum number of seconds between log flushes")
 
 func main() {
-
+	klog.InitFlags(nil)
 	// set up signals so we handle the first shutdown signal gracefully
 	stopCh := signals.SetupSignalHandler()
 
@@ -42,7 +42,6 @@ func main() {
 	s.AddFlags(pflag.CommandLine)
 
 	flag.InitFlags()
-	klog.InitFlags(nil)
 
 	// The default klog flush interval is 30 seconds, which is frighteningly long.
 	go wait.Forever(klog.Flush, *logFlushFreq)
