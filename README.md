@@ -159,6 +159,8 @@ workflow:
     execution-bf0dc.jobfinish.0  Succeeded  success       
 ```
 
+## [Project from Tsinghua](demo/20200118_huawei.md)
+
 ## Feature on the road  
 
 KubeGene has provide the basic functionalities for running the genome sequencing workflow. More feature will be added:
