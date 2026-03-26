@@ -25,7 +25,7 @@ import (
 	"time"
 
 	. "github.com/onsi/gomega"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 type genectlWrapper struct {

@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	goflag "flag"
 	"fmt"
 	"os"
 	"time"
@@ -24,7 +25,7 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/component-base/cli/flag"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"kubegene.io/kubegene/cmd/kube-dag/app"
 	"kubegene.io/kubegene/cmd/kube-dag/app/options"
@@ -35,6 +36,9 @@ var logFlushFreq = pflag.Duration("log-flush-frequency", 5*time.Second, "Maximum
 
 func main() {
 	klog.InitFlags(nil)
+	_ = goflag.Set("legacy_stderr_threshold_behavior", "false")
+	_ = goflag.Set("stderrthreshold", "INFO")
+
 	// set up signals so we handle the first shutdown signal gracefully
 	stopCh := signals.SetupSignalHandler()
 

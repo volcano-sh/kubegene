@@ -37,7 +37,7 @@ import (
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/client-go/tools/record"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"kubegene.io/kubegene/cmd/kube-dag/app/options"
 	"kubegene.io/kubegene/pkg/apis/gene"
