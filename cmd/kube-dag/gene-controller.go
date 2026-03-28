@@ -36,8 +36,13 @@ var logFlushFreq = pflag.Duration("log-flush-frequency", 5*time.Second, "Maximum
 
 func main() {
 	klog.InitFlags(nil)
-	_ = goflag.Set("legacy_stderr_threshold_behavior", "false")
-	_ = goflag.Set("stderrthreshold", "INFO")
+	// Opt into fixed stderrthreshold behavior (kubernetes/klog#212).
+	if err := goflag.Set("legacy_stderr_threshold_behavior", "false"); err != nil {
+		klog.Fatalf("Failed to set legacy_stderr_threshold_behavior: %v", err)
+	}
+	if err := goflag.Set("stderrthreshold", "INFO"); err != nil {
+		klog.Fatalf("Failed to set stderrthreshold: %v", err)
+	}
 
 	// set up signals so we handle the first shutdown signal gracefully
 	stopCh := signals.SetupSignalHandler()
